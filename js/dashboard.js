@@ -12,27 +12,43 @@ function cambiarDia(delta) {
 }
 
 function actualizarTimeMachine() {
-    const label = document.getElementById('time-label');
-    const nextBtn = document.getElementById('time-next');
-    if (label) label.textContent = labelDia(estado.diaOffset);
+    if (typeof estado === 'undefined' || !estado) return;
+    var label = document.getElementById('time-label');
+    var nextBtn = document.getElementById('time-next');
+    if (label) label.textContent = typeof labelDia === 'function' ? labelDia(estado.diaOffset) : 'HOY';
     if (nextBtn) nextBtn.disabled = estado.diaOffset >= 0;
 }
 
 // ===== DONUT =====
+function initDonutCanvas() {
+    var canvas = document.getElementById('donutCanvas');
+    if (!canvas) return;
+    var parent = canvas.parentElement;
+    var w = (parent && parent.offsetWidth > 0) ? parent.offsetWidth : 220;
+    var h = (parent && parent.offsetHeight > 0) ? parent.offsetHeight : 220;
+    canvas.width = w;
+    canvas.height = h;
+    if (typeof dibujarDonut === 'function') dibujarDonut();
+}
 function dibujarDonut() {
-    const canvas = document.getElementById('donutCanvas');
-    const ctx = canvas.getContext('2d');
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = 100;
-    const lineWidth = 24;
+    var canvas = document.getElementById('donutCanvas');
+    if (!canvas || !canvas.getContext) return;
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width || 220;
+    var h = canvas.height || 220;
+    if (w <= 0 || h <= 0) return;
+    var centerX = w / 2;
+    var centerY = h / 2;
+    var radius = Math.min(w, h) / 2 - 14;
+    var lineWidth = 24;
 
-    const diaData = getDiaData(estado.diaOffset);
+    if (typeof estado === 'undefined' || !estado) return;
+    var diaData = typeof getDiaData === 'function' && estado ? getDiaData(estado.diaOffset) : { ingresos: 0, gastos: 0 };
     const objetivo = 500;
     const porcentaje = Math.min((diaData.ingresos / objetivo) * 100, 100);
     const angulo = (porcentaje / 100) * 360;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, w, h);
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
     ctx.strokeStyle = 'rgba(14, 165, 233, 0.1)';
@@ -40,7 +56,7 @@ function dibujarDonut() {
     ctx.stroke();
 
     if (angulo > 0) {
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        var gradient = ctx.createLinearGradient(0, 0, w, h);
         gradient.addColorStop(0, '#0EA5E9');
         gradient.addColorStop(0.5, '#38BDF8');
         gradient.addColorStop(1, '#0284C7');
@@ -54,6 +70,7 @@ function dibujarDonut() {
         ctx.stroke();
     }
 }
+if (typeof window !== 'undefined') window.initDonutCanvas = initDonutCanvas;
 
 function cambiarPeriodo(periodo, event) {
     estado.periodo = periodo;
@@ -87,10 +104,11 @@ function getRankingVendedores() {
 }
 
 function renderizarRanking() {
-    const container = document.getElementById('ranking-list');
+    if (typeof estado === 'undefined' || !estado) return;
+    var container = document.getElementById('ranking-list');
     if (!container) return;
     container.innerHTML = '';
-    var ranking = getRankingVendedores();
+    var ranking = typeof getRankingVendedores === 'function' ? getRankingVendedores() : [];
     if (ranking.length === 0) {
         ranking = (estado.trabajadores || []).map(function(t) { return { usuario: t.nombre, ventas: t.ventas || 0, numTransacciones: 0, ticketMedio: 0 }; });
     }
@@ -203,6 +221,7 @@ function cerrarModalTransaccion() {
 function editarReglasConsumo() { cambiarPantalla('tabla-precios'); }
 
 function actualizarSaldos() {
+    if (typeof estado === 'undefined' || !estado) return;
     var cuentas = estado.cuentas || {};
     function setText(id, text) { var e = document.getElementById(id); if (e) e.textContent = text; }
     setText('saldo-efectivo', (cuentas.efectivo || 0).toFixed(2) + '€');

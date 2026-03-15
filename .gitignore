@@ -23,3 +23,4 @@ npm-debug.log*
 
 # Optional: keep .env.example for reference
 !.env.example
+.vercel

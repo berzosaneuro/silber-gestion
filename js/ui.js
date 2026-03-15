@@ -1,10 +1,10 @@
 /* SILBER GESTIÓN — ui.js */
-}
 
 function renderizarTablaPrecios() {
-    const container = document.getElementById('tabla-precios');
+    if (typeof estado === 'undefined' || !estado) return;
+    var container = document.getElementById('tabla-precios');
     if (!container) return;
-    const sp = estado.stockProductos;
+    var sp = estado.stockProductos;
     if (!sp) return;
     container.innerHTML = '';
     const esV = cat => cat === 'Verde' || cat.includes('Brócoli');
@@ -140,58 +140,101 @@ function renderizarListaStock() {
 }
 
 function cambiarPantalla(pantalla) {
-    if (estado.historialPantallas[estado.historialPantallas.length - 1] !== pantalla) {
-        estado.historialPantallas.push(pantalla);
+    try {
+        if (typeof estado === 'undefined') { try { estado = window.estado || { historialPantallas: ['dashboard'] }; } catch (e) { return; } }
+        if (!estado.historialPantallas) estado.historialPantallas = ['dashboard'];
+        if (estado.historialPantallas[estado.historialPantallas.length - 1] !== pantalla) {
+            estado.historialPantallas.push(pantalla);
+        }
+        var screens = document.querySelectorAll('.screen');
+        if (screens && screens.length) { for (var i = 0; i < screens.length; i++) { screens[i].classList.remove('active'); } }
+        var target = document.getElementById('screen-' + pantalla);
+        if (target) {
+            target.classList.add('active');
+            target.style.display = 'block';
+            target.style.visibility = 'visible';
+            if (typeof window._silberDebug === 'function') window._silberDebug('screen-visible', pantalla);
+        } else {
+            if (typeof console !== 'undefined' && console.warn) console.warn('[Silber] screen not found: screen-' + pantalla);
+        }
+        var navItems = document.querySelectorAll('.nav-item');
+        if (navItems && navItems.length) { for (var j = 0; j < navItems.length; j++) { navItems[j].classList.remove('active'); } }
+        var navItem = document.querySelector('.nav-item[data-screen="' + pantalla + '"]');
+        if (navItem) navItem.classList.add('active');
+        var backBtn = document.getElementById('backBtn');
+        if (backBtn) backBtn.classList.toggle('visible', pantalla !== 'dashboard');
+        var menuOverlay = document.getElementById('menuOverlay');
+        if (menuOverlay) { menuOverlay.classList.remove('active'); menuOverlay.style.display = 'none'; }
+        cerrarMenu();
+        if (pantalla === 'oficina' && typeof actualizarEstadoBiometria === 'function') { try { actualizarEstadoBiometria(); } catch (e) {} }
+        if (pantalla === 'gastos' && typeof renderizarDesgloseGastos === 'function') { try { renderizarDesgloseGastos(); } catch (e) {} }
+        if (pantalla === 'ingresos' && typeof renderizarDesgloseIngresos === 'function') { try { renderizarDesgloseIngresos(); } catch (e) {} }
+        if (pantalla === 'transferencias' && typeof renderizarHistorialTransferencias === 'function') { try { renderizarHistorialTransferencias(); } catch (e) {} }
+        if (pantalla === 'stock') {
+            try {
+                var elB = document.getElementById('coste-gramo-b');
+                var elV = document.getElementById('coste-gramo-v');
+                if (elB && estado) elB.value = estado.costePorGramoB || 22;
+                if (elV && estado) elV.value = estado.costePorGramoV || 1;
+            } catch (e) {}
+        }
+        if (pantalla === 'metricas' && typeof renderizarMetricas === 'function') { try { renderizarMetricas(); } catch (e) {} }
+        if (pantalla === 'timeline' && typeof renderBusinessTimeline === 'function') { try { renderBusinessTimeline(); } catch (e) {} }
+        if (pantalla === 'productos' && typeof renderProductos === 'function') { try { renderProductos(); } catch (e) {} }
+        if (pantalla === 'dashboard') {
+            if (typeof window._silberDebug === 'function') window._silberDebug('dashboard-render-start');
+            try {
+                if (typeof renderDashboardProductosAlerta === 'function') renderDashboardProductosAlerta();
+                if (typeof actualizarSaldos === 'function') actualizarSaldos();
+                if (typeof renderizarRanking === 'function') renderizarRanking();
+                if (typeof actualizarTimeMachine === 'function') actualizarTimeMachine();
+            } catch (e) { if (typeof console !== 'undefined' && console.warn) console.warn('[Silber] dashboard render:', e); }
+            setTimeout(function() {
+                try {
+                    if (typeof window.initDonutCanvas === 'function') window.initDonutCanvas();
+                    else if (typeof dibujarDonut === 'function') dibujarDonut();
+                    if (typeof actualizarSaldos === 'function') actualizarSaldos();
+                    if (typeof window._silberDebug === 'function') window._silberDebug('dashboard-render-done');
+                } catch (e) { if (typeof console !== 'undefined' && console.warn) console.warn('[Silber] dashboard setTimeout:', e); }
+            }, 120);
+        }
+        if (navigator.vibrate) navigator.vibrate(30);
+    } catch (e) {
+        if (typeof console !== 'undefined' && console.error) console.error('[Silber] cambiarPantalla error:', e);
     }
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById('screen-' + pantalla).classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    const navItem = document.querySelector(`.nav-item[data-screen="${pantalla}"]`);
-    if (navItem) navItem.classList.add('active');
-    document.getElementById('backBtn').classList.toggle('visible', pantalla !== 'dashboard');
-    cerrarMenu();
-    if (pantalla === 'oficina')           actualizarEstadoBiometria();
-    if (pantalla === 'gastos')           renderizarDesgloseGastos();
-    if (pantalla === 'ingresos')         renderizarDesgloseIngresos();
-    if (pantalla === 'transferencias')   renderizarHistorialTransferencias();
-    if (pantalla === 'stock') {
-        const elB = document.getElementById('coste-gramo-b');
-        const elV = document.getElementById('coste-gramo-v');
-        if (elB) elB.value = estado.costePorGramoB || 22;
-        if (elV) elV.value = estado.costePorGramoV || 1;
-    }
-    if (pantalla === 'metricas' && typeof renderizarMetricas === 'function') renderizarMetricas();
-    if (pantalla === 'timeline' && typeof renderBusinessTimeline === 'function') renderBusinessTimeline();
-    if (pantalla === 'productos' && typeof renderProductos === 'function') renderProductos();
-    if (pantalla === 'dashboard' && typeof renderDashboardProductosAlerta === 'function') renderDashboardProductosAlerta();
-    if (navigator.vibrate) navigator.vibrate(30);
 }
 
 function volverAtras() {
-    if (estado.historialPantallas.length > 1) {
+    try {
+        if (typeof estado === 'undefined' || !estado.historialPantallas || estado.historialPantallas.length <= 1) return;
         estado.historialPantallas.pop();
-        const anterior = estado.historialPantallas[estado.historialPantallas.length - 1];
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('screen-' + anterior).classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        const navItem = document.querySelector(`.nav-item[data-screen="${anterior}"]`);
+        var anterior = estado.historialPantallas[estado.historialPantallas.length - 1];
+        var screens = document.querySelectorAll('.screen');
+        if (screens && screens.length) { for (var i = 0; i < screens.length; i++) { screens[i].classList.remove('active'); } }
+        var prevScreen = document.getElementById('screen-' + anterior);
+        if (prevScreen) { prevScreen.classList.add('active'); prevScreen.style.display = 'block'; prevScreen.style.visibility = 'visible'; }
+        var navItems = document.querySelectorAll('.nav-item');
+        if (navItems && navItems.length) { for (var j = 0; j < navItems.length; j++) { navItems[j].classList.remove('active'); } }
+        var navItem = document.querySelector('.nav-item[data-screen="' + anterior + '"]');
         if (navItem) navItem.classList.add('active');
-        document.getElementById('backBtn').classList.toggle('visible', anterior !== 'dashboard');
+        var backBtn = document.getElementById('backBtn');
+        if (backBtn) backBtn.classList.toggle('visible', anterior !== 'dashboard');
         cerrarMenu();
         if (navigator.vibrate) navigator.vibrate(30);
-    }
+    } catch (e) { if (typeof console !== 'undefined' && console.warn) console.warn('[Silber] volverAtras:', e); }
 }
 
 function toggleMenu() {
-    const o = document.getElementById('menuOverlay');
-    if (o) o.classList.toggle('active');
+    var o = document.getElementById('menuOverlay');
+    if (!o) return;
+    o.classList.toggle('active');
+    o.style.display = o.classList.contains('active') ? '' : 'none';
 }
 
 function cerrarMenu() {
-    const o = document.getElementById('menuOverlay');
-    if (o) o.classList.remove('active');
-
-})();
+    var o = document.getElementById('menuOverlay');
+    if (o) { o.classList.remove('active'); o.style.display = 'none'; }
+}
 
 // ===== GESTIÓN BIOMETRÍA EN OFICINA =====
 function actualizarEstadoBiometria() {
@@ -809,6 +852,18 @@ function _ejecutarConfirmarCierre(tipo, nota) {
     }
     if (typeof notifyOtherMaster === 'function') notifyOtherMaster('Realizó el cierre del día (' + hoy + ')');
     if (typeof buildDailySummary === 'function') buildDailySummary(hoy);
+    var whatsappCierre = '34643525906';
+    var msgCierre = '🔐 Cierre Silber - ' + hoy + '\n' +
+        'Ingresos: ' + totalIncome.toFixed(2) + '€ | Gastos: ' + totalExpenses.toFixed(2) + '€\n' +
+        'Efectivo contado: ' + actualCash.toFixed(2) + '€ | Tarjeta: ' + actualCard.toFixed(2) + '€\n' +
+        'Diferencia: ' + difference.toFixed(2) + '€\n' +
+        (tipo === 'ok' ? '✅ Todo cuadra' : '⚠️ Descuadre' + (nota ? ': ' + nota : ''));
+    try { window.open('https://wa.me/' + whatsappCierre + '?text=' + encodeURIComponent(msgCierre), '_blank'); } catch (e) {}
+    if (typeof esJefaza === 'function' && esJefaza() && tipo === 'ok') {
+        var btnCierre = document.querySelector('#modalCierreDia .modal-footer .btn-primary');
+        var rect = btnCierre ? btnCierre.getBoundingClientRect() : null;
+        if (typeof showLoveClosingEffect === 'function') showLoveClosingEffect(rect);
+    }
     cerrarCierreDia();
     alert(tipo === 'ok' ? '✅ Cierre del día confirmado. Todo cuadra.' : '⚠️ Descuadre registrado con nota. Guardado en el historial.');
     if (navigator.vibrate) navigator.vibrate([30,50,30]);
@@ -929,6 +984,38 @@ function ejecutarCambioPassGorrion() {
     document.getElementById('modalCambiarPassGorrion').classList.remove('active');
     alert('✅ Contraseña actualizada correctamente');
     if (navigator.vibrate) navigator.vibrate([30,50,30]);
+}
+
+// ===== LOVE EFFECT (JEFAZA — cierre enviado a Jefazo) =====
+function showLoveClosingEffect(buttonRect) {
+    var overlay = document.createElement('div');
+    overlay.className = 'love-popup-overlay';
+    overlay.innerHTML = '<div class="love-popup">Gracias por todo lo que haces.<br>Eres increíble. ❤️</div>';
+    document.body.appendChild(overlay);
+    setTimeout(function() {
+        var popup = overlay.querySelector('.love-popup');
+        if (popup) popup.classList.add('love-popup-out');
+        setTimeout(function() { overlay.remove(); }, 380);
+    }, 2200);
+
+    var cx = buttonRect ? buttonRect.left + buttonRect.width / 2 : window.innerWidth / 2;
+    var cy = buttonRect ? buttonRect.top + buttonRect.height / 2 : window.innerHeight / 2;
+    var hearts = ['❤️', '💜', '💗'];
+    for (var i = 0; i < 10; i++) {
+        (function(j) {
+            setTimeout(function() {
+                var el = document.createElement('div');
+                el.className = 'love-heart';
+                el.textContent = hearts[j % hearts.length];
+                var dx = (Math.random() - 0.5) * 80;
+                el.style.left = (cx - 12) + 'px';
+                el.style.top = (cy - 12) + 'px';
+                el.style.setProperty('--dx', dx + 'px');
+                document.body.appendChild(el);
+                setTimeout(function() { el.remove(); }, 2100);
+            }, j * 80);
+        })(i);
+    }
 }
 
 // ===== ALERTAS JEFES =====

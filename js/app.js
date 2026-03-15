@@ -1,44 +1,79 @@
 /* SILBER GESTIÓN — app.js */
 
-
 function intentarLogin() {
-    const u = document.getElementById('login-usuario').value.trim();
-    const p = document.getElementById('login-password').value;
-
-    // Comprobar usuarios con rol (JEFAZO, JEFAZA) o Worker (gorriones)
-    const user = USUARIOS.find(x => x.username === u && x.password === p);
-    if (user) {
-        sesionActual = { usuario: u, rol: user.role };
-        entrarApp();
-        return;
+    var errEl = document.getElementById('login-error');
+    function showErr(msg) {
+        if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; errEl.style.visibility = 'visible'; }
+        try { alert(msg); } catch (_) {}
     }
+    try {
+        if (typeof USUARIOS === 'undefined') {
+            showErr('Error: recarga la página (F5)');
+            return;
+        }
+        var uEl = document.getElementById('login-usuario');
+        var pEl = document.getElementById('login-password');
+        var uRaw = (uEl && uEl.value) ? String(uEl.value).trim() : '';
+        var p = (pEl && pEl.value) ? String(pEl.value).trim() : '';
+        if (errEl) errEl.style.display = 'none';
 
-    // Comprobar gorriones → WORKER (compatibilidad)
-    const gorriones = cargarGorriones();
-    const gIdx = gorriones.findIndex(g => g.usuario === u && g.password === p);
-    if (gIdx !== -1) {
-        const g = gorriones[gIdx];
-        sesionActual = { usuario: u, rol: 'WORKER', gorrionIdx: gIdx, nombre: g.nombre, numero: g.numero };
-        entrarApp();
-        return;
+        if (!uRaw || !p) {
+            showErr('Introduce usuario y contraseña');
+            if (navigator.vibrate) navigator.vibrate([100,50,100]);
+            return;
+        }
+
+        var user = USUARIOS.find(function(x) { return x.username.toLowerCase() === uRaw.toLowerCase() && (x.password || '').toLowerCase() === p.toLowerCase(); });
+        if (user) {
+            sesionActual = { usuario: user.username, rol: user.role };
+            if (typeof window._silberDebug === 'function') window._silberDebug('login-success', user.username);
+            entrarApp();
+            return;
+        }
+
+        var gorriones = typeof cargarGorriones === 'function' ? cargarGorriones() : [];
+        var gIdx = gorriones.findIndex(function(g) { return (g.usuario || '').toLowerCase() === uRaw.toLowerCase() && (String(g.password || '').toLowerCase()) === p.toLowerCase(); });
+        if (gIdx !== -1) {
+            var g = gorriones[gIdx];
+            sesionActual = { usuario: g.usuario, rol: 'WORKER', gorrionIdx: gIdx, nombre: g.nombre, numero: g.numero };
+            entrarApp();
+            return;
+        }
+
+        showErr('Usuario o contraseña incorrectos');
+        if (pEl) pEl.value = '';
+        if (navigator.vibrate) navigator.vibrate([100,50,100]);
+    } catch (e) {
+        showErr('Error al entrar. Recarga la página (F5).');
+        try { console.error('Login error:', e); } catch (_) {}
     }
-
-    document.getElementById('login-error').style.display = 'block';
-    document.getElementById('login-password').value = '';
-    if (navigator.vibrate) navigator.vibrate([100,50,100]);
 }
+if (typeof window !== 'undefined') window.intentarLogin = intentarLogin;
 
 function entrarApp() {
-    document.getElementById('screen-login').classList.remove('active');
-    const nav = document.getElementById('bottom-nav');
-    if (nav) nav.style.display = 'flex';
-    aplicarModoSesion();
-    // Persistir sesión en localStorage para que sobreviva recargas
-    if (sesionActual) {
-        localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual));
-        activarBiometria(sesionActual);
+    if (typeof window._silberDebug === 'function') window._silberDebug('app-init-start');
+    try {
+        var loginEl = document.getElementById('screen-login');
+        if (loginEl) { loginEl.classList.remove('active'); loginEl.style.display = 'none'; loginEl.style.visibility = 'hidden'; }
+        var menuOverlay = document.getElementById('menuOverlay');
+        if (menuOverlay) { menuOverlay.classList.remove('active'); menuOverlay.style.display = 'none'; menuOverlay.setAttribute('aria-hidden', 'true'); }
+        var nav = document.getElementById('bottom-nav');
+        if (nav) nav.style.display = 'flex';
+        if (typeof aplicarModoSesion === 'function') { try { aplicarModoSesion(); } catch (e) {} }
+        if (sesionActual) {
+            try { localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual)); } catch (e) {}
+            if (typeof activarBiometria === 'function') { try { activarBiometria(sesionActual); } catch (e) {} }
+        }
+        if (typeof cambiarPantalla === 'function') {
+            cambiarPantalla('dashboard');
+            if (typeof window._silberDebug === 'function') window._silberDebug('app-init-done');
+        } else {
+            if (typeof console !== 'undefined' && console.error) console.error('[Silber] cambiarPantalla no definida');
+        }
+    } catch (e) {
+        try { if (typeof console !== 'undefined' && console.error) console.error('[Silber] entrarApp error:', e); } catch (_) {}
+        try { alert('Error al abrir la app: ' + (e && e.message ? e.message : 'recarga la página')); } catch (_) {}
     }
-    cambiarPantalla('dashboard');
     if (navigator.geolocation && sesionActual && typeof saveWorkerLocation === 'function') {
         navigator.geolocation.getCurrentPosition(function(pos) {
             saveWorkerLocation(sesionActual.usuario, sesionActual.rol, pos.coords.latitude, pos.coords.longitude);
@@ -46,10 +81,27 @@ function entrarApp() {
     }
     if (typeof syncClientsToSupabase === 'function') syncClientsToSupabase();
     if (navigator.vibrate) navigator.vibrate([30,50,30]);
+    if (typeof showDailyLoveMessage === 'function') showDailyLoveMessage();
 }
 
 function esJefazo() { return sesionActual && sesionActual.rol === 'JEFAZO'; }
 function esJefaza() { return sesionActual && sesionActual.rol === 'JEFAZA'; }
+
+function showDailyLoveMessage() {
+    var today = new Date().toISOString().split('T')[0];
+    try {
+        if (localStorage.getItem('silber_daily_love_date') === today) return;
+        localStorage.setItem('silber_daily_love_date', today);
+    } catch (e) { return; }
+    var toast = document.createElement('div');
+    toast.className = 'daily-love-toast';
+    toast.innerHTML = '<div class="daily-love-title">Silber Control System</div>Hecho con amor para ti ❤️';
+    document.body.appendChild(toast);
+    setTimeout(function() {
+        toast.classList.add('daily-love-toast-out');
+        setTimeout(function() { toast.remove(); }, 320);
+    }, 4500);
+}
 function esMaster() { return esJefazo() || esJefaza(); }
 function esWorker() { return sesionActual && sesionActual.rol === 'WORKER'; }
 function esJefe() { return esMaster(); }

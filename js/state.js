@@ -1,5 +1,11 @@
 /* SILBER GESTIÓN — state.js */
 
+var USUARIOS = [
+    { username: 'Jefazo', password: 'jefazo', role: 'JEFAZO' },
+    { username: 'Jefaza', password: 'jefaza', role: 'JEFAZA' }
+];
+var sesionActual = null;
+
 const STORAGE_KEY = 'silber_gestion_v2';
 
 function cargarEstado() {
@@ -54,17 +60,20 @@ const estadoInicial = {
     fotoActual: null
 };
 
-const estadoCargado = cargarEstado();
-let estado = estadoCargado || JSON.parse(JSON.stringify(estadoInicial));
-// Sanear historialPantallas: nunca debe contener 'login' ni estar vacío
-if (!estado.historialPantallas || !estado.historialPantallas.length) {
+var estado;
+try {
+    var estadoCargado = cargarEstado();
+    estado = estadoCargado || JSON.parse(JSON.stringify(estadoInicial));
+    if (!estado.historialPantallas || !estado.historialPantallas.length) {
+        estado.historialPantallas = ['dashboard'];
+    } else {
+        estado.historialPantallas = estado.historialPantallas.filter(function(p) { return p !== 'login'; });
+        if (!estado.historialPantallas.length) estado.historialPantallas = ['dashboard'];
+    }
     estado.historialPantallas = ['dashboard'];
-} else {
-    estado.historialPantallas = estado.historialPantallas.filter(p => p !== 'login');
-    if (!estado.historialPantallas.length) estado.historialPantallas = ['dashboard'];
+} catch (e) {
+    estado = { historialPantallas: ['dashboard'], diaOffset: 0, periodo: 'day', cuentas: {}, registrosDiarios: {}, categoriasGastos: [], categoriasIngresos: [], stockProductos: {}, productos: [], stock_movements: [] };
 }
-// Siempre resetear historial de navegación al arrancar para evitar estados corruptos
-estado.historialPantallas = ['dashboard'];
 
 // Migración: asegurar que stockProductos existe y tiene el formato correcto
 if (!estado.stockProductos) {
@@ -143,10 +152,13 @@ function labelDia(offset) {
 }
 
 function getDiaData(offset) {
-    const periodo = estado.periodo || 'day';
+    if (typeof estado === 'undefined' || !estado) return { gastos: 0, ingresos: 0 };
+    var periodo = estado.periodo || 'day';
 
     if (periodo === 'day') {
-        const key = fechaConOffset(offset);
+        if (!estado.registrosDiarios) estado.registrosDiarios = {};
+        var key = typeof fechaConOffset === 'function' ? fechaConOffset(offset) : '';
+        if (!key) return { gastos: 0, ingresos: 0 };
         if (!estado.registrosDiarios[key]) estado.registrosDiarios[key] = { gastos: 0, ingresos: 0 };
         return estado.registrosDiarios[key];
     }
@@ -163,91 +175,53 @@ function getDiaData(offset) {
         desde = new Date(hoy.getFullYear(), 0, 1);
     }
 
-    let gastos = 0, ingresos = 0;
-    Object.keys(estado.registrosDiarios).forEach(key => {
+    var gastos = 0, ingresos = 0;
+    var regs = estado.registrosDiarios || {};
+    Object.keys(regs).forEach(function(key) {
         const d = new Date(key);
         if (d >= desde && d <= hoy) {
-            gastos   += estado.registrosDiarios[key].gastos   || 0;
-            ingresos += estado.registrosDiarios[key].ingresos || 0;
+            gastos   += (regs[key] && regs[key].gastos)   || 0;
+            ingresos += (regs[key] && regs[key].ingresos) || 0;
         }
     });
-    return { gastos, ingresos };
+    return { gastos: gastos, ingresos: ingresos };
 }
 
-// Roles finales: JEFAZO (control total), JEFAZA (administración), WORKER (limitado, desde gorriones).
-const USUARIOS = [
-    { username: 'Jefazo', password: '15031980', role: 'JEFAZO' },
-    { username: 'Jefaza', password: '03021987', role: 'JEFAZA' }
-];
-
-// sesionActual.rol: 'JEFAZO' | 'JEFAZA' | 'WORKER'
-// WORKER desde gorriones puede llevar gorrionIdx, nombre, numero para funcionalidad existente.
-let sesionActual = null;
+// USUARIOS y sesionActual ya definidos al inicio del archivo para que el login siempre funcione
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ── Restaurar sesión persistida (sobrevive recargas y vuelta de multitarea) ──
-    (function restaurarSesion() {
-        try {
-            const raw = localStorage.getItem('silber_sesion_activa');
-            if (!raw) return; // sin sesión → mostrar login normal
-            const s = JSON.parse(raw);
-            if (!s || !s.usuario || !s.rol) return;
-            // Compatibilidad: sesiones antiguas
-            if (s.rol === 'jefe') s.rol = 'JEFAZO';
-            if (s.rol === 'gorrion') s.rol = 'WORKER';
-            if (s.rol === 'MASTER') s.rol = s.usuario === 'Jefazo' ? 'JEFAZO' : 'JEFAZA';
-            if (s.rol === 'ADMIN') s.rol = 'JEFAZA';
-            // Verificar que el usuario sigue siendo válido
-            if (s.rol === 'JEFAZO' || s.rol === 'JEFAZA') {
-                const valido = USUARIOS.some(x => x.username === s.usuario);
-                if (!valido) { localStorage.removeItem('silber_sesion_activa'); return; }
-            } else if (s.rol === 'WORKER') {
-                const gorriones = cargarGorriones();
-                const idx = gorriones.findIndex(g => g.usuario === s.usuario);
-                if (idx === -1) { localStorage.removeItem('silber_sesion_activa'); return; }
-                s.gorrionIdx = idx;
-            }
-            sesionActual = s;
-            estado.historialPantallas = ['dashboard']; // resetear historial al restaurar
-            const loginElR = document.getElementById('screen-login');
-            loginElR.setAttribute('style', 'display:none !important');
-            loginElR.classList.remove('active');
-            const nav = document.getElementById('bottom-nav');
-            if (nav) nav.style.display = 'flex';
-            aplicarModoSesion();
-            cambiarPantalla('dashboard');
-        } catch(e) {
-            localStorage.removeItem('silber_sesion_activa');
-        }
-    })();
+    // ── No restaurar sesión al cargar: siempre mostrar login primero (evita pantalla en blanco) ──
+    // Si quieres "recordar sesión" en el futuro, descomenta el bloque restaurarSesion y elimina el clear:
+    try { localStorage.removeItem('silber_sesion_activa'); } catch(e) {}
 
     function initCanvas() {
-        const canvas = document.getElementById('donutCanvas');
-        const w = canvas.parentElement.offsetWidth;
-        const h = canvas.parentElement.offsetHeight;
-        if (w > 0 && h > 0) {
+        try {
+            var canvas = document.getElementById('donutCanvas');
+            if (!canvas || !canvas.getContext) return;
+            var parent = canvas.parentElement;
+            var w = (parent && parent.offsetWidth > 0) ? parent.offsetWidth : 240;
+            var h = (parent && parent.offsetHeight > 0) ? parent.offsetHeight : 240;
             canvas.width = w;
             canvas.height = h;
-        } else {
-            canvas.width = 240;
-            canvas.height = 240;
-        }
-        dibujarDonut();
+            if (typeof dibujarDonut === 'function') dibujarDonut();
+        } catch (e) { if (typeof console !== 'undefined' && console.warn) console.warn('[Silber] initCanvas:', e); }
     }
-    initCanvas();
-    setTimeout(initCanvas, 100);
-    renderizarRanking();
-    renderizarCategoriasGastos();
-    renderizarCategoriasIngresos();
-    renderizarClientes();
-    actualizarSaldos();
-    actualizarTimeMachine();
-    renderizarTablaPrecios();
-    renderizarOficina();
-    llenarSelectProductos('alta-producto');
-    llenarSelectProductos('alta-producto2');
+    try {
+        initCanvas();
+        setTimeout(initCanvas, 100);
+        if (typeof renderizarRanking === 'function') renderizarRanking();
+        if (typeof renderizarCategoriasGastos === 'function') renderizarCategoriasGastos();
+        if (typeof renderizarCategoriasIngresos === 'function') renderizarCategoriasIngresos();
+        if (typeof renderizarClientes === 'function') renderizarClientes();
+        if (typeof actualizarSaldos === 'function') actualizarSaldos();
+        if (typeof actualizarTimeMachine === 'function') actualizarTimeMachine();
+        if (typeof renderizarTablaPrecios === 'function') renderizarTablaPrecios();
+        if (typeof renderizarOficina === 'function') renderizarOficina();
+        if (typeof llenarSelectProductos === 'function') { llenarSelectProductos('alta-producto'); llenarSelectProductos('alta-producto2'); }
+        if (typeof window._silberDebug === 'function') window._silberDebug('init-done');
+    } catch (e) { if (typeof console !== 'undefined' && console.warn) console.warn('[Silber] DOMContentLoaded init:', e); }
 
     // Reset diario: guardar última fecha activa y resetear vista si cambió el día
     try {
