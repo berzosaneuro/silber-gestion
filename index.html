@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SILBER GESTIÓN">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0F172A">
+    <meta name="description" content="SILBER GESTIÓN — Gestión financiera y de stock">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>SILBER GESTIÓN</title>
+    <link rel="stylesheet" href="css/styles.css">
+
+</head>
+<body>
+    <div class="app-container">
+        <div class="app-header">
+            <div class="back-btn" id="backBtn" onclick="volverAtras()">←</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <img id="header-logo" src="logo.png" alt="" style="height:32px;width:auto;object-fit:contain;display:none;" onload="this.style.display='block'" onerror="this.style.display='none'">
+                <div class="header-title" id="headerTitle">SILBER GESTIÓN</div>
+            </div>
+            <div style="width:40px;"></div>
+        </div>
+
+        <div class="menu-overlay" id="menuOverlay" onclick="cerrarMenu()">
+            <div class="menu-content" onclick="event.stopPropagation()">
+            </div>
+        </div>
+
+        <!-- LOGIN -->
+        <div class="screen active" id="screen-login" style="flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:0;overflow:hidden;background:#020818;">
+
+            <!-- FONDO ANIMADO -->
+            <div style="position:absolute;inset:0;z-index:0;pointer-events:none;">
+                <!-- Grid lines -->
+                <svg width="100%" height="100%" style="position:absolute;inset:0;opacity:0.07;">
+                    <defs>
+                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#00E5FF" stroke-width="0.5"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#grid)"/>
+                </svg>
+                <!-- Glow orbs -->
+                <div style="position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:320px;height:320px;background:radial-gradient(circle,rgba(0,229,255,0.12) 0%,transparent 70%);border-radius:50%;"></div>
+                <div style="position:absolute;bottom:-60px;left:20%;width:200px;height:200px;background:radial-gradient(circle,rgba(0,100,255,0.1) 0%,transparent 70%);border-radius:50%;"></div>
+                <div style="position:absolute;top:40%;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(0,229,255,0.08) 0%,transparent 70%);border-radius:50%;"></div>
+            </div>
+
+            <!-- LOGO -->
+            <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;margin-bottom:40px;">
+                <!-- Logo Silber Gestión (imagen) -->
+                <div style="position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center;">
+                    <img id="login-logo-img" src="logo.png" alt="SILBER GESTIÓN" style="width:100%;height:100%;object-fit:contain;display:none;" onload="this.style.display='block';document.getElementById('login-logo-fallback').style.display='none';" onerror="this.style.display='none';document.getElementById('login-logo-fallback').style.display='block';">
+                    <!-- Fallback si no hay logo.png -->
+                    <div id="login-logo-fallback" style="position:relative;width:160px;height:160px;">
+                        <div style="position:absolute;inset:-10px;border-radius:50%;border:1px solid rgba(0,229,255,0.2);border-top-color:rgba(0,229,255,0.8);animation:spinRing 4s linear infinite;"></div>
+                        <div style="position:absolute;inset:4px;border-radius:50%;border:1px solid rgba(0,229,255,0.1);border-bottom-color:rgba(0,180,255,0.6);animation:spinRing 6s linear infinite reverse;"></div>
+                        <div style="position:absolute;inset:14px;border-radius:50%;background:linear-gradient(135deg,rgba(0,229,255,0.08) 0%,rgba(0,60,120,0.3) 50%,rgba(0,229,255,0.05) 100%);border:1.5px solid rgba(0,229,255,0.5);box-shadow:0 0 30px rgba(0,229,255,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
+                            <div style="font-size:28px;font-weight:900;letter-spacing:3px;color:#00E5FF;text-shadow:0 0 10px rgba(0,229,255,1);">SILBER</div>
+                            <div style="font-size:8px;font-weight:700;letter-spacing:5px;color:rgba(0,229,255,0.6);">GESTIÓN</div>
+                        </div>
+                        <div style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:#00E5FF;"></div>
+                        <div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:rgba(0,180,255,0.7);"></div>
+                    </div>
+                </div>
+                <!-- Línea decorativa -->
+                <div style="margin-top:16px;display:flex;align-items:center;gap:8px;">
+                    <div style="width:40px;height:1px;background:linear-gradient(to right,transparent,rgba(0,229,255,0.5));"></div>
+                    <div style="font-size:9px;letter-spacing:4px;color:rgba(0,229,255,0.4);font-weight:600;">SISTEMA ÉLITE</div>
+                    <div style="width:40px;height:1px;background:linear-gradient(to left,transparent,rgba(0,229,255,0.5));"></div>
+                </div>
+            </div>
+
+            <!-- CARD DE CRISTAL -->
+            <div style="position:relative;z-index:1;width:100%;max-width:320px;">
+                <!-- Brillo superior de cristal -->
+                <div style="position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(to right,transparent,rgba(255,255,255,0.25),transparent);border-radius:50%;"></div>
+
+                <div style="background:linear-gradient(135deg,rgba(0,229,255,0.04) 0%,rgba(0,20,60,0.6) 50%,rgba(0,229,255,0.03) 100%);border:1px solid rgba(0,229,255,0.18);border-radius:24px;padding:28px 24px;backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,0.4),0 0 0 1px rgba(0,229,255,0.06),inset 0 1px 0 rgba(255,255,255,0.05);display:flex;flex-direction:column;gap:14px;">
+
+                    <!-- Input usuario — cristal -->
+                    <div style="position:relative;">
+                        <div style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(0,229,255,0.5);">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                        </div>
+                        <input type="text" id="login-usuario" placeholder="Usuario" autocomplete="username"
+                            style="width:100%;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.2);border-radius:14px;padding:13px 14px 13px 40px;color:#fff;font-size:14px;font-weight:600;letter-spacing:1px;text-align:center;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);transition:border-color 0.3s,box-shadow 0.3s;"
+                            onfocus="this.style.borderColor='rgba(0,229,255,0.6)';this.style.boxShadow='0 0 0 3px rgba(0,229,255,0.08),inset 0 1px 0 rgba(255,255,255,0.04)'"
+                            onblur="this.style.borderColor='rgba(0,229,255,0.2)';this.style.boxShadow='inset 0 1px 0 rgba(255,255,255,0.04)'">
+                    </div>
+
+                    <!-- Input contraseña — cristal -->
+                    <div style="position:relative;">
+                        <div style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(0,229,255,0.5);">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        </div>
+                        <input type="password" id="login-password" placeholder="Contraseña" autocomplete="current-password"
+                            style="width:100%;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.2);border-radius:14px;padding:13px 14px 13px 40px;color:#fff;font-size:14px;font-weight:600;letter-spacing:3px;text-align:center;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);transition:border-color 0.3s,box-shadow 0.3s;"
+                            onfocus="this.style.borderColor='rgba(0,229,255,0.6)';this.style.boxShadow='0 0 0 3px rgba(0,229,255,0.08),inset 0 1px 0 rgba(255,255,255,0.04)'"
+                            onblur="this.style.borderColor='rgba(0,229,255,0.2)';this.style.boxShadow='inset 0 1px 0 rgba(255,255,255,0.04)'"
+                            onkeydown="if(event.key==='Enter')intentarLogin()">
+                    </div>
+
+                    <!-- Error -->
+                    <div id="login-error" style="color:#EF4444;font-size:12px;font-weight:700;text-align:center;display:none;letter-spacing:0.5px;">⚠ Usuario o contraseña incorrectos</div>
+
+                    <!-- Botón ENTRAR — cristal azul neón -->
+                    <button onclick="intentarLogin()"
+                        style="position:relative;overflow:hidden;width:100%;padding:15px;border-radius:14px;border:1px solid rgba(0,229,255,0.6);background:linear-gradient(135deg,rgba(0,229,255,0.15) 0%,rgba(0,100,200,0.25) 50%,rgba(0,229,255,0.1) 100%);color:#00E5FF;font-size:14px;font-weight:900;letter-spacing:3px;cursor:pointer;text-shadow:0 0 10px rgba(0,229,255,0.8);box-shadow:0 0 20px rgba(0,229,255,0.2),inset 0 1px 0 rgba(255,255,255,0.1);backdrop-filter:blur(10px);transition:all 0.3s;"
+                        onmousedown="this.style.transform='scale(0.97)'"
+                        ontouchstart="this.style.transform='scale(0.97)'"
+                        onmouseup="this.style.transform='scale(1)'"
+                        ontouchend="this.style.transform='scale(1)'">
+                        <!-- Reflejo cristal -->
+                        <div style="position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(to right,transparent,rgba(255,255,255,0.3),transparent);"></div>
+                        ACCEDER
+                    </button>
+
+                    <!-- Botón Face ID — cristal sutil -->
+                    <button onclick="loginFaceID()" id="btn-faceid"
+                        style="position:relative;overflow:hidden;width:100%;padding:13px;border-radius:14px;border:1px solid rgba(0,229,255,0.2);background:linear-gradient(135deg,rgba(0,229,255,0.04) 0%,rgba(0,20,60,0.3) 100%);color:rgba(0,229,255,0.8);font-size:12px;font-weight:700;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;backdrop-filter:blur(10px);transition:all 0.3s;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);"
+                        onmousedown="this.style.transform='scale(0.97)'"
+                        ontouchstart="this.style.transform='scale(0.97)'"
+                        onmouseup="this.style.transform='scale(1)'"
+                        ontouchend="this.style.transform='scale(1)'">
+                        <div style="position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(to right,transparent,rgba(255,255,255,0.12),transparent);"></div>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(0,229,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4M9 21H5a2 2 0 01-2-2v-4M15 3h4a2 2 0 012 2v4M15 21h4a2 2 0 002-2v-4M12 8v.01M8 12a4 4 0 008 0"/></svg>
+                        FACE ID / HUELLA
+                    </button>
+                </div>
+            </div>
+
+            <!-- Línea inferior decorativa -->
+            <div style="position:relative;z-index:1;margin-top:24px;display:flex;align-items:center;gap:6px;opacity:0.3;">
+                <div style="width:3px;height:3px;border-radius:50%;background:#00E5FF;"></div>
+                <div style="width:20px;height:1px;background:rgba(0,229,255,0.5);"></div>
+                <div style="width:5px;height:5px;border-radius:50%;background:#00E5FF;"></div>
+                <div style="width:20px;height:1px;background:rgba(0,229,255,0.5);"></div>
+                <div style="width:3px;height:3px;border-radius:50%;background:#00E5FF;"></div>
+            </div>
+
+        </div>
+
+        <!-- DASHBOARD -->
+        <div class="screen" id="screen-dashboard">
+            <div class="dashboard-content">
+                <div class="donut-section">
+                    <div class="donut-glow"></div>
+                    <div class="time-machine">
+                        <button class="time-btn" onclick="cambiarDia(-1)">&#8249;</button>
+                        <div class="time-label" id="time-label">HOY</div>
+                        <button class="time-btn" onclick="cambiarDia(1)" id="time-next">&#8250;</button>
+                    </div>
+                    <div class="donut-container">
+                        <canvas id="donutCanvas"></canvas>
+                        <div class="donut-center">
+                            <div class="donut-center-brand" style="font-size:13px;letter-spacing:1px;">SILBER</div>
+                            <div class="donut-center-label">GESTIÓN</div>
+                        </div>
+                    </div>
+                    <div class="period-selector">
+                        <button class="period-btn active" onclick="cambiarPeriodo('day', event)">Día</button>
+                        <button class="period-btn" onclick="cambiarPeriodo('week', event)">Semana</button>
+                        <button class="period-btn" onclick="cambiarPeriodo('month', event)">Mes</button>
+                        <button class="period-btn" onclick="cambiarPeriodo('year', event)">Año</button>
+                    </div>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="summary-card gastos" onclick="cambiarPantalla('gastos')">
+                        <div class="summary-icon">📉</div>
+                        <div class="summary-label">Gastos</div>
+                        <div class="summary-value" id="dash-gastos">0€</div>
+                    </div>
+                    <div class="summary-card ingresos" onclick="cambiarPantalla('ingresos')">
+                        <div class="summary-icon">📈</div>
+                        <div class="summary-label">Ingresos</div>
+                        <div class="summary-value" id="dash-ingresos">0€</div>
+                    </div>
+                    <div class="summary-card deuda" onclick="cambiarPantalla('deuda')">
+                        <div class="summary-icon">⚠️</div>
+                        <div class="summary-label">Deuda</div>
+                        <div class="summary-value" id="dash-deuda">0€</div>
+                    </div>
+                </div>
+
+                <div class="ranking-section">
+                    <div class="ranking-header"><div class="ranking-title">Equipo</div></div>
+                    <div class="ranking-list" id="ranking-list"></div>
+                </div>
+                <div class="section-card" id="dashboard-productos-alerta" style="display:none;margin-top:12px;border:1px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);">
+                    <div class="section-title" style="font-size:12px;">⚠️ Productos — Stock bajo / Agotamiento próximo</div>
+                    <div id="dashboard-productos-alerta-body" style="font-size:12px;color:var(--text-primary);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GASTOS -->
+        <div class="screen" id="screen-gastos">
+            <div class="categories-screen">
+                <div class="tabs-container">
+                    <button class="tab-btn active">Gastos</button>
+                    <button class="tab-btn" onclick="cambiarPantalla('ingresos')">Ingresos</button>
+                </div>
+                <div class="categories-grid" id="gastos-grid"></div>
+                <div class="create-category"><button class="create-btn" onclick="abrirGestorCategorias('gasto')">+</button></div>
+                <div style="padding:0 16px 80px;">
+                    <div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;margin-bottom:8px;">DESGLOSE HOY</div>
+                    <div id="desglose-gastos"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INGRESOS -->
+        <div class="screen" id="screen-ingresos">
+            <div class="categories-screen">
+                <div class="tabs-container">
+                    <button class="tab-btn" onclick="cambiarPantalla('gastos')">Gastos</button>
+                    <button class="tab-btn active">Ingresos</button>
+                </div>
+                <div class="categories-grid" id="ingresos-grid"></div>
+                <div style="padding:0 20px 16px;display:flex;flex-direction:column;gap:10px;">
+                    <button class="btn btn-primary btn-full" onclick="abrirModalDeudaPendiente()" style="font-size:13px;">📋 Registrar Deuda Pendiente</button>
+                    <button id="btn-pago-deuda-ingresos" class="btn btn-primary btn-full" onclick="abrirModalDeudaPagada()" style="font-size:13px;background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.25));border-color:rgba(16,185,129,0.6);color:#10B981;text-shadow:0 0 10px rgba(16,185,129,0.8);box-shadow:0 0 12px rgba(16,185,129,0.4),0 0 30px rgba(16,185,129,0.15);">💚 Registrar Pago de Deuda</button>
+                </div>
+                <div class="create-category"><button class="create-btn" onclick="abrirGestorCategorias('ingreso')">+</button></div>
+                <div style="padding:0 16px 80px;">
+                    <div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;margin-bottom:8px;">DESGLOSE HOY</div>
+                    <div id="desglose-ingresos"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEUDA -->
+        <div class="screen" id="screen-deuda">
+            <div class="content-section">
+                <button class="btn btn-primary btn-full" onclick="cambiarPantalla('oficina')" style="margin-bottom:16px;font-size:14px;letter-spacing:1px;">🏢 Deuda por Oficina →</button>
+                <div class="section-card" id="deuda-resumen-card" style="display:none;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+                        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">TOTAL DEUDA</div><div id="res-total" style="font-size:20px;font-weight:900;color:#EF4444;">0€</div></div>
+                        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">CLIENTES</div><div id="res-clientes" style="font-size:20px;font-weight:900;color:var(--primary);">0</div></div>
+                        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">COBRAR HOY</div><div id="res-hoy" style="font-size:20px;font-weight:900;color:#F59E0B;">0€</div></div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                    <button class="btn btn-secondary" id="filtro-todos" onclick="filtrarDeudas('todos')" style="flex:1;font-size:11px;padding:8px;">Todos</button>
+                    <button class="btn btn-secondary" id="filtro-pendientes" onclick="filtrarDeudas('pendientes')" style="flex:1;font-size:11px;padding:8px;">Pendientes</button>
+                    <button class="btn btn-secondary" id="filtro-hoy" onclick="filtrarDeudas('hoy')" style="flex:1;font-size:11px;padding:8px;">Hoy</button>
+                </div>
+                <div class="section-card">
+                    <div class="section-title">Clientes con Deuda</div>
+                    <div id="clientes-list"></div>
+                </div>
+            </div>
+            <button class="fab" onclick="abrirModalNuevoCliente()">+</button>
+        </div>
+
+        <!-- DEUDA POR OFICINA -->
+        <div class="screen" id="screen-oficina">
+            <div class="content-section">
+                <div class="section-card" style="margin-bottom:12px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+                        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">TOTAL DEUDA</div><div id="of-res-total" style="font-size:20px;font-weight:900;color:#EF4444;">0€</div></div>
+                        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">CLIENTES</div><div id="of-res-clientes" style="font-size:20px;font-weight:900;color:var(--primary);">0</div></div>
+                        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">COBRAR HOY</div><div id="of-res-hoy" style="font-size:20px;font-weight:900;color:#F59E0B;">0€</div></div>
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+                    <button class="btn btn-primary btn-full" onclick="abrirModalDeudaPendiente()" style="font-size:13px;">📋 Registrar Deuda Pendiente</button>
+                    <button class="btn btn-primary btn-full" onclick="abrirModalDeudaPagada()" style="font-size:13px;background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.25));border-color:rgba(16,185,129,0.6);color:#10B981;text-shadow:0 0 10px rgba(16,185,129,0.8);box-shadow:0 0 12px rgba(16,185,129,0.4),0 0 30px rgba(16,185,129,0.15);">💚 Registrar Pago de Deuda</button>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                    <button class="btn btn-secondary" id="of-filtro-todos" onclick="filtrarOficina('todos')" style="flex:1;font-size:11px;padding:8px;">Todos</button>
+                    <button class="btn btn-secondary" id="of-filtro-pendientes" onclick="filtrarOficina('pendientes')" style="flex:1;font-size:11px;padding:8px;">Pendientes</button>
+                    <button class="btn btn-secondary" id="of-filtro-hoy" onclick="filtrarOficina('hoy')" style="flex:1;font-size:11px;padding:8px;">Hoy</button>
+                </div>
+                <div class="section-card" style="margin-bottom:12px;">
+                    <div class="section-title">🏢 Clientes — Oficina</div>
+                    <div id="oficina-clientes-list"></div>
+                </div>
+                <div class="section-card" style="margin-bottom:12px;">
+                    <div class="section-title">🐦 Gorriones</div>
+                    <button class="btn btn-primary btn-full" onclick="cambiarPantalla('gorriones')" style="margin-top:8px;font-size:13px;">Ver / Gestionar Gorriones →</button>
+                </div>
+                <div class="section-card" id="oficina-cierre-card" style="margin-bottom:12px;">
+                    <div class="section-title">🔐 Cierre del Día</div>
+                    <div id="cierre-resumen" style="margin:10px 0;font-size:13px;color:var(--text-secondary);"></div>
+                    <div style="display:flex;gap:10px;margin-top:8px;">
+                        <button class="btn btn-primary" style="flex:1;font-size:13px;" onclick="abrirCierreDia()">Ver Cierre</button>
+                    </div>
+                </div>
+                <div class="section-card" style="margin-bottom:12px;">
+                    <div class="section-title">🔒 Biometría</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Registra hasta 2 huellas / Face ID para proteger accesos y borrados.</div>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(14,165,233,0.05);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+                            <div>
+                                <div style="font-size:12px;font-weight:700;color:var(--text-primary);">Biometría 1</div>
+                                <div id="bio1-estado" style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Comprobando...</div>
+                            </div>
+                            <button id="bio1-btn" onclick="gestionarBiometria(1)" style="background:rgba(14,165,233,0.12);border:1px solid rgba(14,165,233,0.4);border-radius:8px;padding:6px 12px;color:#00E5FF;font-size:11px;font-weight:700;cursor:pointer;">—</button>
+                        </div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(14,165,233,0.05);border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+                            <div>
+                                <div style="font-size:12px;font-weight:700;color:var(--text-primary);">Biometría 2</div>
+                                <div id="bio2-estado" style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Comprobando...</div>
+                            </div>
+                            <button id="bio2-btn" onclick="gestionarBiometria(2)" style="background:rgba(14,165,233,0.12);border:1px solid rgba(14,165,233,0.4);border-radius:8px;padding:6px 12px;color:#00E5FF;font-size:11px;font-weight:700;cursor:pointer;">—</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <div class="section-title">Accesos Rápidos</div>
+                    <div class="menu-item" id="oficina-menu-cuentas" onclick="cambiarPantalla('cuentas')" style="margin-bottom:8px;"><div class="menu-item-icon">💰</div><div class="menu-item-text">Cuentas</div></div>
+                    <div class="menu-item" id="oficina-menu-transferencias" onclick="cambiarPantalla('transferencias')" style="margin-bottom:8px;"><div class="menu-item-icon">🔄</div><div class="menu-item-text">Transferencias</div></div>
+                    <div class="menu-item" id="oficina-menu-stock" onclick="cambiarPantalla('stock')" style="margin-bottom:8px;"><div class="menu-item-icon">📦</div><div class="menu-item-text">Control de Stock</div></div>
+                    <div class="menu-item" id="oficina-menu-productos" onclick="cambiarPantalla('productos'); if(typeof renderProductos==='function')renderProductos();" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">📦</div><div class="menu-item-text">Gestión de Productos</div></div>
+                    <div class="menu-item" onclick="abrirAlertasJefes()" style="margin-bottom:8px;"><div class="menu-item-icon">🚨</div><div class="menu-item-text">Alertas de Crédito</div></div>
+                    <div class="menu-item" id="oficina-menu-auditoria" onclick="abrirAuditoria()" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">📋</div><div class="menu-item-text">Ver auditoría</div></div>
+                    <div class="menu-item" id="oficina-menu-metricas" onclick="cambiarPantalla('metricas'); if(typeof renderizarMetricas==='function')renderizarMetricas();" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">📊</div><div class="menu-item-text">Métricas del negocio</div></div>
+                    <div class="menu-item" id="oficina-menu-ruta" onclick="abrirModalRutaClientes()" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">🗺️</div><div class="menu-item-text">Optimizar ruta de clientes</div></div>
+                    <div class="menu-item" id="oficina-menu-timeline" onclick="cambiarPantalla('timeline')" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">📜</div><div class="menu-item-text">Timeline del Negocio</div></div>
+                    <div class="menu-item" id="oficina-menu-config" onclick="cambiarPantalla('config')"><div class="menu-item-icon">⚙️</div><div class="menu-item-text">Configuración</div></div>
+                </div>
+            </div>
+            <button class="fab" onclick="abrirModalNuevoCliente()">+</button>
+        </div>
+
+        <!-- MODAL REGISTRO BIOMETRÍA -->
+        <div class="modal-overlay" id="modalBiometria" onclick="if(event.target===this)cerrarModalBiometria()">
+            <div class="modal-content" style="max-width:340px;text-align:center;">
+                <div style="font-size:44px;margin-bottom:8px;">🔒</div>
+                <div id="bio-modal-titulo" style="font-size:16px;font-weight:900;color:#00E5FF;margin-bottom:8px;">Biometría 1</div>
+                <div id="bio-modal-msg" style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.5;"></div>
+                <div id="bio-modal-acciones" style="display:flex;flex-direction:column;gap:10px;"></div>
+                <button class="btn btn-secondary btn-full" style="margin-top:10px;" onclick="cerrarModalBiometria()">Cerrar</button>
+            </div>
+        </div>
+
+        <!-- MODAL RUTA CLIENTES (MASTER) -->
+        <div class="modal-overlay" id="modalRutaClientes" onclick="if(event.target===this)cerrarModalRutaClientes()">
+            <div class="modal-content" style="max-height:80vh;">
+                <div class="modal-header"><div class="modal-title">🗺️ Optimizar ruta de clientes</div></div>
+                <div class="modal-body">
+                    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">Selecciona clientes con coordenadas para abrir la ruta en Google Maps.</p>
+                    <div id="ruta-clientes-list"></div>
+                    <button type="button" class="btn btn-primary btn-full" id="btn-abrir-ruta-maps" style="margin-top:12px;display:none;" onclick="abrirRutaEnGoogleMaps()">Abrir ruta en Google Maps</button>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary btn-full" onclick="cerrarModalRutaClientes()">Cerrar</button></div>
+            </div>
+        </div>
+
+        <!-- MODAL AUDITORÍA (MASTER) -->
+        <div class="modal-overlay" id="modalAuditoria" onclick="if(event.target===this)cerrarAuditoria()">
+            <div class="modal-content" style="max-height:85vh;overflow:hidden;display:flex;flex-direction:column;">
+                <div class="modal-header">
+                    <div class="modal-title">📋 Auditoría y control</div>
+                </div>
+                <div class="modal-body" style="overflow-y:auto;flex:1;">
+                    <div id="auditoria-content"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-full" onclick="cerrarAuditoria()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL HISTORIAL CIERRES COMPLETOS (MASTER) -->
+        <div class="modal-overlay" id="modalHistorialCierresCompletos" onclick="if(event.target===this)cerrarHistorialCierresCompletos()">
+            <div class="modal-content" style="max-height:85vh;overflow:hidden;display:flex;flex-direction:column;">
+                <div class="modal-header">
+                    <div class="modal-title">Historial de cierres de caja</div>
+                </div>
+                <div class="modal-body" style="overflow-y:auto;flex:1;">
+                    <div id="historial-cierres-completos-lista"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-full" onclick="cerrarHistorialCierresCompletos()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL CONFIRMACIÓN BORRADO -->
+        <div class="modal-overlay" id="modalConfirmDelete" onclick="if(event.target===this)_cancelarDelete()">
+            <div class="modal-content" style="border:1.5px solid rgba(239,68,68,0.5);max-width:340px;">
+                <div style="text-align:center;margin-bottom:18px;">
+                    <div style="font-size:40px;margin-bottom:10px;">🗑️</div>
+                    <div style="font-size:16px;font-weight:900;color:#EF4444;margin-bottom:10px;">¿Eliminar elemento?</div>
+                    <div style="font-size:13px;color:var(--text-secondary);line-height:1.5;">¿Estás seguro de que quieres eliminar este elemento? Esta acción no se puede deshacer.</div>
+                </div>
+                <div id="modal-delete-bio-msg" style="display:none;text-align:center;padding:10px;border-radius:8px;background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.3);margin-bottom:14px;font-size:12px;color:#0EA5E9;">🔐 Verificando identidad...</div>
+                <div style="display:flex;gap:10px;">
+                    <button id="btn-delete-cancel" class="btn btn-secondary" style="flex:1;" onclick="_cancelarDelete()">Cancelar</button>
+                    <button id="btn-delete-confirm" style="flex:1;background:rgba(239,68,68,0.15);border:1.5px solid rgba(239,68,68,0.6);border-radius:10px;padding:12px;font-weight:900;color:#EF4444;cursor:pointer;transition:all 0.2s;" onclick="_ejecutarDelete()">Sí, eliminar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL GESTOR CATEGORÍAS -->
+        <div class="modal-overlay" id="modalGestorCategorias">
+            <div class="modal-content" style="max-height:88vh;overflow-y:auto;">
+                <div class="modal-header">
+                    <div class="modal-title" id="gestor-cat-titulo">Categorías</div>
+                    <div class="modal-subtitle" id="gestor-cat-sub" style="color:var(--text-secondary);"></div>
+                </div>
+                <div class="modal-body">
+                    <!-- Lista categorías existentes -->
+                    <div id="gestor-cat-lista" style="margin-bottom:16px;"></div>
+                    <!-- Formulario nueva categoría -->
+                    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:14px;">
+                        <div style="font-size:11px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;margin-bottom:10px;">NUEVA CATEGORÍA</div>
+                        <div class="input-group">
+                            <label class="input-label">Nombre</label>
+                            <input type="text" class="input-field" id="nueva-cat-nombre" placeholder="Ej: Gasolina">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">Icono (emoji)</label>
+                            <input type="text" class="input-field" id="nueva-cat-emoji" placeholder="Ej: ⛽" maxlength="4" style="font-size:24px;text-align:center;">
+                        </div>
+                        <button class="btn btn-primary btn-full" onclick="crearCategoria()" style="margin-top:4px;">+ Crear categoría</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-full" onclick="document.getElementById('modalGestorCategorias').classList.remove('active')">Cerrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL EDITAR CATEGORÍA -->
+        <div class="modal-overlay" id="modalEditCategoria">
+            <div class="modal-content">
+                <div class="modal-header"><div class="modal-title">✏️ Editar Categoría</div></div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label class="input-label">Nombre</label>
+                        <input type="text" class="input-field" id="edit-cat-nombre">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Icono (emoji)</label>
+                        <input type="text" class="input-field" id="edit-cat-emoji" maxlength="4" style="font-size:24px;text-align:center;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="document.getElementById('modalEditCategoria').classList.remove('active')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarEditCategoria()">💾 Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL EDITAR GASTO -->
+        <div class="modal-overlay" id="modalEditGasto">
+            <div class="modal-content">
+                <div class="modal-header"><div class="modal-title">✏️ Editar Gasto</div></div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label class="input-label">Cuenta</label>
+                        <select class="select-field" id="edit-gasto-cuenta">
+                            <option value="efectivo">💵 Efectivo</option>
+                            <option value="bbva">🏦 BBVA</option>
+                            <option value="caja">🗄️ Guardado</option>
+                            <option value="monedero">👛 Monedero</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Monto (€)</label>
+                        <input type="number" class="input-field" id="edit-gasto-monto" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="document.getElementById('modalEditGasto').classList.remove('active')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarEditGasto()">💾 Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL EDITAR INGRESO -->
+        <div class="modal-overlay" id="modalEditIngreso">
+            <div class="modal-content">
+                <div class="modal-header"><div class="modal-title">✏️ Editar Ingreso</div></div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label class="input-label">Producto / Categoría</label>
+                        <select class="select-field" id="edit-ingreso-categoria"></select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Monto (€)</label>
+                        <input type="number" class="input-field" id="edit-ingreso-monto" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="document.getElementById('modalEditIngreso').classList.remove('active')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarEditIngreso()">💾 Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL CIERRE DIA -->
+        <div class="modal-overlay" id="modalCierreDia">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">🔐 Cierre del Día</div>
+                    <div class="modal-subtitle" id="cierre-fecha" style="color:var(--text-secondary);"></div>
+                </div>
+                <div class="modal-body">
+                    <div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;margin-bottom:6px;">💵 EFECTIVO</div>
+                    <div class="stat-row"><div class="stat-label">Ingresos efectivo</div><div class="stat-value" id="cierre-ing" style="color:#10B981;font-weight:900;"></div></div>
+                    <div class="stat-row"><div class="stat-label">Gastos efectivo</div><div class="stat-value" id="cierre-gas" style="color:#EF4444;font-weight:900;"></div></div>
+                    <div class="stat-row">
+                        <div class="stat-label" style="font-weight:900;">= Cierre efectivo</div>
+                        <div class="stat-value" id="cierre-resultado" style="font-size:20px;font-weight:900;"></div>
+                    </div>
+                    <div style="height:1px;background:rgba(255,255,255,0.08);margin:12px 0;"></div>
+                    <div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;margin-bottom:6px;">🗄️ GUARDADO</div>
+                    <div class="stat-row"><div class="stat-label">Gastos guardado</div><div class="stat-value" id="cierre-gas-caja" style="color:#EF4444;font-weight:700;"></div></div>
+                    <div class="stat-row">
+                        <div class="stat-label" style="font-weight:900;">= Cierre guardado</div>
+                        <div class="stat-value" id="cierre-resultado-guardado" style="font-size:16px;font-weight:900;"></div>
+                    </div>
+                    <div style="height:1px;background:rgba(255,255,255,0.08);margin:12px 0;"></div>
+                    <div style="font-size:10px;font-weight:700;color:#3B82F6;letter-spacing:1px;margin-bottom:6px;">📦 VENTAS RECARGA HOY</div>
+                    <div class="stat-row"><div class="stat-label" style="font-size:12px;">🔵 Recarga B vendida</div><div class="stat-value" id="cierre-ventas-b" style="color:#3B82F6;font-size:13px;">—</div></div>
+                    <div class="stat-row"><div class="stat-label" style="font-size:12px;">🟢 Recarga V vendida</div><div class="stat-value" id="cierre-ventas-v" style="color:#10B981;font-size:13px;">—</div></div>
+                    <div class="stat-row" style="border-top:1px solid rgba(59,130,246,0.2);margin-top:4px;padding-top:10px;">
+                        <div class="stat-label" style="font-size:12px;">Stock B restante</div>
+                        <div class="stat-value" id="cierre-stock-b-rest" style="color:#3B82F6;font-size:13px;">—</div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-label" style="font-size:12px;">Stock V restante</div>
+                        <div class="stat-value" id="cierre-stock-v-rest" style="color:#10B981;font-size:13px;">—</div>
+                    </div>
+                    <div style="height:1px;background:rgba(255,255,255,0.08);margin:12px 0;"></div>
+                    <div style="font-size:10px;font-weight:700;color:#F59E0B;letter-spacing:1px;margin-bottom:6px;">💡 NETO ESTIMADO (INFO)</div>
+                    <div class="stat-row"><div class="stat-label" style="font-size:11px;">Coste stock B vendido</div><div class="stat-value" id="cierre-coste-b" style="color:#F59E0B;font-size:12px;"></div></div>
+                    <div class="stat-row"><div class="stat-label" style="font-size:11px;">Coste stock V vendido</div><div class="stat-value" id="cierre-coste-v" style="color:#F59E0B;font-size:12px;"></div></div>
+                    <div class="stat-row">
+                        <div class="stat-label" style="font-weight:900;font-size:13px;">= Neto del día</div>
+                        <div class="stat-value" id="cierre-neto" style="font-size:18px;font-weight:900;color:#F59E0B;"></div>
+                    </div>
+                    <div id="cierre-conciliacion-box" style="display:none;margin-top:14px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);">
+                        <div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;margin-bottom:6px;">📋 CONCILIACIÓN (MASTER)</div>
+                        <div class="stat-row"><div class="stat-label">Ingresos tarjeta hoy</div><div class="stat-value" id="cierre-ing-card" style="color:#10B981;">—</div></div>
+                        <div class="stat-row"><div class="stat-label">Efectivo contado (€)</div><div><input type="number" id="cierre-actual-efectivo" placeholder="0" step="0.01" class="input-field" style="width:100px;text-align:right;"></div></div>
+                        <div class="stat-row"><div class="stat-label">Tarjeta contado (€)</div><div><input type="number" id="cierre-actual-tarjeta" placeholder="0" step="0.01" class="input-field" style="width:100px;text-align:right;"></div></div>
+                        <div class="stat-row"><div class="stat-label" style="font-weight:900;">Diferencia</div><div class="stat-value" id="cierre-diferencia" style="font-weight:900;">—</div></div>
+                    </div>
+                    <div id="cierre-nota-box" style="display:none;margin-top:14px;">
+                        <label class="input-label">📝 Motivo del descuadre</label>
+                        <textarea class="textarea-field" id="cierre-nota-descuadre" placeholder="Explica el motivo del descuadre..." rows="3" style="margin-top:6px;"></textarea>
+                    </div>
+                    <div id="cierre-historial-box" style="margin-top:14px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);display:none;">
+                        <div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;margin-bottom:6px;">HISTORIAL DE CIERRES</div>
+                        <div id="cierre-historial-lista" style="max-height:140px;overflow-y:auto;"></div>
+                    </div>
+                    <div id="cierre-historial-completos-btn" style="display:none;margin-top:8px;">
+                        <button type="button" class="btn btn-secondary btn-full" onclick="abrirHistorialCierresCompletos()" style="font-size:12px;">Ver historial de cierres completos</button>
+                    </div>
+                </div>
+                <div class="modal-footer" style="flex-direction:column;gap:10px;">
+                    <div style="display:flex;gap:10px;width:100%;">
+                        <button class="btn btn-primary" style="flex:1;" onclick="confirmarCierre()">✅ OK — Cuadra</button>
+                        <button class="btn btn-danger" style="flex:1;" onclick="mostrarNotaDescuadre()" id="btn-descuadre">⚠️ Descuadre</button>
+                    </div>
+                    <button id="btn-confirmar-descuadre" class="btn btn-danger btn-full" style="display:none;" onclick="registrarDescuadre()">⚠️ Confirmar Descuadre</button>
+                    <button class="btn btn-secondary btn-full" onclick="cerrarCierreDia()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GORRIONES -->
+        <div class="screen" id="screen-gorriones">
+            <div class="content-section">
+                <div class="section-card" style="margin-bottom:12px;">
+                    <div class="section-title">🐦 Gorriones</div>
+                    <div id="gorriones-list"></div>
+                </div>
+                <button class="btn btn-primary btn-full" onclick="abrirModalNuevoGorrion()" style="margin-bottom:12px;">+ Dar de Alta Gorrión</button>
+            </div>
+        </div>
+
+        <!-- MODAL NUEVO GORRION -->
+        <div class="modal-overlay" id="modalNuevoGorrion">
+            <div class="modal-content">
+                <div class="modal-header"><div class="modal-title">🐦 Nuevo Gorrión</div></div>
+                <div class="modal-body">
+                    <div class="input-group"><label class="input-label">Nombre</label><input type="text" class="input-field" id="gorrion-nombre" placeholder="Nombre completo"></div>
+                    <div class="input-group"><label class="input-label">Teléfono</label><input type="tel" class="input-field" id="gorrion-telefono" placeholder="+34 600 000 000"></div>
+                    <div class="input-group"><label class="input-label">Dirección</label><input type="text" class="input-field" id="gorrion-direccion" placeholder="Calle, número, ciudad"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="cerrarModalNuevoGorrion()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarGorrion()">Dar de Alta</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL FICHA GORRION -->
+        <div class="modal-overlay" id="modalFichaGorrion">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title" id="ficha-gorrion-titulo">Gorrión</div>
+                    <div class="modal-subtitle" id="ficha-gorrion-id" style="color:var(--primary);font-weight:700;"></div>
+                </div>
+                <div class="modal-body">
+                    <div class="stat-row"><div class="stat-label">📍 Dirección</div><div class="stat-value" id="ficha-gorrion-dir" style="font-size:13px;text-align:right;"></div></div>
+                    <div class="stat-row"><div class="stat-label">👤 Usuario</div><div class="stat-value" id="ficha-gorrion-user" style="font-size:14px;color:#10B981;"></div></div>
+                    <div class="input-group" style="margin-top:12px;">
+                        <label class="input-label">📞 Teléfono</label>
+                        <input type="tel" class="input-field" id="ficha-gorrion-tel-edit" placeholder="+34 600 000 000">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">🔑 Nueva Contraseña</label>
+                        <input type="text" class="input-field" id="ficha-gorrion-pass-edit" placeholder="Dejar vacío para no cambiar">
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="guardarCambiosGorrion()" style="margin-top:4px;">💾 Guardar Cambios</button>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="cerrarFichaGorrion()">Cerrar</button>
+                    <button class="btn btn-danger" onclick="eliminarGorrion(this)" id="btn-eliminar-gorrion">Eliminar</button>
+                </div>
+            </div>
+        </div>
+        <div class="screen" id="screen-cuentas">
+            <div class="content-section">
+                <div class="section-card">
+                    <div class="section-title">Saldos de Cuentas</div>
+                    <div class="stat-row"><div class="stat-label">💵 Efectivo</div><div class="stat-value" id="saldo-efectivo">487€</div></div>
+                    <div class="stat-row"><div class="stat-label">🏦 BBVA</div><div class="stat-value" id="saldo-bbva">1,250€</div></div>
+                    <div class="stat-row"><div class="stat-label">🗄️ Guardado</div><div class="stat-value" id="saldo-caja">320€</div></div>
+                    <div class="stat-row"><div class="stat-label">👛 Monedero</div><div class="stat-value" id="saldo-monedero">150€</div></div>
+                </div>
+                <div class="section-card">
+                    <div class="section-title">Resumen Total</div>
+                    <div class="stat-row"><div class="stat-label">Total Disponible</div><div class="stat-value" id="saldo-total">2,207€</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRANSFERENCIAS -->
+        <div class="screen" id="screen-transferencias">
+            <div class="content-section">
+                <div class="section-card">
+                    <div class="section-title">Transferir entre Cuentas</div>
+                    <div class="input-group">
+                        <label class="input-label">Cuenta Origen</label>
+                        <select class="select-field" id="transfer-origen">
+                            <option value="efectivo">💵 Efectivo</option>
+                            <option value="bbva">🏦 BBVA</option>
+                            <option value="caja">🗄️ Guardado</option>
+                            <option value="monedero">👛 Monedero</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Cuenta Destino</label>
+                        <select class="select-field" id="transfer-destino">
+                            <option value="efectivo">💵 Efectivo</option>
+                            <option value="bbva">🏦 BBVA</option>
+                            <option value="caja">🗄️ Guardado</option>
+                            <option value="monedero">👛 Monedero</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Monto (€)</label>
+                        <input type="number" class="input-field" id="transfer-monto" placeholder="0.00" step="0.01">
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="ejecutarTransferencia()">Transferir</button>
+                </div>
+                <div style="margin-top:4px;">
+                    <div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;margin-bottom:8px;">HISTORIAL DE MOVIMIENTOS</div>
+                    <div id="historial-transferencias"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STOCK -->
+        <div class="screen" id="screen-stock">
+            <div class="content-section">
+                <div class="section-card">
+                    <div class="section-title">Control de Stock</div>
+                    <div class="input-group">
+                        <label class="input-label">Recarga B (gramos totales)</label>
+                        <input type="number" id="stock-recargaB" class="input-field" placeholder="0.0" step="0.1" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Recarga V (gramos totales)</label>
+                        <input type="number" id="stock-recargaV" class="input-field" placeholder="0.0" step="0.1" readonly>
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="cambiarPantalla('tabla-precios')" style="margin-top:12px;">
+                        📋 Tabla de Precios →
+                    </button>
+                    <div class="section-title" style="margin-top: 20px;">📦 Entradas de Stock</div>
+                    <div id="lista-stock" style="margin-top: 12px;"></div>
+                </div>
+                <div class="section-card" style="margin-top:12px;">
+                    <div class="section-title">💰 Precio / Coste de Recarga</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Coste por gramo al comprar stock. Se usa en el cierre para calcular el neto.</div>
+                    <div class="input-group">
+                        <label class="input-label">Recarga B — € por gramo</label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="number" id="coste-gramo-b" class="input-field" step="0.01" placeholder="22">
+                            <button onclick="guardarCosteB()" class="btn btn-primary" style="white-space:nowrap;padding:10px 14px;">💾</button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Recarga V — € por gramo</label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="number" id="coste-gramo-v" class="input-field" step="0.01" placeholder="1">
+                            <button onclick="guardarCosteV()" class="btn btn-primary" style="white-space:nowrap;padding:10px 14px;">💾</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLA DE PRECIOS (pantalla hija de stock) -->
+        <div class="screen" id="screen-tabla-precios">
+            <div class="content-section">
+                <div class="section-card">
+                    <div class="section-title">📋 Tabla de Precios</div>
+                    <div id="tabla-precios" style="margin-top:12px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GESTIÓN DE PRODUCTOS (MASTER/ADMIN) -->
+        <div class="screen" id="screen-productos">
+            <div class="content-section">
+                <div class="section-card">
+                    <div class="section-title">📦 Gestión de Productos</div>
+                    <p style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Productos por gramo: precio por gramo, stock y ventas.</p>
+                    <button type="button" class="btn btn-primary btn-full" style="margin-bottom:12px;" onclick="abrirNuevoProductoModal()">+ Nuevo producto</button>
+                    <div style="overflow-x:auto;">
+                        <table class="table" style="width:100%;min-width:420px;">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Precio por gramo</th>
+                                    <th>Stock actual (g)</th>
+                                    <th>Stock mínimo</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productos-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL CREAR/EDITAR PRODUCTO (módulo productos) -->
+        <div class="modal-overlay" id="modalFormProducto" onclick="if(event.target===this)cerrarFormProducto()">
+            <div class="modal-content" style="max-width:360px;">
+                <div class="modal-header"><div class="modal-title">Nuevo / Editar producto</div></div>
+                <div class="modal-body">
+                    <div class="input-group"><label class="input-label">Nombre producto</label><input type="text" class="input-field" id="form-producto-nombre" placeholder="Ej: Recarga B"></div>
+                    <div class="input-group"><label class="input-label">Precio por gramo (€)</label><input type="number" class="input-field" id="form-producto-precio-gramo" step="0.01" placeholder="0.00"></div>
+                    <div class="input-group"><label class="input-label">Stock inicial / actual (g)</label><input type="number" class="input-field" id="form-producto-stock-inicial" step="0.1" placeholder="0"></div>
+                    <div class="input-group"><label class="input-label">Stock mínimo (g)</label><input type="number" class="input-field" id="form-producto-stock-minimo" step="0.1" placeholder="0"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="cerrarFormProducto()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarFormProducto()">Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL AJUSTAR STOCK -->
+        <div class="modal-overlay" id="modalAjustarStock" onclick="if(event.target===this)cerrarAjustarStock()">
+            <div class="modal-content" style="max-width:340px;">
+                <div class="modal-header"><div class="modal-title">Ajustar stock</div><div class="modal-subtitle" id="ajuste-producto-nombre"></div></div>
+                <div class="modal-body">
+                    <div class="input-group"><label class="input-label">Cantidad (g). Positivo = sumar, negativo = restar</label><input type="number" class="input-field" id="ajuste-cantidad" step="0.1" placeholder="0"></div>
+                    <div class="input-group"><label class="input-label">Tipo</label><select class="select-field" id="ajuste-tipo"><option value="ajuste">Ajuste</option><option value="reposicion">Reposición</option></select></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="cerrarAjustarStock()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="ejecutarAjusteStock()">Aplicar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL VENTA POR GRAMOS -->
+        <div class="modal-overlay" id="modalVentaGramos" onclick="if(event.target===this)cerrarVentaGramos()">
+            <div class="modal-content" style="max-width:340px;">
+                <div class="modal-header"><div class="modal-title">Venta por gramos</div><div class="modal-subtitle" id="venta-producto-nombre"></div></div>
+                <div class="modal-body">
+                    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Precio: <span id="venta-precio-gramo"></span> · Stock: <span id="venta-stock-actual"></span></div>
+                    <div class="input-group"><label class="input-label">Cantidad (gramos)</label><input type="number" class="input-field" id="venta-gramos" step="0.1" placeholder="0" min="0"></div>
+                    <div style="font-size:14px;font-weight:700;color:#00E5FF;">Total: <span id="venta-total">0.00€</span></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="cerrarVentaGramos()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="ejecutarVentaGramos()">Registrar venta</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL EDITAR PRODUCTO -->
+        <div class="modal-overlay" id="modalEditarProducto">
+            <div class="modal">
+                <div class="modal-title">✏️ Editar Producto</div>
+                <div class="modal-subtitle" id="edit-producto-nombre" style="color:var(--primary);font-weight:700;margin-bottom:12px;"></div>
+                <input type="hidden" id="edit-producto-key">
+                <div class="input-group">
+                    <label class="input-label">Precio (€)</label>
+                    <input type="number" class="input-field" id="edit-precio" step="0.01" placeholder="0.00">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Gramaje por unidad (g)</label>
+                    <input type="number" class="input-field" id="edit-gramaje" step="0.01" placeholder="0.00">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Stock disponible (g)</label>
+                    <input type="number" class="input-field" id="edit-stock" step="0.01" placeholder="0.00">
+                </div>
+                <div style="display:flex;gap:12px;margin-top:8px;">
+                    <button class="btn btn-secondary btn-full" onclick="cerrarEditarProducto()">Cancelar</button>
+                    <button class="btn btn-primary btn-full" onclick="guardarEditarProducto()">Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TIMELINE DEL NEGOCIO (MASTER) -->
+        <div class="screen" id="screen-timeline">
+            <div class="content-section">
+                <div class="section-card" style="margin-bottom:12px;">
+                    <div class="section-title">📜 Timeline del Negocio</div>
+                    <div id="timeline-content" style="margin-top:8px;max-height:70vh;overflow-y:auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MÉTRICAS DEL NEGOCIO (MASTER) -->
+        <div class="screen" id="screen-metricas">
+            <div class="content-section">
+                <div class="section-card" style="margin-bottom:12px;">
+                    <div class="section-title">📊 Métricas del negocio</div>
+                    <div id="metricas-content" style="margin-top:8px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONFIG -->
+        <div class="screen" id="screen-config">
+            <div class="content-section">
+                <div class="section-card">
+                    <div class="section-title">Preferencias</div>
+                    <div class="switch-row"><div class="stat-label">Notificaciones</div><div class="switch active" onclick="this.classList.toggle('active')"><div class="switch-thumb"></div></div></div>
+                    <div class="switch-row"><div class="stat-label">Sonidos</div><div class="switch active" onclick="this.classList.toggle('active')"><div class="switch-thumb"></div></div></div>
+                    <div class="switch-row"><div class="stat-label">Vibración</div><div class="switch active" onclick="this.classList.toggle('active')"><div class="switch-thumb"></div></div></div>
+                </div>
+                <div class="section-card">
+                    <div class="section-title">Cuenta</div>
+                    <div class="input-group">
+                        <label class="input-label">Código de Sincronización</label>
+                        <input type="text" class="input-field" value="ABC123" readonly>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <div class="section-title">⚙️ Sistema de Stock</div>
+                    <button class="btn btn-primary btn-full" onclick="editarReglasConsumo()" style="margin-top: 12px;">💰 Modificar Precios/Gramajes</button>
+                </div>
+                <div class="section-card">
+                    <div class="section-title">👤 Alta Cliente (Crédito)</div>
+                    <div class="input-group"><label class="input-label">Nombre</label><input type="text" class="input-field" id="alta-nombre" placeholder="Nombre completo"></div>
+                    <div class="input-group"><label class="input-label">Producto 1</label>
+                        <select class="select-field" id="alta-producto"></select>
+                    </div>
+                    <div class="input-group" id="alta-producto2-group" style="display:none;">
+                        <label class="input-label">Producto 2 (opcional)</label>
+                        <select class="select-field" id="alta-producto2"></select>
+                    </div>
+                    <button class="btn btn-secondary" onclick="toggleProducto2Alta()" id="btn-add-prod-alta" style="font-size:11px;padding:6px 12px;margin-bottom:4px;">+ Añadir segundo producto</button>
+                    <div class="input-group"><label class="input-label">Límite Crédito (€)</label><input type="number" class="input-field" id="alta-limite" placeholder="0.00" step="0.01"></div>
+                    <div class="input-group"><label class="input-label">WhatsApp</label><input type="tel" class="input-field" id="alta-telefono" placeholder="+34 600 000 000"></div>
+                    <div class="input-group"><label class="input-label">Día de Pago</label>
+                        <select class="select-field" id="alta-dia-pago">
+                            <option value="">Seleccionar...</option>
+                            <option value="1">Día 1</option><option value="2">Día 2</option><option value="3">Día 3</option><option value="4">Día 4</option><option value="5">Día 5</option><option value="6">Día 6</option><option value="7">Día 7</option><option value="8">Día 8</option><option value="9">Día 9</option><option value="10">Día 10</option><option value="11">Día 11</option><option value="12">Día 12</option><option value="13">Día 13</option><option value="14">Día 14</option><option value="15">Día 15</option><option value="16">Día 16</option><option value="17">Día 17</option><option value="18">Día 18</option><option value="19">Día 19</option><option value="20">Día 20</option><option value="21">Día 21</option><option value="22">Día 22</option><option value="23">Día 23</option><option value="24">Día 24</option><option value="25">Día 25</option><option value="26">Día 26</option><option value="27">Día 27</option><option value="28">Día 28</option><option value="29">Día 29</option><option value="30">Día 30</option><option value="31">Día 31</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="altaClienteDeuda()" style="margin-top:8px;">✅ Registrar Cliente</button>
+                    <div id="alta-resultado" style="margin-top:10px;font-size:13px;color:#10B981;font-weight:700;display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL DEUDA PENDIENTE -->
+        <div class="modal-overlay" id="modalDeudaPendiente">
+            <div class="modal-content">
+                <div class="modal-header"><div class="modal-title">📋 Deuda Pendiente</div></div>
+                <div class="modal-body">
+                    <div class="input-group"><label class="input-label">Cliente</label>
+                        <select class="select-field" id="dp-cliente"></select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Producto 1</label>
+                        <select class="select-field" id="dp-producto"></select>
+                    </div>
+                    <div class="input-group" id="dp-producto2-group" style="display:none;">
+                        <label class="input-label">Producto 2 (opcional)</label>
+                        <select class="select-field" id="dp-producto2"></select>
+                    </div>
+                    <button class="btn btn-secondary" onclick="toggleProducto2DP()" id="btn-add-prod-dp" style="font-size:11px;padding:6px 12px;margin-bottom:4px;">+ Añadir segundo producto</button>
+                    <div class="input-group"><label class="input-label">Cantidad (€)</label><input type="number" class="input-field" id="dp-cantidad" placeholder="0.00" step="0.01"></div>
+                    <div class="input-group"><label class="input-label">Día de Cobro</label>
+                        <select class="select-field" id="dp-dia">
+                            <option value="1">Día 1</option><option value="5">Día 5</option><option value="10">Día 10</option>
+                            <option value="15">Día 15</option><option value="20">Día 20</option><option value="25">Día 25</option><option value="30">Día 30</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="cerrarModalDeudaPendiente()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarDeudaPendiente()">Registrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL DEUDA PAGADA -->
+        <div class="modal-overlay" id="modalDeudaPagada">
+            <div class="modal-content">
+                <div class="modal-header"><div class="modal-title">💚 Registrar Pago</div></div>
+                <div class="modal-body">
+                    <div class="input-group"><label class="input-label">Cliente</label>
+                        <select class="select-field" id="pago-cliente"></select>
+                    </div>
+                    <div class="input-group"><label class="input-label">Cantidad Pagada (€)</label><input type="number" class="input-field" id="pago-cantidad" placeholder="0.00" step="0.01"></div>
+                    <div class="input-group"><label class="input-label">Cuenta donde ingresa</label>
+                        <select class="select-field" id="pago-cuenta">
+                            <option value="efectivo">💵 Efectivo</option>
+                            <option value="bbva">🏦 BBVA</option>
+                            <option value="caja">🗄️ Guardado</option>
+                            <option value="monedero">👛 Monedero</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="cerrarModalDeudaPagada()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarDeudaPagada()">Confirmar Pago</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIRENA -->
+        <div class="modal-overlay" id="modalSirena">
+            <div class="modal-content" style="text-align:center;border-color:rgba(239,68,68,0.6);box-shadow:0 0 40px rgba(239,68,68,0.4);">
+                <div style="font-size:48px;margin-bottom:12px;">🚨🚨🚨</div>
+                <div class="modal-title" style="color:#EF4444;">¡LÍMITE EXCEDIDO!</div>
+                <div id="sirena-mensaje" style="color:#F87171;font-size:14px;margin:12px 0;font-weight:700;"></div>
+                <div id="sirena-aumentar" style="display:none;margin-bottom:12px;">
+                    <div class="input-group" style="margin-bottom:8px;">
+                        <label class="input-label">Nuevo límite de crédito (€)</label>
+                        <input type="number" class="input-field" id="sirena-nuevo-limite" placeholder="0.00" step="0.01">
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="confirmarAumentarCredito()">✅ Confirmar nuevo límite</button>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-danger btn-full" onclick="cerrarSirena()">Entendido</button>
+                    <button class="btn btn-primary btn-full" onclick="mostrarAumentarCredito()" id="sirena-btn-aumentar">💳 Aumentar Crédito</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL CAMBIAR CONTRASEÑA GORRION -->
+        <div class="modal-overlay" id="modalCambiarPassGorrion">
+            <div class="modal-content">
+                <div class="modal-header"><div class="modal-title">🔑 Cambiar mi Contraseña</div></div>
+                <div class="modal-body">
+                    <div class="input-group"><label class="input-label">Contraseña actual</label><input type="password" class="input-field" id="cpg-actual" placeholder="••••••••"></div>
+                    <div class="input-group"><label class="input-label">Nueva contraseña</label><input type="password" class="input-field" id="cpg-nueva" placeholder="••••••••"></div>
+                    <div class="input-group"><label class="input-label">Repetir nueva</label><input type="password" class="input-field" id="cpg-repetir" placeholder="••••••••"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="document.getElementById('modalCambiarPassGorrion').classList.remove('active')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="ejecutarCambioPassGorrion()">Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL ALERTAS JEFES -->
+        <div class="modal-overlay" id="modalAlertasJefes">
+            <div class="modal-content">
+                <div class="modal-header"><div class="modal-title">🚨 Alertas de Crédito</div></div>
+                <div class="modal-body" id="alertas-jefes-lista"></div>
+                <div class="modal-footer"><button class="btn btn-secondary btn-full" onclick="document.getElementById('modalAlertasJefes').classList.remove('active')">Cerrar</button></div>
+            </div>
+        </div>
+
+        <!-- NAV -->
+        <div class="bottom-nav" id="bottom-nav">
+            <div class="nav-item active" data-screen="dashboard" onclick="cambiarPantalla('dashboard')">
+                <div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+                <div class="nav-label">INICIO</div>
+            </div>
+            <div class="nav-item" data-screen="gastos" onclick="cambiarPantalla('gastos')">
+                <div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7-7 7 7"/></svg></div>
+                <div class="nav-label">GASTOS</div>
+            </div>
+            <div class="nav-item" data-screen="ingresos" onclick="cambiarPantalla('ingresos')">
+                <div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7 7 7-7"/></svg></div>
+                <div class="nav-label">INGRESOS</div>
+            </div>
+            <div class="nav-item" data-screen="oficina" onclick="cambiarPantalla('oficina')">
+                <div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V12h6v9"/><path d="M9 9h.01M15 9h.01"/></svg></div>
+                <div class="nav-label">OFICINA</div>
+            </div>
+        </div>
+
+        <!-- MODAL TRANSACCIÓN -->
+        <div class="modal-overlay" id="modalTransaccion">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title" id="modal-transaccion-titulo">Nuevo Gasto</div>
+                    <div class="modal-subtitle" id="modal-transaccion-categoria">Casa</div>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label class="input-label">Monto (€)</label>
+                        <input type="number" class="input-field" id="transaccion-monto" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Cuenta</label>
+                        <select class="select-field" id="transaccion-cuenta">
+                            <option value="efectivo">💵 Efectivo</option>
+                            <option value="bbva">🏦 BBVA</option>
+                            <option value="caja">🗄️ Guardado</option>
+                            <option value="monedero">👛 Monedero</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="gramos-group" style="display:none;">
+                        <label class="input-label">⚖️ Cantidad (gramos)</label>
+                        <input type="number" class="input-field" id="transaccion-gramos" placeholder="0.0" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Nota (Opcional)</label>
+                        <textarea class="textarea-field" id="transaccion-nota" placeholder="Añade una nota..."></textarea>
+                    </div>
+                    <div class="input-group" id="foto-group">
+                        <label class="input-label">📷 Foto del Ticket</label>
+                        <input type="file" id="foto-input" accept="image/*" capture="environment" style="display:none" onchange="procesarFoto(this)">
+                        <button class="foto-btn" onclick="document.getElementById('foto-input').click()">📷 Tomar / Adjuntar Foto</button>
+                        <img id="foto-preview" class="foto-preview" alt="Ticket">
+                    </div>
+                    <div class="stock-badge" id="stock-badge">📦 Stock actualizado automáticamente</div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="cerrarModalTransaccion()">Cancelar</button>
+                    <button class="btn btn-primary" id="btn-guardar-transaccion" onclick="guardarTransaccion()">Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL NUEVO CLIENTE -->
+        <div class="modal-overlay" id="modalNuevoCliente">
+            <div class="modal-content">
+                <div class="modal-header"><div class="modal-title">Nuevo Cliente</div></div>
+                <div class="modal-body">
+                    <div class="input-group"><label class="input-label">Nombre</label><input type="text" class="input-field" id="cliente-nombre" placeholder="Nombre completo"></div>
+                    <div class="input-group"><label class="input-label">WhatsApp</label><input type="tel" class="input-field" id="cliente-whatsapp" placeholder="+34 600 000 000"></div>
+                    <div class="input-group"><label class="input-label">Límite de Crédito (€)</label><input type="number" class="input-field" id="cliente-limite" placeholder="0.00" step="0.01"></div>
+                    <div class="input-group">
+                        <label class="input-label">Día de Pago</label>
+                        <select class="select-field" id="cliente-dia-pago">
+                            <option value="">Seleccionar día...</option>
+                            <option value="1">Día 1</option><option value="2">Día 2</option><option value="3">Día 3</option><option value="4">Día 4</option><option value="5">Día 5</option><option value="6">Día 6</option><option value="7">Día 7</option><option value="8">Día 8</option><option value="9">Día 9</option><option value="10">Día 10</option><option value="11">Día 11</option><option value="12">Día 12</option><option value="13">Día 13</option><option value="14">Día 14</option><option value="15">Día 15</option><option value="16">Día 16</option><option value="17">Día 17</option><option value="18">Día 18</option><option value="19">Día 19</option><option value="20">Día 20</option><option value="21">Día 21</option><option value="22">Día 22</option><option value="23">Día 23</option><option value="24">Día 24</option><option value="25">Día 25</option><option value="26">Día 26</option><option value="27">Día 27</option><option value="28">Día 28</option><option value="29">Día 29</option><option value="30">Día 30</option><option value="31">Día 31</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <div><label class="input-label">Lat (opcional)</label><input type="number" class="input-field" id="cliente-lat" placeholder="ej. 40.41" step="any"></div>
+                        <div><label class="input-label">Lng (opcional)</label><input type="number" class="input-field" id="cliente-lng" placeholder="ej. -3.70" step="any"></div>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Producto 1</label>
+                        <select class="select-field" id="cliente-producto"></select>
+                    </div>
+                    <div class="input-group" id="cliente-producto2-group" style="display:none;">
+                        <label class="input-label">Producto 2 (opcional)</label>
+                        <select class="select-field" id="cliente-producto2"></select>
+                    </div>
+                    <button class="btn btn-secondary" onclick="toggleProducto2Cliente()" id="btn-add-prod-cliente" style="font-size:11px;padding:6px 12px;margin-bottom:4px;">+ Añadir segundo producto</button>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="cerrarModalNuevoCliente()">Cancelar</button>
+                    <button class="btn btn-primary" id="btn-guardar-cliente" onclick="guardarCliente()">Crear Cliente</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL DETALLE CLIENTE -->
+        <div class="modal-overlay" id="modalDetalleCliente">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title" id="detalle-cliente-nombre">Cliente</div>
+                    <div class="modal-subtitle" id="detalle-cliente-info">Info</div>
+                </div>
+                <div class="modal-body">
+                    <div class="section-card" style="margin-bottom: 16px;">
+                        <div class="stat-row"><div class="stat-label">Deuda Total</div><div class="stat-value" id="detalle-cliente-deuda">0€</div></div>
+                        <div class="stat-row"><div class="stat-label">Límite de Crédito</div><div class="stat-value" id="detalle-cliente-limite">0€</div></div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn btn-primary" style="flex: 1;" onclick="pagoTotal()">Pago Total</button>
+                        <button class="btn btn-secondary" style="flex: 1;" onclick="mostrarPagoParcial()">Pago Parcial</button>
+                    </div>
+                    <div id="pago-parcial-form" style="display: none;">
+                        <div class="input-group"><label class="input-label">Monto del Pago (€)</label><input type="number" class="input-field" id="pago-parcial-monto" placeholder="0.00" step="0.01"></div>
+                        <button class="btn btn-primary btn-full" onclick="ejecutarPagoParcial()">Aplicar Pago</button>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <div class="input-label">Historial de Movimientos</div>
+                        <div id="historial-cliente"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-full" onclick="cerrarModalDetalleCliente()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/state.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/transacciones.js"></script>
+    <script src="js/clientes.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/metrics.js"></script>
+    <script src="js/timeline.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/master-security.js"></script>
+    <script src="js/productos.js"></script>
+</body>
+</html>
