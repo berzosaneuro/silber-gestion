@@ -1,8 +1,8 @@
 /* SILBER GESTIÓN — state.js */
 
 var USUARIOS = [
-    { username: 'Jefazo', password: '15031980', role: 'JEFAZO' },
-    { username: 'Jefaza', password: '03021987', role: 'JEFAZA' }
+    { username: 'Jefazo', password: 'jefazo', role: 'JEFAZO' },
+    { username: 'Jefaza', password: 'jefaza', role: 'JEFAZA' }
 ];
 var sesionActual = null;
 
