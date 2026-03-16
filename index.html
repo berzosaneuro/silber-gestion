@@ -786,9 +786,9 @@
             <div class="content-section">
                 <div class="section-card">
                     <div class="section-title">Preferencias</div>
-                    <div class="switch-row"><div class="stat-label">Notificaciones</div><div class="switch active" onclick="this.classList.toggle('active')"><div class="switch-thumb"></div></div></div>
-                    <div class="switch-row"><div class="stat-label">Sonidos</div><div class="switch active" onclick="this.classList.toggle('active')"><div class="switch-thumb"></div></div></div>
-                    <div class="switch-row"><div class="stat-label">Vibración</div><div class="switch active" onclick="this.classList.toggle('active')"><div class="switch-thumb"></div></div></div>
+                    <div class="switch-row"><div class="stat-label">Notificaciones</div><div class="switch active" id="config-notif" onclick="typeof toggleConfigPref==='function'&&toggleConfigPref('notif',this)"><div class="switch-thumb"></div></div></div>
+                    <div class="switch-row"><div class="stat-label">Sonidos</div><div class="switch active" id="config-sonidos" onclick="typeof toggleConfigPref==='function'&&toggleConfigPref('sonidos',this)"><div class="switch-thumb"></div></div></div>
+                    <div class="switch-row"><div class="stat-label">Vibración</div><div class="switch active" id="config-vibra" onclick="typeof toggleConfigPref==='function'&&toggleConfigPref('vibra',this)"><div class="switch-thumb"></div></div></div>
                 </div>
                 <div class="section-card">
                     <div class="section-title">Cuenta</div>
@@ -1086,6 +1086,7 @@
           var x = USUARIOS[i];
           if (x.username.toLowerCase() === u.toLowerCase() && (x.password || '').toLowerCase() === p.toLowerCase()) {
             sesionActual = { usuario: x.username, rol: x.role };
+            try { document.body.classList.remove('login-visible'); } catch(e) {}
             var loginEl = document.getElementById('screen-login');
             if (loginEl) { loginEl.classList.remove('active'); loginEl.style.display = 'none'; loginEl.style.visibility = 'hidden'; }
             var menuOv = document.getElementById('menuOverlay');

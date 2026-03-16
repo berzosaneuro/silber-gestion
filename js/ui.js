@@ -112,7 +112,7 @@ function guardarEditarProducto() {
     }
 }
 
-// Legacy stubs — reemplazadas por el modal abrirEditarProducto
+// Stubs legacy: no-op. La edición/borrado de precios se hace con abrirEditarProducto (modal).
 function eliminarFilaPrecio() {}
 function editarFilaPrecio() {}
 
@@ -206,6 +206,8 @@ function cambiarPantalla(pantalla) {
 
 function volverAtras() {
     try {
+        var loginEl = document.getElementById('screen-login');
+        if (loginEl && loginEl.classList.contains('active')) return;
         if (typeof estado === 'undefined' || !estado.historialPantallas || estado.historialPantallas.length <= 1) return;
         estado.historialPantallas.pop();
         var anterior = estado.historialPantallas[estado.historialPantallas.length - 1];

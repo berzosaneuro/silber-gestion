@@ -63,18 +63,41 @@ CREATE TABLE IF NOT EXISTS clients (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- transacciones (ya puede existir; columnas típicas)
--- CREATE TABLE IF NOT EXISTS transacciones (
---   id BIGSERIAL PRIMARY KEY,
---   tipo TEXT,
---   categoria TEXT,
---   monto NUMERIC,
---   cuenta TEXT,
---   gramos NUMERIC,
---   nota TEXT,
---   registrado_por TEXT,
---   created_at TIMESTAMPTZ DEFAULT NOW()
--- );
+-- transacciones (sincronización con app)
+CREATE TABLE IF NOT EXISTS transacciones (
+  id BIGSERIAL PRIMARY KEY,
+  tipo TEXT,
+  categoria TEXT,
+  monto NUMERIC,
+  cuenta TEXT,
+  gramos NUMERIC,
+  nota TEXT,
+  registrado_por TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- productos (sincronización con app)
+CREATE TABLE IF NOT EXISTS productos (
+  id BIGINT PRIMARY KEY,
+  nombre TEXT,
+  precio_por_gramo NUMERIC,
+  stock_gramos NUMERIC,
+  stock_minimo NUMERIC,
+  activo BOOLEAN DEFAULT true,
+  created_at TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- stock_movements (movimientos de stock)
+CREATE TABLE IF NOT EXISTS stock_movements (
+  id BIGSERIAL PRIMARY KEY,
+  producto TEXT,
+  tipo TEXT,
+  cantidad_gramos NUMERIC,
+  usuario TEXT,
+  timestamp TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 -- Habilitar RLS y políticas básicas (ajustar según necesidad)
 ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
@@ -82,9 +105,15 @@ ALTER TABLE cash_closings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_activity_summary ENABLE ROW LEVEL SECURITY;
 ALTER TABLE worker_locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transacciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE productos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow all for anon" ON activity_log FOR ALL USING (true);
 CREATE POLICY "Allow all for anon" ON cash_closings FOR ALL USING (true);
 CREATE POLICY "Allow all for anon" ON daily_activity_summary FOR ALL USING (true);
 CREATE POLICY "Allow all for anon" ON worker_locations FOR ALL USING (true);
 CREATE POLICY "Allow all for anon" ON clients FOR ALL USING (true);
+CREATE POLICY "Allow all for anon" ON transacciones FOR ALL USING (true);
+CREATE POLICY "Allow all for anon" ON productos FOR ALL USING (true);
+CREATE POLICY "Allow all for anon" ON stock_movements FOR ALL USING (true);

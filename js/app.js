@@ -53,6 +53,7 @@ if (typeof window !== 'undefined') window.intentarLogin = intentarLogin;
 function entrarApp() {
     if (typeof window._silberDebug === 'function') window._silberDebug('app-init-start');
     try {
+        try { document.body.classList.remove('login-visible'); } catch(e) {}
         var loginEl = document.getElementById('screen-login');
         if (loginEl) { loginEl.classList.remove('active'); loginEl.style.display = 'none'; loginEl.style.visibility = 'hidden'; }
         var menuOverlay = document.getElementById('menuOverlay');

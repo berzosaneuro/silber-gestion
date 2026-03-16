@@ -1,12 +1,34 @@
 /* SILBER GESTIÓN — state.js */
 
 var USUARIOS = [
-    { username: 'Jefazo', password: 'jefazo', role: 'JEFAZO' },
-    { username: 'Jefaza', password: 'jefaza', role: 'JEFAZA' }
+    { username: 'Jefazo', password: '15031980', role: 'JEFAZO' },
+    { username: 'Jefaza', password: '03021987', role: 'JEFAZA' }
 ];
 var sesionActual = null;
 
 const STORAGE_KEY = 'silber_gestion_v2';
+const PREFS_KEY = 'silber_prefs';
+
+function toggleConfigPref(key, el) {
+    el.classList.toggle('active');
+    try {
+        var prefs = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
+        prefs[key] = el.classList.contains('active');
+        localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    } catch (e) {}
+}
+
+function restaurarPreferenciasConfig() {
+    try {
+        var prefs = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
+        ['notif', 'sonidos', 'vibra'].forEach(function(k) {
+            var el = document.getElementById('config-' + k);
+            if (el) {
+                if (prefs[k] !== false) el.classList.add('active'); else el.classList.remove('active');
+            }
+        });
+    } catch (e) {}
+}
 
 function cargarEstado() {
     try {
@@ -195,6 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ── No restaurar sesión al cargar: siempre mostrar login primero (evita pantalla en blanco) ──
     // Si quieres "recordar sesión" en el futuro, descomenta el bloque restaurarSesion y elimina el clear:
     try { localStorage.removeItem('silber_sesion_activa'); } catch(e) {}
+    try { document.body.classList.add('login-visible'); } catch(e) {}
 
     function initCanvas() {
         try {
@@ -220,6 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof renderizarTablaPrecios === 'function') renderizarTablaPrecios();
         if (typeof renderizarOficina === 'function') renderizarOficina();
         if (typeof llenarSelectProductos === 'function') { llenarSelectProductos('alta-producto'); llenarSelectProductos('alta-producto2'); }
+        restaurarPreferenciasConfig();
         if (typeof window._silberDebug === 'function') window._silberDebug('init-done');
     } catch (e) { if (typeof console !== 'undefined' && console.warn) console.warn('[Silber] DOMContentLoaded init:', e); }
 

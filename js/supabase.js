@@ -58,7 +58,7 @@ function saveWorkerLocation(user, role, lat, lng) {
     if (typeof _supabase === 'undefined' || !_supabase) return;
     try {
         var ts = new Date().toISOString().slice(0, 16);
-        _supabase.from('worker_locations').insert({ user: user || '?', role: role || '?', lat: lat, lng: lng, timestamp: ts }).then(function() {}).catch(function() {});
+        _supabase.from('worker_locations').insert({ user: user || '?', role: role || '?', lat: lat, lng: lng, timestamp: ts }).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] worker_locations:', err); });
     } catch (err) {}
 }
 
@@ -68,7 +68,7 @@ function syncClientsToSupabase() {
     try {
         estado.clientes.forEach(function(c) {
             var row = { id: String(c.id), nombre: c.nombre, whatsapp: c.whatsapp || '', limite: c.limite || 0, dia_pago: c.diaPago || 1, producto: c.producto || '', deuda: c.deuda || 0, lat: c.lat != null ? c.lat : null, lng: c.lng != null ? c.lng : null };
-            _supabase.from('clients').upsert(row, { onConflict: 'id' }).then(function() {}).catch(function() {});
+            _supabase.from('clients').upsert(row, { onConflict: 'id' }).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] clients upsert:', err); });
         });
     } catch (err) {}
 }

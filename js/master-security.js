@@ -301,7 +301,7 @@ function saveDailySummary(date, summary) {
     try { localStorage.setItem(DAILY_SUMMARY_KEY, JSON.stringify(list)); } catch (e) {}
     if (typeof _supabase !== 'undefined' && _supabase) {
         try {
-            _supabase.from('daily_activity_summary').insert({ date: date, total_transactions: entry.total_transactions, deleted_count: entry.deleted_count, edited_count: entry.edited_count, suspicious_count: entry.suspicious_count }).then(function() {}).catch(function() {});
+            _supabase.from('daily_activity_summary').insert({ date: date, total_transactions: entry.total_transactions, deleted_count: entry.deleted_count, edited_count: entry.edited_count, suspicious_count: entry.suspicious_count }).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] daily_activity_summary:', err); });
         } catch (err) {}
     }
 }
@@ -356,7 +356,7 @@ function saveCashClosing(record) {
     } catch (e) {}
     if (typeof _supabase !== 'undefined' && _supabase) {
         try {
-            _supabase.from('cash_closings').insert(record).then(function() {}).catch(function() {});
+            _supabase.from('cash_closings').insert(record).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] cash_closings:', err); });
         } catch (err) {}
     }
 }
