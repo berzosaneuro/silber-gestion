@@ -48,24 +48,24 @@ body {
     box-sizing:border-box;
 }
 
-/* scanlines sutiles */
+/* scanlines sutiles: z-index negativo para quedar siempre detrás de toda la UI (login, app-container, etc.) */
 body::before {
     content:''; position:fixed; top:0; left:0; width:100%; height:100%;
     background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);
-    pointer-events:none; z-index:9999999; opacity:.35;
+    pointer-events:none; z-index:-1; opacity:.35;
 }
-/* glow ambiental */
+/* glow ambiental (también detrás de todo el contenido) */
 body::after {
     content:''; position:fixed; top:0; left:0; width:100%; height:100%;
     background:
         radial-gradient(ellipse at 15% 0%,rgba(0,229,255,0.07) 0%,transparent 55%),
         radial-gradient(ellipse at 85% 100%,rgba(255,0,170,0.05) 0%,transparent 55%);
-    pointer-events:none; z-index:0;
+    pointer-events:none; z-index:-1;
 }
 
 .app-container {
     width:100%; max-width:100vw; margin:0; background:transparent;
-    position:relative; z-index:1;
+    position:relative; z-index:10;
     height:100%;
     min-height:100vh;
     min-height:100dvh;
@@ -98,11 +98,14 @@ body::after {
     position:absolute; top:0; left:0; right:0; bottom:0;
     box-sizing:border-box;
 }
-.screen.active { display:block !important; visibility:visible !important; opacity:1 !important; }
+.screen.active { display:block !important; visibility:visible !important; opacity:1 !important; z-index:1; overflow-y:auto; overflow-x:hidden; }
+.screen:not(.active) { z-index:0; }
+#screen-dashboard.active { min-height:100vh; }
+#screen-dashboard.active .dashboard-content { opacity:1; visibility:visible; min-height:400px; display:flex; flex-direction:column; }
 .screen.active .dashboard-content,
 .screen.active .content-section,
-.screen.active .categories-screen { min-height:50vh; }
-.dashboard-content { display:block; }
+.screen.active .categories-screen { min-height:50vh; visibility:visible !important; }
+.screen.active .dashboard-content { display:flex !important; flex-direction:column; min-height:200px; }
 .donut-section { display:block; visibility:visible; }
 .categories-grid { min-height:120px; display:block; }
 #screen-login {

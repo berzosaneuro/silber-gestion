@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Comprobar dashboard</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #1a1a2e; color: #eee; max-width: 500px; }
+        h1 { font-size: 18px; color: #00E5FF; }
+        pre { background: #0d0d1a; padding: 12px; border-radius: 8px; font-size: 13px; overflow-x: auto; }
+        .ok { color: #10B981; }
+        .err { color: #EF4444; }
+        button { background: #00E5FF; color: #04050F; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+        button:hover { opacity: 0.9; }
+        p { margin: 8px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Comprobar dashboard (Silber)</h1>
+    <p><strong>Opción rápida (hazlo tú mismo):</strong></p>
+    <ol style="font-size:14px; line-height:1.8;">
+        <li>Abre la app (index.html), inicia sesión.</li>
+        <li>Pulsa <strong>F12</strong> → pestaña <strong>Consola</strong>.</li>
+        <li>Pega este código y pulsa <strong>Enter</strong>:</li>
+    </ol>
+    <pre>var d=document.getElementById("screen-dashboard");if(d){d.style.display="block";d.style.visibility="visible";d.style.opacity="1";var c=d.querySelector(".dashboard-content");if(c){c.style.display="flex";c.style.visibility="visible";}console.log("OK: dashboard forzado");}else{console.log("No hay #screen-dashboard");}</pre>
+    <p style="margin-top:16px;">Si después de pegarlo ves contenido en el centro, el problema es de CSS y ya está corregido en esa sesión.</p>
+    <hr style="border-color:#333; margin:20px 0;">
+    <p><strong>Alternativa:</strong> Abre la app en una pestaña, luego este archivo en otra y pulsa el botón.</p>
+    <button onclick="run()">Comprobar en otra pestaña</button>
+    <div id="result"></div>
+
+    <script>
+        function run() {
+            var out = document.getElementById('result');
+            out.innerHTML = '<p>Comprobando en la otra pestaña (donde está la app)...</p>';
+            try {
+                var win = window.opener || (window.parent !== window ? window.parent : null);
+                if (!win || !win.document) {
+                    out.innerHTML = '<p class="err">Abre primero la app (index.html) en otra pestaña, haz login, y luego abre este archivo en una pestaña nueva desde esa misma ventana.</p>';
+                    return;
+                }
+                var doc = win.document;
+                var dash = doc.getElementById('screen-dashboard');
+                var content = dash ? doc.querySelector('#screen-dashboard .dashboard-content') : null;
+                var html = [];
+                if (dash) {
+                    html.push('<p class="ok">✓ #screen-dashboard existe</p>');
+                    html.push('<p>Clases: ' + (dash.className || '') + '</p>');
+                    html.push('<p>display: ' + (win.getComputedStyle(dash).display) + ', visibility: ' + (win.getComputedStyle(dash).visibility) + '</p>');
+                } else {
+                    html.push('<p class="err">✗ #screen-dashboard no encontrado</p>');
+                }
+                if (content) {
+                    html.push('<p class="ok">✓ .dashboard-content existe</p>');
+                    html.push('<p>display: ' + (win.getComputedStyle(content).display) + ', visibility: ' + (win.getComputedStyle(content).visibility) + '</p>');
+                } else {
+                    html.push('<p class="err">✗ .dashboard-content no encontrado</p>');
+                }
+                html.push('<button onclick="forzarVisible()">Forzar dashboard visible</button>');
+                out.innerHTML = html.join('');
+                window.forzarVisible = function() {
+                    if (win && win.document && win.document.getElementById('screen-dashboard')) {
+                        var d = win.document.getElementById('screen-dashboard');
+                        d.style.display = 'block';
+                        d.style.visibility = 'visible';
+                        d.style.opacity = '1';
+                        var c = win.document.querySelector('#screen-dashboard .dashboard-content');
+                        if (c) { c.style.display = 'flex'; c.style.visibility = 'visible'; c.style.opacity = '1'; }
+                        out.innerHTML += '<p class="ok">Hecho. Mira la pestaña de la app.</p>';
+                    }
+                };
+            } catch (e) {
+                out.innerHTML = '<p class="err">No se puede acceder a la otra pestaña (mismo origen). Abre la consola (F12) en la pestaña de la app y pega esto:</p><pre>var d = document.getElementById("screen-dashboard"); if(d){ d.style.display="block"; d.style.visibility="visible"; d.style.opacity="1"; var c = document.querySelector("#screen-dashboard .dashboard-content"); if(c){ c.style.display="flex"; c.style.visibility="visible"; } } console.log("Dashboard forzado visible");</pre>';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -15,6 +15,8 @@
 | Jefaza   | 03021987   | JEFAZA  |
 | Workers  | (gorriones)| WORKER  |
 
+**Seguridad:** No subas contraseñas reales al repositorio. Cambia las por defecto antes de producción, o inyecta usuarios con `window.SILBER_USUARIOS` en `index.html` (antes de los scripts) para no commitear credenciales.
+
 ## Permisos por rol
 
 - **Jefazo:** Auditoría, configuración, coste por gramo, tabla de precios, eliminar transacciones, confirmar cierre con biometría, descuadre. Recibe todas las alertas (incluidas las de actividad de Jefaza).

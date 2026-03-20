@@ -48,6 +48,8 @@ O define antes de cargar la app (en `index.html`):
 
 Workers (gorriones) se dan de alta desde la app.
 
+**Seguridad:** Cambia estas contraseñas antes de usar en producción. Para no commitear credenciales reales, define `window.SILBER_USUARIOS` en `index.html` (antes de cargar los scripts) con tu lista de usuarios; la app usará esa variable en lugar de los valores por defecto.
+
 ## Requisitos
 
 - Navegador moderno (localStorage, ES5+).

@@ -216,9 +216,6 @@ function ejecutarPagoParcial() {
     if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
 }
 
-
-}
-
 // ===== DB_DEUDAS =====
 const DB_KEY = 'db_deudas';
 
@@ -487,6 +484,7 @@ function confirmarAumentarCredito() {
         if (dbCli) { dbCli.limite_credito = nuevoLimite; guardarDbDeudas(db); }
     }
     cerrarSirena();
+}
 
 // ===== GORRIONES =====
 function cargarGorriones() {

@@ -52,29 +52,44 @@ if (typeof window !== 'undefined') window.intentarLogin = intentarLogin;
 
 function entrarApp() {
     if (typeof window._silberDebug === 'function') window._silberDebug('app-init-start');
+    try { document.body.classList.remove('login-visible'); } catch(e) {}
+    var loginEl = document.getElementById('screen-login');
+    if (loginEl) { loginEl.classList.remove('active'); loginEl.style.display = 'none'; loginEl.style.visibility = 'hidden'; }
+    var menuOverlay = document.getElementById('menuOverlay');
+    if (menuOverlay) { menuOverlay.classList.remove('active'); menuOverlay.style.display = 'none'; menuOverlay.setAttribute('aria-hidden', 'true'); }
+    var nav = document.getElementById('bottom-nav');
+    if (nav) nav.style.display = 'flex';
     try {
-        try { document.body.classList.remove('login-visible'); } catch(e) {}
-        var loginEl = document.getElementById('screen-login');
-        if (loginEl) { loginEl.classList.remove('active'); loginEl.style.display = 'none'; loginEl.style.visibility = 'hidden'; }
-        var menuOverlay = document.getElementById('menuOverlay');
-        if (menuOverlay) { menuOverlay.classList.remove('active'); menuOverlay.style.display = 'none'; menuOverlay.setAttribute('aria-hidden', 'true'); }
-        var nav = document.getElementById('bottom-nav');
-        if (nav) nav.style.display = 'flex';
-        if (typeof aplicarModoSesion === 'function') { try { aplicarModoSesion(); } catch (e) {} }
+        if (typeof aplicarModoSesion === 'function') { try { aplicarModoSesion(); } catch (e) { if (console && console.warn) console.warn('[Silber] aplicarModoSesion:', e); } }
         if (sesionActual) {
             try { localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual)); } catch (e) {}
             if (typeof activarBiometria === 'function') { try { activarBiometria(sesionActual); } catch (e) {} }
         }
-        if (typeof cambiarPantalla === 'function') {
-            cambiarPantalla('dashboard');
-            if (typeof window._silberDebug === 'function') window._silberDebug('app-init-done');
-        } else {
-            if (typeof console !== 'undefined' && console.error) console.error('[Silber] cambiarPantalla no definida');
-        }
     } catch (e) {
-        try { if (typeof console !== 'undefined' && console.error) console.error('[Silber] entrarApp error:', e); } catch (_) {}
-        try { alert('Error al abrir la app: ' + (e && e.message ? e.message : 'recarga la página')); } catch (_) {}
+        if (typeof console !== 'undefined' && console.warn) console.warn('[Silber] entrarApp setup:', e);
     }
+    if (typeof cambiarPantalla === 'function') {
+        try { cambiarPantalla('dashboard'); } catch (e) {
+            if (typeof console !== 'undefined' && console.error) console.error('[Silber] cambiarPantalla(dashboard):', e);
+            var dash = document.getElementById('screen-dashboard');
+            if (dash) { dash.classList.add('active'); dash.style.display = 'block'; dash.style.visibility = 'visible'; }
+        }
+    } else {
+        if (typeof console !== 'undefined' && console.error) console.error('[Silber] cambiarPantalla no definida');
+        var dash = document.getElementById('screen-dashboard');
+        if (dash) { dash.classList.add('active'); dash.style.display = 'block'; dash.style.visibility = 'visible'; }
+    }
+    function forzarDashboardVisible() {
+        var d = document.getElementById('screen-dashboard');
+        if (!d || !d.classList.contains('active')) return;
+        d.style.cssText = 'display:block !important;visibility:visible !important;opacity:1 !important;min-height:100vh;';
+        var c = d.querySelector('.dashboard-content');
+        if (c) c.style.cssText = 'display:flex !important;visibility:visible !important;opacity:1 !important;min-height:400px;';
+    }
+    forzarDashboardVisible();
+    setTimeout(forzarDashboardVisible, 100);
+    setTimeout(forzarDashboardVisible, 400);
+    if (typeof window._silberDebug === 'function') window._silberDebug('app-init-done');
     if (navigator.geolocation && sesionActual && typeof saveWorkerLocation === 'function') {
         navigator.geolocation.getCurrentPosition(function(pos) {
             saveWorkerLocation(sesionActual.usuario, sesionActual.rol, pos.coords.latitude, pos.coords.longitude);
@@ -286,7 +301,9 @@ function procesarFoto(input) {
             preview.style.display = 'block';
         };
         img.src = e.target.result;
-
+    };
+    reader.readAsDataURL(input.files[0]);
+}
 
 // ===== FACE ID / BIOMETRÍA =====
 // Función central de autenticación biométrica (WebAuthn)
@@ -367,6 +384,8 @@ function activarBiometria(sesion) {
             btn.style.opacity = '0.4';
             btn.title = 'Entra primero con usuario y contraseña para activar';
         }
+    }
+})();
 
 function chequearRecordatorios() {
     const ahora = new Date();
@@ -396,8 +415,6 @@ function chequearRecordatorios() {
 
 // Chequear al arrancar y cada 3 minutos
 setTimeout(chequearRecordatorios, 3000);
-
-}
 
 window.addEventListener('resize', () => {
     const canvas = document.getElementById('donutCanvas');

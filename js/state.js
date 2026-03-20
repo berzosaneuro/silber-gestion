@@ -1,9 +1,13 @@
 /* SILBER GESTIÓN — state.js */
 
-var USUARIOS = [
-    { username: 'Jefazo', password: 'jefazo', role: 'JEFAZO' },
-    { username: 'Jefaza', password: 'jefaza', role: 'JEFAZA' }
-];
+// Credenciales: definibles desde fuera para no commitear secretos (window.SILBER_USUARIOS antes de cargar scripts).
+// Por defecto, valores alineados con la documentación; en producción cambiar o inyectar vía SILBER_USUARIOS.
+var USUARIOS = (typeof window !== 'undefined' && window.SILBER_USUARIOS && Array.isArray(window.SILBER_USUARIOS))
+    ? window.SILBER_USUARIOS
+    : [
+        { username: 'Jefazo', password: '15031980', role: 'JEFAZO' },
+        { username: 'Jefaza', password: '03021987', role: 'JEFAZA' }
+    ];
 var sesionActual = null;
 
 const STORAGE_KEY = 'silber_gestion_v2';

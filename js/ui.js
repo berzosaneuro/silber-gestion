@@ -141,13 +141,13 @@ function renderizarListaStock() {
 
 function cambiarPantalla(pantalla) {
     try {
-        if (typeof estado === 'undefined') { try { estado = window.estado || { historialPantallas: ['dashboard'] }; } catch (e) { return; } }
-        if (!estado.historialPantallas) estado.historialPantallas = ['dashboard'];
+        if (typeof estado === 'undefined') { estado = (typeof window !== 'undefined' && window.estado) ? window.estado : { historialPantallas: ['dashboard'] }; }
+        if (!estado.historialPantallas || !estado.historialPantallas.length) estado.historialPantallas = ['dashboard'];
         if (estado.historialPantallas[estado.historialPantallas.length - 1] !== pantalla) {
             estado.historialPantallas.push(pantalla);
         }
         var screens = document.querySelectorAll('.screen');
-        if (screens && screens.length) { for (var i = 0; i < screens.length; i++) { screens[i].classList.remove('active'); } }
+        if (screens && screens.length) { for (var i = 0; i < screens.length; i++) { screens[i].classList.remove('active'); screens[i].style.display = 'none'; screens[i].style.visibility = 'hidden'; } }
         var target = document.getElementById('screen-' + pantalla);
         if (target) {
             target.classList.add('active');
@@ -201,6 +201,8 @@ function cambiarPantalla(pantalla) {
         if (navigator.vibrate) navigator.vibrate(30);
     } catch (e) {
         if (typeof console !== 'undefined' && console.error) console.error('[Silber] cambiarPantalla error:', e);
+        var fallbackTarget = document.getElementById('screen-' + pantalla);
+        if (fallbackTarget) { fallbackTarget.classList.add('active'); fallbackTarget.style.display = 'block'; fallbackTarget.style.visibility = 'visible'; }
     }
 }
 
@@ -345,8 +347,9 @@ async function gestionarBiometria(num) {
     }
 }
 
-
-    // Resetear color del mensaje
+function cerrarModalBiometria() {
+    const modal = document.getElementById('modalBiometria');
+    if (modal) modal.classList.remove('active');
     const msgEl = document.getElementById('bio-modal-msg');
     if (msgEl) msgEl.style.color = 'var(--text-secondary)';
 }
@@ -540,9 +543,6 @@ async function _ejecutarDelete() {
 function _confirmarBorrado(btnEl, _msg, onConfirmado) {
     handleDelete(btnEl, onConfirmado);
 }
-
-// ===== EDITAR / ELIMINAR DESGLOSE =====
-let _editIdx = null;
 
 // ===== COSTE POR GRAMO (solo MASTER + biometría) =====
 function guardarCosteB() {
