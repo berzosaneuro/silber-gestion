@@ -707,3 +707,372 @@ select option { background:var(--bg-card); color:var(--text-primary); }
     margin-bottom: 4px;
 }
 .daily-love-toast.daily-love-toast-out { animation: dailyToastOut 0.3s ease-in forwards; }
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  SILBER GESTIÓN — PREMIUM UI v2  (layout + UX overrides) ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* ── Design tokens ─────────────────────────────────────────── */
+:root {
+    --radius-sm:  10px;
+    --radius-md:  14px;
+    --radius-lg:  18px;
+    --radius-xl:  22px;
+    --space-xs:   4px;
+    --space-sm:   8px;
+    --space-md:   16px;
+    --space-lg:   24px;
+    --card-bg:    rgba(255,255,255,0.03);
+    --card-border:rgba(255,255,255,0.08);
+    --shadow-sm:  0 2px 8px rgba(0,0,0,0.35);
+    --shadow-md:  0 4px 20px rgba(0,0,0,0.5), 0 0 1px rgba(0,229,255,0.06);
+}
+
+/* ── Tone-down glow noise on section titles ────────────────── */
+.section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: rgba(148,163,184,0.75);
+    text-shadow: none;
+    margin-bottom: 14px;
+}
+.ranking-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: rgba(148,163,184,0.75);
+    text-shadow: none;
+}
+.header-title, .app-header #headerTitle {
+    text-shadow: 0 0 14px rgba(0,229,255,0.55);
+}
+
+/* ── Cleaner section-card ──────────────────────────────────── */
+.section-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+.section-card::before { display: none; }
+
+/* ── stat-row & stat-value polish ─────────────────────────── */
+.stat-row {
+    padding: 11px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.stat-label { font-size: 13px; color: rgba(180,200,220,0.65); font-weight: 500; }
+.stat-value { font-size: 16px; font-weight: 800; color: var(--text-primary); text-shadow: none; }
+
+/* ── Dashboard KPI summary cards (upgraded) ───────────────── */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 10px;
+    margin-bottom: 0;
+}
+.summary-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 16px 8px 14px;
+    gap: 5px;
+    box-shadow: var(--shadow-sm);
+}
+.summary-card::before { display: none; }
+.summary-card:active { transform: scale(0.96); background: rgba(255,255,255,0.06); }
+.summary-icon  { font-size: 20px; margin-bottom: 0; }
+.summary-label { font-size: 9px; letter-spacing: 1px; color: rgba(148,163,184,0.7); font-weight: 700; }
+.summary-value { font-size: 18px; font-weight: 900; color: var(--text-primary); }
+.summary-card.gastos   { border-bottom: 2px solid rgba(248,113,113,0.6); }
+.summary-card.ingresos { border-bottom: 2px solid rgba(52,211,153,0.6); }
+.summary-card.deuda    { border-bottom: 2px solid rgba(251,191,36,0.6); }
+
+/* ── Donut section polish ─────────────────────────────────── */
+.donut-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--shadow-sm);
+}
+.donut-section::before { display: none; }
+
+/* ── Ranking cards polish ─────────────────────────────────── */
+.ranking-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--shadow-sm);
+}
+.ranking-section::before { display: none; }
+.ranking-item {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+}
+.ranking-amount { text-shadow: none; }
+.ranking-item.first .ranking-amount { text-shadow: none; }
+
+/* ── Client cards polish ──────────────────────────────────── */
+.cliente-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+.cliente-card::before { background: linear-gradient(to bottom, var(--primary), transparent); opacity: 0.6; }
+.cliente-nombre { font-size: 15px; font-weight: 700; }
+.cliente-deuda  { font-size: 20px; font-weight: 900; text-shadow: none; }
+.cliente-deuda.negativa { text-shadow: none; }
+
+/* ── Input / select polish ────────────────────────────────── */
+.input-field, .select-field, .textarea-field {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+}
+.input-field:focus, .select-field:focus, .textarea-field:focus {
+    border-color: rgba(0,229,255,0.5);
+    background: rgba(0,229,255,0.04);
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.08);
+}
+.input-field::placeholder { color: rgba(148,163,184,0.35); }
+.input-label { letter-spacing: 1px; }
+
+/* ── Modal polish ─────────────────────────────────────────── */
+.modal-content {
+    background: rgba(10,13,26,0.99);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.75), 0 0 1px rgba(0,229,255,0.1);
+}
+.modal-content::before { display: none; }
+.modal-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0;
+    text-shadow: none;
+}
+.modal-subtitle { font-size: 12px; color: rgba(148,163,184,0.7); }
+
+/* ── Buttons polish ───────────────────────────────────────── */
+.btn {
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.4px;
+}
+.btn-primary {
+    background: linear-gradient(135deg, rgba(0,229,255,0.12), rgba(0,170,200,0.2));
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
+    text-shadow: none;
+}
+.btn-primary:active {
+    box-shadow: 0 0 16px rgba(0,229,255,0.3);
+}
+
+/* ── Menu items polish ────────────────────────────────────── */
+.menu-item {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+}
+.menu-item::before { opacity: 0.5; }
+.menu-item-text { font-size: 14px; font-weight: 600; letter-spacing: 0.2px; }
+.menu-item-icon { font-size: 20px; }
+
+/* ── FAB polish ───────────────────────────────────────────── */
+.fab { box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 12px rgba(0,229,255,0.2); }
+
+/* ╔══════════════════════════════╗
+   ║  iOS SETTINGS COMPONENTS     ║
+   ╚══════════════════════════════╝ */
+.settings-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(148,163,184,0.55);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 18px 4px 6px;
+}
+.settings-group {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-sm);
+}
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row:active { background: rgba(255,255,255,0.05); }
+.settings-row-left {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    flex: 1;
+    min-width: 0;
+}
+.settings-row-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+}
+.settings-row-body { flex: 1; min-width: 0; }
+.settings-row-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.settings-row-sub {
+    font-size: 11px;
+    color: rgba(148,163,184,0.6);
+    margin-top: 1px;
+}
+.settings-chevron {
+    color: rgba(148,163,184,0.35);
+    font-size: 15px;
+    font-weight: 700;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+/* Switch inside settings row */
+.settings-row .switch { flex-shrink: 0; }
+
+/* ╔══════════════════════════════╗
+   ║  REGISTRO DE LLEGADAS        ║
+   ╚══════════════════════════════╝ */
+.llegadas-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.llegadas-kpi-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 14px 8px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+}
+.llegadas-kpi-num {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--text-primary);
+    line-height: 1;
+}
+.llegadas-kpi-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(148,163,184,0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 5px;
+}
+.llegadas-filter-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+}
+.llegadas-filter-bar::-webkit-scrollbar { display: none; }
+.llegadas-filter-chip {
+    padding: 7px 14px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(148,163,184,0.75);
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+    font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+.llegadas-filter-chip.active {
+    background: rgba(0,229,255,0.1);
+    border-color: rgba(0,229,255,0.45);
+    color: var(--primary);
+}
+.llegada-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-sm);
+}
+.llegada-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+}
+.llegada-dot.ok     { background: #10B981; box-shadow: 0 0 6px rgba(16,185,129,0.55); }
+.llegada-dot.fuera  { background: #F59E0B; box-shadow: 0 0 6px rgba(245,158,11,0.55); }
+.llegada-dot.sin-gps{ background: #64748B; }
+.llegada-info { flex: 1; min-width: 0; }
+.llegada-nombre { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.llegada-meta   { font-size: 11px; color: rgba(148,163,184,0.65); margin-top: 3px; line-height: 1.4; }
+.llegada-status {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    align-self: flex-start;
+}
+.llegada-status.ok      { background: rgba(16,185,129,0.12); color: #10B981; border: 1px solid rgba(16,185,129,0.25); }
+.llegada-status.fuera   { background: rgba(245,158,11,0.12);  color: #F59E0B; border: 1px solid rgba(245,158,11,0.25); }
+.llegada-status.sin-gps { background: rgba(100,116,139,0.12); color: #94A3B8; border: 1px solid rgba(100,116,139,0.25); }
+
+/* ── Period buttons polish ────────────────────────────────── */
+.period-btn {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(148,163,184,0.6);
+}
+.period-btn.active {
+    background: rgba(0,229,255,0.1);
+    border-color: rgba(0,229,255,0.45);
+    color: var(--primary);
+    text-shadow: none;
+    box-shadow: none;
+}
+
+/* ── Table improvements ───────────────────────────────────── */
+.table { border-collapse: collapse; }
+.table th {
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    color: rgba(148,163,184,0.6); text-transform: uppercase;
+    padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: transparent;
+}
+.table td {
+    font-size: 13px; color: var(--text-primary);
+    padding: 11px 8px; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.table tr:last-child td { border-bottom: none; }
