@@ -86,6 +86,27 @@
         <!-- DASHBOARD -->
         <div class="screen" id="screen-dashboard">
             <div class="dashboard-content">
+
+                <!-- KPI Hero — tap to navigate -->
+                <div class="summary-grid">
+                    <div class="summary-card gastos" onclick="cambiarPantalla('gastos')">
+                        <div class="summary-icon">📉</div>
+                        <div class="summary-label">Gastos</div>
+                        <div class="summary-value" id="dash-gastos">0€</div>
+                    </div>
+                    <div class="summary-card ingresos" onclick="cambiarPantalla('ingresos')">
+                        <div class="summary-icon">📈</div>
+                        <div class="summary-label">Ingresos</div>
+                        <div class="summary-value" id="dash-ingresos">0€</div>
+                    </div>
+                    <div class="summary-card deuda" onclick="cambiarPantalla('deuda')">
+                        <div class="summary-icon">💳</div>
+                        <div class="summary-label">Deuda</div>
+                        <div class="summary-value" id="dash-deuda">0€</div>
+                    </div>
+                </div>
+
+                <!-- Donut + time machine + period selector -->
                 <div class="donut-section">
                     <div class="donut-glow"></div>
                     <div class="time-machine">
@@ -108,32 +129,20 @@
                     </div>
                 </div>
 
-                <div class="summary-grid">
-                    <div class="summary-card gastos" onclick="cambiarPantalla('gastos')">
-                        <div class="summary-icon">📉</div>
-                        <div class="summary-label">Gastos</div>
-                        <div class="summary-value" id="dash-gastos">0€</div>
-                    </div>
-                    <div class="summary-card ingresos" onclick="cambiarPantalla('ingresos')">
-                        <div class="summary-icon">📈</div>
-                        <div class="summary-label">Ingresos</div>
-                        <div class="summary-value" id="dash-ingresos">0€</div>
-                    </div>
-                    <div class="summary-card deuda" onclick="cambiarPantalla('deuda')">
-                        <div class="summary-icon">⚠️</div>
-                        <div class="summary-label">Deuda</div>
-                        <div class="summary-value" id="dash-deuda">0€</div>
-                    </div>
-                </div>
-
+                <!-- Team ranking -->
                 <div class="ranking-section">
-                    <div class="ranking-header"><div class="ranking-title">Equipo</div></div>
+                    <div class="ranking-header">
+                        <div class="ranking-title">Equipo</div>
+                    </div>
                     <div class="ranking-list" id="ranking-list"></div>
                 </div>
-                <div class="section-card" id="dashboard-productos-alerta" style="display:none;margin-top:12px;border:1px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);">
-                    <div class="section-title" style="font-size:12px;">⚠️ Productos — Stock bajo / Agotamiento próximo</div>
-                    <div id="dashboard-productos-alerta-body" style="font-size:12px;color:var(--text-primary);"></div>
+
+                <!-- Stock alert (hidden by default) -->
+                <div class="section-card" id="dashboard-productos-alerta" style="display:none;border:1px solid rgba(245,158,11,0.25);background:rgba(245,158,11,0.04);">
+                    <div class="section-title" style="color:rgba(245,158,11,0.8);">⚠️ Stock bajo / Agotamiento próximo</div>
+                    <div id="dashboard-productos-alerta-body" style="font-size:12px;color:var(--text-primary);line-height:1.6;"></div>
                 </div>
+
             </div>
         </div>
 
@@ -262,6 +271,7 @@
                     <div class="menu-item" id="oficina-menu-metricas" onclick="cambiarPantalla('metricas'); if(typeof renderizarMetricas==='function')renderizarMetricas();" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">📊</div><div class="menu-item-text">Métricas del negocio</div></div>
                     <div class="menu-item" id="oficina-menu-ruta" onclick="abrirModalRutaClientes()" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">🗺️</div><div class="menu-item-text">Optimizar ruta de clientes</div></div>
                     <div class="menu-item" id="oficina-menu-timeline" onclick="cambiarPantalla('timeline')" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">📜</div><div class="menu-item-text">Timeline del Negocio</div></div>
+                    <div class="menu-item" id="oficina-menu-llegadas" onclick="if(typeof renderLlegadas==='function')renderLlegadas();cambiarPantalla('llegadas');" style="margin-bottom:8px;"><div class="menu-item-icon">📍</div><div class="menu-item-text">Registro de Llegadas</div></div>
                     <div class="menu-item" id="oficina-menu-config" onclick="cambiarPantalla('config')"><div class="menu-item-icon">⚙️</div><div class="menu-item-text">Configuración</div></div>
                 </div>
             </div>
@@ -781,28 +791,100 @@
             </div>
         </div>
 
-        <!-- CONFIG -->
+        <!-- CONFIG — iOS-style grouped settings -->
         <div class="screen" id="screen-config">
             <div class="content-section">
-                <div class="section-card">
-                    <div class="section-title">Preferencias</div>
-                    <div class="switch-row"><div class="stat-label">Notificaciones</div><div class="switch active" id="config-notif" onclick="typeof toggleConfigPref==='function'&&toggleConfigPref('notif',this)"><div class="switch-thumb"></div></div></div>
-                    <div class="switch-row"><div class="stat-label">Sonidos</div><div class="switch active" id="config-sonidos" onclick="typeof toggleConfigPref==='function'&&toggleConfigPref('sonidos',this)"><div class="switch-thumb"></div></div></div>
-                    <div class="switch-row"><div class="stat-label">Vibración</div><div class="switch active" id="config-vibra" onclick="typeof toggleConfigPref==='function'&&toggleConfigPref('vibra',this)"><div class="switch-thumb"></div></div></div>
-                </div>
-                <div class="section-card">
-                    <div class="section-title">Cuenta</div>
-                    <div class="input-group">
-                        <label class="input-label">Código de Sincronización</label>
-                        <input type="text" class="input-field" value="ABC123" readonly>
+
+                <!-- PREFERENCIAS -->
+                <div class="settings-section-label">Preferencias</div>
+                <div class="settings-group">
+                    <div class="settings-row" style="cursor:default;">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(14,165,233,0.15);">🔔</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Notificaciones</div>
+                            </div>
+                        </div>
+                        <div class="switch active" id="config-notif" onclick="typeof toggleConfigPref==='function'&&toggleConfigPref('notif',this)"><div class="switch-thumb"></div></div>
+                    </div>
+                    <div class="settings-row" style="cursor:default;">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(245,158,11,0.15);">🔊</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Sonidos</div>
+                            </div>
+                        </div>
+                        <div class="switch active" id="config-sonidos" onclick="typeof toggleConfigPref==='function'&&toggleConfigPref('sonidos',this)"><div class="switch-thumb"></div></div>
+                    </div>
+                    <div class="settings-row" style="cursor:default;">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(168,85,247,0.15);">📳</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Vibración</div>
+                            </div>
+                        </div>
+                        <div class="switch active" id="config-vibra" onclick="typeof toggleConfigPref==='function'&&toggleConfigPref('vibra',this)"><div class="switch-thumb"></div></div>
                     </div>
                 </div>
-                <div class="section-card">
-                    <div class="section-title">⚙️ Sistema de Stock</div>
-                    <button class="btn btn-primary btn-full" onclick="editarReglasConsumo()" style="margin-top: 12px;">💰 Modificar Precios/Gramajes</button>
+
+                <!-- GESTIÓN -->
+                <div class="settings-section-label">Gestión</div>
+                <div class="settings-group">
+                    <div class="settings-row" onclick="cambiarPantalla('stock')">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(59,130,246,0.15);">📦</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Control de Stock</div>
+                                <div class="settings-row-sub">Entradas, costes, tabla de precios</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                    <div class="settings-row" onclick="editarReglasConsumo()">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(16,185,129,0.15);">💰</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Precios y Gramajes</div>
+                                <div class="settings-row-sub">Modificar tabla de precios</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                    <div class="settings-row" onclick="cambiarPantalla('gorriones')">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(245,158,11,0.15);">🐦</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Gorriones</div>
+                                <div class="settings-row-sub">Ver y gestionar trabajadores</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                    <div class="settings-row" onclick="cambiarPantalla('deuda')">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(239,68,68,0.15);">👥</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Clientes y Deudas</div>
+                                <div class="settings-row-sub">Ver lista de clientes</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                    <div class="settings-row" onclick="cambiarPantalla('transferencias')">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(14,165,233,0.15);">🔄</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Transferencias</div>
+                                <div class="settings-row-sub">Mover entre cuentas</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
                 </div>
-                <div class="section-card">
-                    <div class="section-title">👤 Alta Cliente (Crédito)</div>
+
+                <!-- ALTA CLIENTE rápida -->
+                <div class="settings-section-label">Alta Cliente Rápida</div>
+                <div class="section-card" style="padding:16px;">
                     <div class="input-group"><label class="input-label">Nombre</label><input type="text" class="input-field" id="alta-nombre" placeholder="Nombre completo"></div>
                     <div class="input-group"><label class="input-label">Producto 1</label>
                         <select class="select-field" id="alta-producto"></select>
@@ -811,7 +893,7 @@
                         <label class="input-label">Producto 2 (opcional)</label>
                         <select class="select-field" id="alta-producto2"></select>
                     </div>
-                    <button class="btn btn-secondary" onclick="toggleProducto2Alta()" id="btn-add-prod-alta" style="font-size:11px;padding:6px 12px;margin-bottom:4px;">+ Añadir segundo producto</button>
+                    <button class="btn btn-secondary" onclick="toggleProducto2Alta()" id="btn-add-prod-alta" style="font-size:11px;padding:6px 12px;margin-bottom:12px;">+ Añadir segundo producto</button>
                     <div class="input-group"><label class="input-label">Límite Crédito (€)</label><input type="number" class="input-field" id="alta-limite" placeholder="0.00" step="0.01"></div>
                     <div class="input-group"><label class="input-label">WhatsApp</label><input type="tel" class="input-field" id="alta-telefono" placeholder="+34 600 000 000"></div>
                     <div class="input-group"><label class="input-label">Día de Pago</label>
@@ -820,9 +902,24 @@
                             <option value="1">Día 1</option><option value="2">Día 2</option><option value="3">Día 3</option><option value="4">Día 4</option><option value="5">Día 5</option><option value="6">Día 6</option><option value="7">Día 7</option><option value="8">Día 8</option><option value="9">Día 9</option><option value="10">Día 10</option><option value="11">Día 11</option><option value="12">Día 12</option><option value="13">Día 13</option><option value="14">Día 14</option><option value="15">Día 15</option><option value="16">Día 16</option><option value="17">Día 17</option><option value="18">Día 18</option><option value="19">Día 19</option><option value="20">Día 20</option><option value="21">Día 21</option><option value="22">Día 22</option><option value="23">Día 23</option><option value="24">Día 24</option><option value="25">Día 25</option><option value="26">Día 26</option><option value="27">Día 27</option><option value="28">Día 28</option><option value="29">Día 29</option><option value="30">Día 30</option><option value="31">Día 31</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary btn-full" onclick="altaClienteDeuda()" style="margin-top:8px;">✅ Registrar Cliente</button>
+                    <button class="btn btn-primary btn-full" onclick="altaClienteDeuda()" style="margin-top:4px;">✅ Registrar Cliente</button>
                     <div id="alta-resultado" style="margin-top:10px;font-size:13px;color:#10B981;font-weight:700;display:none;"></div>
                 </div>
+
+                <!-- CUENTA -->
+                <div class="settings-section-label">Cuenta</div>
+                <div class="settings-group">
+                    <div class="settings-row" style="cursor:default;">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(148,163,184,0.1);">🔗</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Código de Sincronización</div>
+                                <div class="settings-row-sub">ABC123</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -925,6 +1022,46 @@
                 <div class="modal-header"><div class="modal-title">🚨 Alertas de Crédito</div></div>
                 <div class="modal-body" id="alertas-jefes-lista"></div>
                 <div class="modal-footer"><button class="btn btn-secondary btn-full" onclick="document.getElementById('modalAlertasJefes').classList.remove('active')">Cerrar</button></div>
+            </div>
+        </div>
+
+        <!-- REGISTRO DE LLEGADAS — Panel global (MASTER) -->
+        <div class="screen" id="screen-llegadas">
+            <div class="content-section">
+
+                <!-- KPI row -->
+                <div class="llegadas-kpi-row">
+                    <div class="llegadas-kpi-card">
+                        <div class="llegadas-kpi-num" id="llegadas-kpi-total">0</div>
+                        <div class="llegadas-kpi-label">Llegadas</div>
+                    </div>
+                    <div class="llegadas-kpi-card">
+                        <div class="llegadas-kpi-num" id="llegadas-kpi-validas" style="color:#10B981;">0%</div>
+                        <div class="llegadas-kpi-label">Válidas</div>
+                    </div>
+                    <div class="llegadas-kpi-card">
+                        <div class="llegadas-kpi-num" id="llegadas-kpi-incidencias" style="color:#F59E0B;">0</div>
+                        <div class="llegadas-kpi-label">Incidencias</div>
+                    </div>
+                </div>
+
+                <!-- Filter chips -->
+                <div class="llegadas-filter-bar" id="llegadas-filter-bar">
+                    <button class="llegadas-filter-chip active" data-filter="todos" onclick="filtrarLlegadas('todos',this)">Todas</button>
+                    <button class="llegadas-filter-chip" data-filter="ok" onclick="filtrarLlegadas('ok',this)">✅ OK</button>
+                    <button class="llegadas-filter-chip" data-filter="fuera" onclick="filtrarLlegadas('fuera',this)">⚠️ Fuera zona</button>
+                    <button class="llegadas-filter-chip" data-filter="sin-gps" onclick="filtrarLlegadas('sin-gps',this)">📵 Sin GPS</button>
+                    <button class="llegadas-filter-chip" data-filter="hoy" onclick="filtrarLlegadas('hoy',this)">Hoy</button>
+                </div>
+
+                <!-- List -->
+                <div id="llegadas-global-list">
+                    <div style="text-align:center;padding:40px 20px;color:var(--text-secondary);">
+                        <div style="font-size:36px;margin-bottom:12px;opacity:0.3;">📍</div>
+                        <div style="font-size:13px;">Sin registros de llegada aún</div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -1035,37 +1172,57 @@
         <!-- MODAL DETALLE CLIENTE -->
         <div class="modal-overlay" id="modalDetalleCliente">
             <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title" id="detalle-cliente-nombre">Cliente</div>
-                    <div class="modal-subtitle" id="detalle-cliente-info">Info</div>
+                <div class="modal-header" style="margin-bottom:14px;">
+                    <div class="modal-title" id="detalle-cliente-nombre" style="font-size:20px;">Cliente</div>
+                    <div class="modal-subtitle" id="detalle-cliente-info" style="margin-top:3px;">Info</div>
                 </div>
                 <div class="modal-body">
-                    <div class="section-card" style="margin-bottom: 16px;">
-                        <div class="stat-row"><div class="stat-label">Deuda Total</div><div class="stat-value" id="detalle-cliente-deuda">0€</div></div>
-                        <div class="stat-row"><div class="stat-label">Límite de Crédito</div><div class="stat-value" id="detalle-cliente-limite">0€</div></div>
+
+                    <!-- Deuda hero -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+                        <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:14px;padding:14px 12px;text-align:center;">
+                            <div style="font-size:9px;font-weight:700;color:rgba(239,68,68,0.7);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">Deuda Total</div>
+                            <div style="font-size:22px;font-weight:900;color:#F87171;" id="detalle-cliente-deuda">0€</div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 12px;text-align:center;">
+                            <div style="font-size:9px;font-weight:700;color:rgba(148,163,184,0.7);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">Límite Crédito</div>
+                            <div style="font-size:22px;font-weight:900;color:var(--text-primary);" id="detalle-cliente-limite">0€</div>
+                        </div>
                     </div>
-                    <!-- Botones GPS: navegar + he llegado -->
+
+                    <!-- GPS / Llegada row -->
                     <div id="cliente-gps-row" style="display:none;gap:8px;margin-bottom:14px;">
                         <button id="btn-navegar-cliente" class="btn btn-secondary" style="flex:1;display:none;" onclick="navegarACliente()">🗺️ Navegar</button>
                         <button id="btn-he-llegado" class="btn btn-primary" style="flex:1;display:none;" onclick="registrarLlegada()">📍 He llegado</button>
                     </div>
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                        <button class="btn btn-primary" style="flex: 1;" onclick="pagoTotal()">Pago Total</button>
-                        <button class="btn btn-secondary" style="flex: 1;" onclick="mostrarPagoParcial()">Pago Parcial</button>
+
+                    <!-- Payment actions -->
+                    <div style="display:flex;gap:10px;margin-bottom:16px;">
+                        <button class="btn btn-primary" style="flex:1;font-size:13px;padding:14px 8px;" onclick="pagoTotal()">✅ Pago Total</button>
+                        <button class="btn btn-secondary" style="flex:1;font-size:13px;padding:14px 8px;" onclick="mostrarPagoParcial()">💸 Pago Parcial</button>
                     </div>
-                    <div id="pago-parcial-form" style="display: none;">
-                        <div class="input-group"><label class="input-label">Monto del Pago (€)</label><input type="number" class="input-field" id="pago-parcial-monto" placeholder="0.00" step="0.01"></div>
+
+                    <!-- Partial payment form -->
+                    <div id="pago-parcial-form" style="display:none;margin-bottom:16px;">
+                        <div class="input-group" style="margin-bottom:8px;">
+                            <label class="input-label">Monto del Pago (€)</label>
+                            <input type="number" class="input-field" id="pago-parcial-monto" placeholder="0.00" step="0.01">
+                        </div>
                         <button class="btn btn-primary btn-full" onclick="ejecutarPagoParcial()">Aplicar Pago</button>
                     </div>
-                    <div style="margin-top: 20px;">
-                        <div class="input-label">Historial de Movimientos</div>
+
+                    <!-- Movement history -->
+                    <div style="margin-top:4px;">
+                        <div class="input-label" style="margin-bottom:8px;">Historial de Movimientos</div>
                         <div id="historial-cliente"></div>
                     </div>
-                    <!-- Registro de llegadas -->
+
+                    <!-- Arrivals history -->
                     <div id="llegadas-section" style="display:none;margin-top:20px;">
-                        <div class="input-label">Registro de Llegadas</div>
+                        <div class="input-label" style="margin-bottom:8px;">📍 Registro de Llegadas</div>
                         <div id="llegadas-cliente"></div>
                     </div>
+
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary btn-full" onclick="cerrarModalDetalleCliente()">Cerrar</button>
@@ -1074,21 +1231,83 @@
         </div>
     </div>
 
-    <script src="js/state.js?v=9"></script>
-    <script src="js/supabase.js?v=9"></script>
-    <script src="js/dashboard.js?v=9"></script>
-    <script src="js/transacciones.js?v=9"></script>
-    <script src="js/clientes.js?v=9"></script>
-    <script src="js/ui.js?v=9"></script>
-    <script src="js/metrics.js?v=9"></script>
-    <script src="js/timeline.js?v=9"></script>
-    <script src="js/app.js?v=9"></script>
-    <script src="js/master-security.js?v=9"></script>
-    <script src="js/productos.js?v=9"></script>
+    <script src="js/state.js?v=10"></script>
+    <script src="js/supabase.js?v=10"></script>
+    <script src="js/dashboard.js?v=10"></script>
+    <script src="js/transacciones.js?v=10"></script>
+    <script src="js/clientes.js?v=10"></script>
+    <script src="js/ui.js?v=10"></script>
+    <script src="js/metrics.js?v=10"></script>
+    <script src="js/timeline.js?v=10"></script>
+    <script src="js/app.js?v=10"></script>
+    <script src="js/master-security.js?v=10"></script>
+    <script src="js/productos.js?v=10"></script>
     <script>
     window._silberDebug = function() {
       try { if (typeof console !== 'undefined' && console.log) console.log.apply(console, ['[Silber]'].concat(Array.prototype.slice.call(arguments))); } catch(e) {}
     };
+
+    /* ── Registro de Llegadas — panel global ──────────────────── */
+    var _llegadasFiltro = 'todos';
+
+    function renderLlegadas() {
+        var hoy = new Date().toISOString().split('T')[0];
+        var lista = (typeof estado !== 'undefined' && estado && Array.isArray(estado.llegadas)) ? estado.llegadas : [];
+
+        // Apply filter
+        var filtradas = lista.filter(function(l) {
+            if (_llegadasFiltro === 'ok')      return !l.fueraDeZona && !l.sinGPS;
+            if (_llegadasFiltro === 'fuera')   return !!l.fueraDeZona;
+            if (_llegadasFiltro === 'sin-gps') return !!l.sinGPS;
+            if (_llegadasFiltro === 'hoy')     return l.fecha === hoy;
+            return true;
+        });
+
+        // KPIs (always from full list)
+        var total       = lista.length;
+        var incidencias = lista.filter(function(l){ return l.fueraDeZona || l.sinGPS; }).length;
+        var validas     = total > 0 ? Math.round(((total - incidencias) / total) * 100) : 0;
+
+        var elTotal  = document.getElementById('llegadas-kpi-total');
+        var elVal    = document.getElementById('llegadas-kpi-validas');
+        var elInc    = document.getElementById('llegadas-kpi-incidencias');
+        if (elTotal) elTotal.textContent = total;
+        if (elVal)   elVal.textContent   = validas + '%';
+        if (elInc)   elInc.textContent   = incidencias;
+
+        // List
+        var container = document.getElementById('llegadas-global-list');
+        if (!container) return;
+
+        if (filtradas.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);"><div style="font-size:36px;margin-bottom:12px;opacity:0.3;">📍</div><div style="font-size:13px;">' + (_llegadasFiltro === 'todos' ? 'Sin registros de llegada aún' : 'Sin resultados para este filtro') + '</div></div>';
+            return;
+        }
+
+        container.innerHTML = filtradas.map(function(l) {
+            var statusClass = l.fueraDeZona ? 'fuera' : (l.sinGPS ? 'sin-gps' : 'ok');
+            var statusLabel = l.fueraDeZona ? '⚠️ Fuera zona' : (l.sinGPS ? '📵 Sin GPS' : '✅ OK');
+            var distInfo    = (l.distancia != null) ? ' · ' + Math.round(l.distancia) + 'm' : '';
+            return '<div class="llegada-item">' +
+                '<div class="llegada-dot ' + statusClass + '"></div>' +
+                '<div class="llegada-info">' +
+                    '<div class="llegada-nombre">' + (l.clienteNombre || '—') + '</div>' +
+                    '<div class="llegada-meta">' + (l.trabajador || '—') + ' · ' + (l.fecha || '') + ' ' + (l.hora || '') + distInfo + '</div>' +
+                '</div>' +
+                '<span class="llegada-status ' + statusClass + '">' + statusLabel + '</span>' +
+            '</div>';
+        }).join('');
+    }
+
+    function filtrarLlegadas(filtro, btn) {
+        _llegadasFiltro = filtro;
+        var chips = document.querySelectorAll('.llegadas-filter-chip');
+        if (chips) { for (var i = 0; i < chips.length; i++) chips[i].classList.remove('active'); }
+        if (btn) btn.classList.add('active');
+        renderLlegadas();
+    }
+    /* ──────────────────────────────────────────────────────────── */
+
     (function() {
       function loginFallback() {
         if (typeof window.intentarLogin === 'function') { window.intentarLogin(); return; }
