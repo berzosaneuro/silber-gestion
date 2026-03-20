@@ -1007,9 +1007,13 @@
                             <option value="1">Día 1</option><option value="2">Día 2</option><option value="3">Día 3</option><option value="4">Día 4</option><option value="5">Día 5</option><option value="6">Día 6</option><option value="7">Día 7</option><option value="8">Día 8</option><option value="9">Día 9</option><option value="10">Día 10</option><option value="11">Día 11</option><option value="12">Día 12</option><option value="13">Día 13</option><option value="14">Día 14</option><option value="15">Día 15</option><option value="16">Día 16</option><option value="17">Día 17</option><option value="18">Día 18</option><option value="19">Día 19</option><option value="20">Día 20</option><option value="21">Día 21</option><option value="22">Día 22</option><option value="23">Día 23</option><option value="24">Día 24</option><option value="25">Día 25</option><option value="26">Día 26</option><option value="27">Día 27</option><option value="28">Día 28</option><option value="29">Día 29</option><option value="30">Día 30</option><option value="31">Día 31</option>
                         </select>
                     </div>
-                    <div class="input-group" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                        <div><label class="input-label">Lat (opcional)</label><input type="number" class="input-field" id="cliente-lat" placeholder="ej. 40.41" step="any"></div>
-                        <div><label class="input-label">Lng (opcional)</label><input type="number" class="input-field" id="cliente-lng" placeholder="ej. -3.70" step="any"></div>
+                    <div class="input-group">
+                        <label class="input-label">Ubicación GPS (opcional)</label>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+                            <div><input type="number" class="input-field" id="cliente-lat" placeholder="Lat ej. 40.4168" step="any"></div>
+                            <div><input type="number" class="input-field" id="cliente-lng" placeholder="Lng ej. -3.7038" step="any"></div>
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="btn-capture-gps" onclick="captureGPSParaCliente()" style="font-size:11px;padding:6px 12px;width:100%;">📍 Capturar GPS actual</button>
                     </div>
                     <div class="input-group">
                         <label class="input-label">Producto 1</label>
@@ -1040,6 +1044,11 @@
                         <div class="stat-row"><div class="stat-label">Deuda Total</div><div class="stat-value" id="detalle-cliente-deuda">0€</div></div>
                         <div class="stat-row"><div class="stat-label">Límite de Crédito</div><div class="stat-value" id="detalle-cliente-limite">0€</div></div>
                     </div>
+                    <!-- Botones GPS: navegar + he llegado -->
+                    <div id="cliente-gps-row" style="display:none;gap:8px;margin-bottom:14px;">
+                        <button id="btn-navegar-cliente" class="btn btn-secondary" style="flex:1;display:none;" onclick="navegarACliente()">🗺️ Navegar</button>
+                        <button id="btn-he-llegado" class="btn btn-primary" style="flex:1;display:none;" onclick="registrarLlegada()">📍 He llegado</button>
+                    </div>
                     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                         <button class="btn btn-primary" style="flex: 1;" onclick="pagoTotal()">Pago Total</button>
                         <button class="btn btn-secondary" style="flex: 1;" onclick="mostrarPagoParcial()">Pago Parcial</button>
@@ -1052,6 +1061,11 @@
                         <div class="input-label">Historial de Movimientos</div>
                         <div id="historial-cliente"></div>
                     </div>
+                    <!-- Registro de llegadas -->
+                    <div id="llegadas-section" style="display:none;margin-top:20px;">
+                        <div class="input-label">Registro de Llegadas</div>
+                        <div id="llegadas-cliente"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary btn-full" onclick="cerrarModalDetalleCliente()">Cerrar</button>
@@ -1060,17 +1074,17 @@
         </div>
     </div>
 
-    <script src="js/state.js?v=8"></script>
-    <script src="js/supabase.js?v=8"></script>
-    <script src="js/dashboard.js?v=8"></script>
-    <script src="js/transacciones.js?v=8"></script>
-    <script src="js/clientes.js?v=8"></script>
-    <script src="js/ui.js?v=8"></script>
-    <script src="js/metrics.js?v=8"></script>
-    <script src="js/timeline.js?v=8"></script>
-    <script src="js/app.js?v=8"></script>
-    <script src="js/master-security.js?v=8"></script>
-    <script src="js/productos.js?v=8"></script>
+    <script src="js/state.js?v=9"></script>
+    <script src="js/supabase.js?v=9"></script>
+    <script src="js/dashboard.js?v=9"></script>
+    <script src="js/transacciones.js?v=9"></script>
+    <script src="js/clientes.js?v=9"></script>
+    <script src="js/ui.js?v=9"></script>
+    <script src="js/metrics.js?v=9"></script>
+    <script src="js/timeline.js?v=9"></script>
+    <script src="js/app.js?v=9"></script>
+    <script src="js/master-security.js?v=9"></script>
+    <script src="js/productos.js?v=9"></script>
     <script>
     window._silberDebug = function() {
       try { if (typeof console !== 'undefined' && console.log) console.log.apply(console, ['[Silber]'].concat(Array.prototype.slice.call(arguments))); } catch(e) {}

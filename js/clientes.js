@@ -173,6 +173,34 @@ function abrirDetalleCliente(cliente) {
         });
     }
     document.getElementById('pago-parcial-form').style.display = 'none';
+
+    // GPS: mostrar botón navegar solo si el cliente tiene coordenadas
+    var btnNav = document.getElementById('btn-navegar-cliente');
+    if (btnNav) btnNav.style.display = (cliente.lat && cliente.lng) ? 'flex' : 'none';
+
+    // "He llegado": visible solo para workers (Gorriones)
+    var btnLlegado = document.getElementById('btn-he-llegado');
+    var gpsRow = document.getElementById('cliente-gps-row');
+    var tieneGPS = !!(cliente.lat && cliente.lng);
+    if (gpsRow) {
+        // Mostrar la fila si: hay coords (para navegar) O es worker (para he llegado)
+        var mostrarFila = tieneGPS || (typeof esWorker === 'function' && esWorker());
+        gpsRow.style.display = mostrarFila ? 'flex' : 'none';
+    }
+    if (btnLlegado) {
+        btnLlegado.style.display = (typeof esWorker === 'function' && esWorker()) ? 'flex' : 'none';
+        btnLlegado.disabled = false;
+        btnLlegado.textContent = '📍 He llegado';
+    }
+
+    // Historial de llegadas
+    var llegadasSection = document.getElementById('llegadas-section');
+    if (llegadasSection) {
+        var hayLlegadas = (estado.llegadas || []).some(function(l) { return l.clienteId === cliente.id; });
+        llegadasSection.style.display = (hayLlegadas || (typeof esWorker === 'function' && esWorker())) ? 'block' : 'none';
+    }
+    _renderizarLlegadasEnDetalle(cliente.id);
+
     document.getElementById('modalDetalleCliente').classList.add('active');
     if (navigator.vibrate) navigator.vibrate(30);
 }
@@ -645,4 +673,153 @@ function abrirRutaEnGoogleMaps() {
     var url = 'https://www.google.com/maps/dir/' + parts.join('/');
     window.open(url, '_blank');
     cerrarModalRutaClientes();
+}
+
+// ===== GEOLOCALIZACIÓN, GPS CAPTURE, "HE LLEGADO" Y GEOFENCE =====
+
+var GEOFENCE_RADIO_METROS = 300; // metros de radio permitido para registrar llegada
+
+/** Distancia en metros entre dos puntos (fórmula Haversine) */
+function haversineMetros(lat1, lng1, lat2, lng2) {
+    var R = 6371000;
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLng = (lng2 - lng1) * Math.PI / 180;
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** Captura GPS actual y rellena los campos lat/lng del formulario de nuevo cliente */
+function captureGPSParaCliente() {
+    var btn = document.getElementById('btn-capture-gps');
+    if (btn) { btn.textContent = '📡 Obteniendo…'; btn.disabled = true; }
+    if (!navigator.geolocation) {
+        alert('Geolocalización no disponible en este dispositivo.');
+        if (btn) { btn.textContent = '📍 Capturar GPS'; btn.disabled = false; }
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        var lat = pos.coords.latitude.toFixed(6);
+        var lng = pos.coords.longitude.toFixed(6);
+        var latEl = document.getElementById('cliente-lat');
+        var lngEl = document.getElementById('cliente-lng');
+        if (latEl) latEl.value = lat;
+        if (lngEl) lngEl.value = lng;
+        if (btn) { btn.textContent = '✅ GPS capturado'; btn.disabled = false; }
+        if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+        setTimeout(function() { if (btn) btn.textContent = '📍 Capturar GPS'; }, 3000);
+    }, function(err) {
+        alert('No se pudo obtener la ubicación: ' + (err.message || 'Error'));
+        if (btn) { btn.textContent = '📍 Capturar GPS'; btn.disabled = false; }
+    }, { enableHighAccuracy: true, timeout: 12000 });
+}
+
+/** Abre Google Maps con navegación al cliente actual */
+function navegarACliente() {
+    var c = estado.clienteActual;
+    if (!c) return;
+    if (!c.lat || !c.lng) {
+        alert('Este cliente no tiene coordenadas GPS.\nEdítalo y usa el botón "Capturar GPS" para añadir su ubicación.');
+        return;
+    }
+    var url = 'https://www.google.com/maps/dir/?api=1&destination=' + c.lat + ',' + c.lng + '&travelmode=driving';
+    window.open(url, '_blank');
+}
+
+/** Registra la llegada del trabajador al cliente con verificación de geofence */
+function registrarLlegada() {
+    var c = estado.clienteActual;
+    if (!c) return;
+    var btn = document.getElementById('btn-he-llegado');
+    if (btn) { btn.disabled = true; btn.textContent = '📡 Verificando…'; }
+
+    function _grabar(lat, lng, distancia, fueraDeZona, sinGPS) {
+        var ahora = new Date();
+        var entrada = {
+            id: Date.now(),
+            fecha: ahora.toISOString().split('T')[0],
+            hora: ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+            trabajador: sesionActual ? sesionActual.usuario : 'desconocido',
+            clienteId: c.id,
+            clienteNombre: c.nombre,
+            lat: lat || null,
+            lng: lng || null,
+            distancia: distancia != null ? Math.round(distancia) : null,
+            fueraDeZona: !!fueraDeZona,
+            sinGPS: !!sinGPS
+        };
+        if (!estado.llegadas) estado.llegadas = [];
+        estado.llegadas.unshift(entrada);
+        guardarEstado();
+
+        // Auditoría
+        if (typeof activityLogAdd === 'function') {
+            activityLogAdd({
+                ts: ahora.toISOString(),
+                usuario: entrada.trabajador,
+                accion: 'LLEGADA_CLIENTE',
+                detalle: 'Cliente: ' + c.nombre +
+                    (distancia != null ? ' · ' + Math.round(distancia) + 'm' : '') +
+                    (fueraDeZona ? ' ⚠️ FUERA DE ZONA' : '') +
+                    (sinGPS ? ' ⚠️ SIN GPS' : '')
+            });
+        }
+
+        if (btn) { btn.disabled = false; btn.textContent = '📍 He llegado'; }
+
+        var msg = '✅ Llegada registrada\n' + entrada.hora + ' · ' + c.nombre;
+        if (distancia != null) msg += '\nDistancia al cliente: ' + Math.round(distancia) + 'm';
+        if (fueraDeZona) msg += '\n⚠️ Estás fuera del radio permitido (' + GEOFENCE_RADIO_METROS + 'm)';
+        if (sinGPS) msg += '\n⚠️ Sin GPS — llegada registrada sin verificar posición';
+        alert(msg);
+        if (navigator.vibrate) navigator.vibrate([30, 50, 30, 50, 30]);
+
+        _renderizarLlegadasEnDetalle(c.id);
+        var llegadasSection = document.getElementById('llegadas-section');
+        if (llegadasSection) llegadasSection.style.display = 'block';
+    }
+
+    if (!navigator.geolocation) {
+        _grabar(null, null, null, false, true);
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        var lat = pos.coords.latitude;
+        var lng = pos.coords.longitude;
+        var distancia = null;
+        var fueraDeZona = false;
+        if (c.lat && c.lng && !isNaN(parseFloat(c.lat)) && !isNaN(parseFloat(c.lng))) {
+            distancia = haversineMetros(lat, lng, parseFloat(c.lat), parseFloat(c.lng));
+            fueraDeZona = distancia > GEOFENCE_RADIO_METROS;
+        }
+        _grabar(lat, lng, distancia, fueraDeZona, false);
+    }, function() {
+        // GPS no disponible o denegado — registrar igualmente
+        _grabar(null, null, null, false, true);
+    }, { enableHighAccuracy: true, timeout: 8000 });
+}
+
+/** Renderiza el historial de llegadas de un cliente en el modal de detalle */
+function _renderizarLlegadasEnDetalle(clienteId) {
+    var container = document.getElementById('llegadas-cliente');
+    if (!container) return;
+    var llegadas = (estado.llegadas || []).filter(function(l) { return l.clienteId === clienteId; }).slice(0, 10);
+    if (llegadas.length === 0) {
+        container.innerHTML = '<div style="font-size:12px;color:var(--text-secondary);padding:6px 0;">Sin registros de llegada aún</div>';
+        return;
+    }
+    container.innerHTML = llegadas.map(function(l) {
+        var badge = '';
+        if (l.fueraDeZona) badge = '<span style="font-size:10px;background:rgba(245,158,11,0.2);color:#F59E0B;border:1px solid rgba(245,158,11,0.4);border-radius:5px;padding:1px 6px;margin-left:5px;">FUERA ZONA</span>';
+        else if (l.sinGPS) badge = '<span style="font-size:10px;background:rgba(100,116,139,0.2);color:#94A3B8;border:1px solid rgba(100,116,139,0.4);border-radius:5px;padding:1px 6px;margin-left:5px;">SIN GPS</span>';
+        var dist = l.distancia != null ? '<span style="color:var(--text-secondary);">' + l.distancia + 'm</span>' : '';
+        return '<div class="historial-item">' +
+            '<div class="historial-header">' +
+            '<div class="historial-tipo" style="font-size:12px;">📍 ' + (l.trabajador || '—') + badge + '</div>' +
+            '<div class="historial-fecha">' + l.fecha + ' ' + l.hora + '</div>' +
+            '</div>' +
+            (dist ? '<div style="font-size:11px;padding:2px 0 0;">' + dist + '</div>' : '') +
+            '</div>';
+    }).join('');
 }

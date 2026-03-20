@@ -122,6 +122,8 @@ if (typeof estado.umbralAlertaAltoValor !== 'number') estado.umbralAlertaAltoVal
 if (!estado.productos) estado.productos = [];
 // Historial de movimientos de stock: producto, tipo, cantidad_gramos, usuario, timestamp
 if (!estado.stock_movements) estado.stock_movements = [];
+// Registro de llegadas de trabajadores a clientes (geolocalización)
+if (!Array.isArray(estado.llegadas)) estado.llegadas = [];
 
 estado.categoriasGastos = [
     { nombre: 'Casa', color: '#0EA5E9', esRecarga: false, icon: `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="34" height="34"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>` },
