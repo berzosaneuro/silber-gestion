@@ -1074,10 +1074,10 @@
                     <button class="btn btn-secondary" onclick="toggleProducto2DP()" id="btn-add-prod-dp" style="font-size:11px;padding:6px 12px;margin-bottom:4px;">+ Añadir segundo producto</button>
                     <div class="input-group"><label class="input-label">Cantidad (€)</label><input type="number" class="input-field" id="dp-cantidad" placeholder="0.00" step="0.01"></div>
                     <div class="input-group"><label class="input-label">Día de Cobro</label>
-                        <select class="select-field" id="dp-dia">
-                            <option value="1">Día 1</option><option value="5">Día 5</option><option value="10">Día 10</option>
-                            <option value="15">Día 15</option><option value="20">Día 20</option><option value="25">Día 25</option><option value="30">Día 30</option>
-                        </select>
+                        <input type="date" class="input-field" id="dp-dia-picker"
+                               style="cursor:pointer;"
+                               onchange="(function(v){var d=v?new Date(v+'T12:00:00').getDate():1;document.getElementById('dp-dia').value=d;})(this.value)">
+                        <input type="hidden" id="dp-dia" value="1">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1463,19 +1463,19 @@
         </div>
     </div>
 
-    <script src="js/state.js?v=21"></script>
-    <script src="js/stability.js?v=21"></script>
-    <script src="js/supabase.js?v=21"></script>
-    <script src="js/dashboard.js?v=21"></script>
-    <script src="js/transacciones.js?v=21"></script>
-    <script src="js/clientes.js?v=21"></script>
-    <script src="js/ui.js?v=21"></script>
-    <script src="js/metrics.js?v=21"></script>
-    <script src="js/timeline.js?v=21"></script>
-    <script src="js/app.js?v=21"></script>
-    <script src="js/master-security.js?v=21"></script>
-    <script src="js/productos.js?v=21"></script>
-    <script src="js/amor.js?v=21"></script>
+    <script src="js/state.js?v=22"></script>
+    <script src="js/stability.js?v=22"></script>
+    <script src="js/supabase.js?v=22"></script>
+    <script src="js/dashboard.js?v=22"></script>
+    <script src="js/transacciones.js?v=22"></script>
+    <script src="js/clientes.js?v=22"></script>
+    <script src="js/ui.js?v=22"></script>
+    <script src="js/metrics.js?v=22"></script>
+    <script src="js/timeline.js?v=22"></script>
+    <script src="js/app.js?v=22"></script>
+    <script src="js/master-security.js?v=22"></script>
+    <script src="js/productos.js?v=22"></script>
+    <script src="js/amor.js?v=22"></script>
     <script>
     window._silberDebug = function() {
       try { if (typeof console !== 'undefined' && console.log) console.log.apply(console, ['[Silber]'].concat(Array.prototype.slice.call(arguments))); } catch(e) {}
@@ -2526,6 +2526,36 @@
             clearTimeout(el._t);
             el._t = setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translateX(-50%) translateY(8px)'; }, 1400);
         }
+    })();
+
+    /* ── Fecha de cobro: inicializar calendario al abrir modal ── */
+    (function() {
+        var modal = document.getElementById('modalDeudaPendiente');
+        if (!modal) return;
+        function _resetDpPicker() {
+            var picker = document.getElementById('dp-dia-picker');
+            if (!picker) return;
+            var hoy = new Date();
+            // min: día 1 del mes actual
+            var minDate = hoy.getFullYear() + '-' +
+                String(hoy.getMonth() + 1).padStart(2, '0') + '-01';
+            // max: último día del mes siguiente
+            var lastNext = new Date(hoy.getFullYear(), hoy.getMonth() + 2, 0);
+            var maxDate = lastNext.getFullYear() + '-' +
+                String(lastNext.getMonth() + 1).padStart(2, '0') + '-' +
+                String(lastNext.getDate()).padStart(2, '0');
+            picker.min = minDate;
+            picker.max = maxDate;
+            picker.value = hoy.toISOString().split('T')[0]; // default: hoy
+            document.getElementById('dp-dia').value = hoy.getDate();
+        }
+        new MutationObserver(function(muts) {
+            muts.forEach(function(m) {
+                if (m.attributeName === 'class' && modal.classList.contains('active')) {
+                    _resetDpPicker();
+                }
+            });
+        }).observe(modal, { attributes: true });
     })();
     </script>
 </body>

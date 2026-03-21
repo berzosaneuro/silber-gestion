@@ -580,7 +580,7 @@ function guardarCosteV() {
 }
 
 function abrirCierreDia() {
-    if (typeof esJefazo === 'function' && !esJefazo()) return;
+    if (typeof esMaster === 'function' && !esMaster()) return;
     const hoy = new Date().toISOString().split('T')[0];
     const fechaLabel = new Date().toLocaleDateString('es-ES', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
 
