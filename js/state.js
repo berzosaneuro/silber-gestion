@@ -5,8 +5,8 @@
 var USUARIOS = (typeof window !== 'undefined' && window.SILBER_USUARIOS && Array.isArray(window.SILBER_USUARIOS))
     ? window.SILBER_USUARIOS
     : [
-        { username: 'Jefazo', password: '15031980', role: 'JEFAZO' },
-        { username: 'Jefaza', password: '03021987', role: 'JEFAZA' }
+        { username: 'Eljefazo', password: '15031980', role: 'JEFAZO' },
+        { username: 'Lajefaza', password: '03021987', role: 'JEFAZA' }
     ];
 var sesionActual = null;
 
