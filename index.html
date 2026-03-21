@@ -139,6 +139,35 @@
                                 FACE ID / HUELLA
                             </button>
                         </form>
+
+                        <!-- Registro Gorrión -->
+                        <div class="login-reg-link">
+                            <button type="button" onclick="abrirRegistroGorrion()">
+                                🐦 ¿Eres un Gorrión? <span>Regístrate aquí</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de registro (overlay sobre login) -->
+            <div class="login-reg-panel" id="panel-registro-gorrion" aria-hidden="true">
+                <div class="lrp-inner">
+                    <div class="lrp-head">
+                        <button class="lrp-back" onclick="cerrarRegistroGorrion()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+                        </button>
+                        <span class="lrp-title">🐦 Crear cuenta Gorrión</span>
+                    </div>
+                    <div class="lrp-body">
+                        <p class="lrp-hint">Rellena tus datos para acceder al equipo</p>
+                        <input type="text"     id="reg-nombre"    class="login-input" placeholder="Tu nombre completo"        autocomplete="name"        maxlength="40">
+                        <input type="tel"      id="reg-telefono"  class="login-input" placeholder="Teléfono (opcional)"       autocomplete="tel"         maxlength="20">
+                        <input type="password" id="reg-password"  class="login-input" placeholder="Elige una contraseña"      autocomplete="new-password" maxlength="30">
+                        <input type="password" id="reg-password2" class="login-input" placeholder="Repite la contraseña"      autocomplete="new-password" maxlength="30">
+                        <div id="reg-error" class="login-error" role="alert" style="display:none;"></div>
+                        <button type="button" class="login-btn login-btn-primary" onclick="completarRegistroGorrion()">CREAR CUENTA</button>
+                        <div class="lrp-footer-note">Tu usuario se creará automáticamente</div>
                     </div>
                 </div>
             </div>
@@ -1434,23 +1463,113 @@
         </div>
     </div>
 
-    <script src="js/state.js?v=19"></script>
-    <script src="js/stability.js?v=19"></script>
-    <script src="js/supabase.js?v=19"></script>
-    <script src="js/dashboard.js?v=19"></script>
-    <script src="js/transacciones.js?v=19"></script>
-    <script src="js/clientes.js?v=19"></script>
-    <script src="js/ui.js?v=19"></script>
-    <script src="js/metrics.js?v=19"></script>
-    <script src="js/timeline.js?v=19"></script>
-    <script src="js/app.js?v=19"></script>
-    <script src="js/master-security.js?v=19"></script>
-    <script src="js/productos.js?v=19"></script>
-    <script src="js/amor.js?v=19"></script>
+    <script src="js/state.js?v=20"></script>
+    <script src="js/stability.js?v=20"></script>
+    <script src="js/supabase.js?v=20"></script>
+    <script src="js/dashboard.js?v=20"></script>
+    <script src="js/transacciones.js?v=20"></script>
+    <script src="js/clientes.js?v=20"></script>
+    <script src="js/ui.js?v=20"></script>
+    <script src="js/metrics.js?v=20"></script>
+    <script src="js/timeline.js?v=20"></script>
+    <script src="js/app.js?v=20"></script>
+    <script src="js/master-security.js?v=20"></script>
+    <script src="js/productos.js?v=20"></script>
+    <script src="js/amor.js?v=20"></script>
     <script>
     window._silberDebug = function() {
       try { if (typeof console !== 'undefined' && console.log) console.log.apply(console, ['[Silber]'].concat(Array.prototype.slice.call(arguments))); } catch(e) {}
     };
+
+    /* ╔════════════════════════════════════════════════════════╗
+       ║  REGISTRO GORRIONES — Auto-registro desde login        ║
+       ╚════════════════════════════════════════════════════════╝ */
+
+    function abrirRegistroGorrion() {
+        var panel = document.getElementById('panel-registro-gorrion');
+        if (!panel) return;
+        // Clear fields
+        ['reg-nombre','reg-telefono','reg-password','reg-password2'].forEach(function(id) {
+            var el = document.getElementById(id); if (el) el.value = '';
+        });
+        document.getElementById('reg-error').style.display = 'none';
+        panel.classList.add('lrp-open');
+        panel.setAttribute('aria-hidden', 'false');
+        var first = document.getElementById('reg-nombre');
+        if (first) setTimeout(function() { first.focus(); }, 320);
+    }
+
+    function cerrarRegistroGorrion() {
+        var panel = document.getElementById('panel-registro-gorrion');
+        if (panel) {
+            panel.classList.remove('lrp-open');
+            panel.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    function completarRegistroGorrion() {
+        var nombre   = (document.getElementById('reg-nombre').value   || '').trim();
+        var telefono = (document.getElementById('reg-telefono').value  || '').trim();
+        var pass1    = (document.getElementById('reg-password').value  || '').trim();
+        var pass2    = (document.getElementById('reg-password2').value || '').trim();
+        var errEl    = document.getElementById('reg-error');
+
+        function showErr(msg) {
+            errEl.textContent = '⚠ ' + msg;
+            errEl.style.display = 'block';
+            if (navigator.vibrate) navigator.vibrate([80,40,80]);
+        }
+
+        errEl.style.display = 'none';
+        if (!nombre || nombre.length < 2)        { showErr('Introduce tu nombre completo'); return; }
+        if (!pass1  || pass1.length < 4)         { showErr('La contraseña debe tener mínimo 4 caracteres'); return; }
+        if (pass1 !== pass2)                     { showErr('Las contraseñas no coinciden'); return; }
+
+        var lista = (typeof cargarGorriones === 'function') ? cargarGorriones() : [];
+
+        // Auto-generate username: gorrionN_nombre
+        var base    = nombre.split(' ')[0]
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+                        .replace(/[^a-zA-Z0-9]/g,'').toLowerCase();
+        var numero  = lista.length + 1;
+        var usuario = 'gorrion' + numero + '_' + base;
+        // Avoid collision if somehow it exists
+        while (lista.find(function(g) { return g.usuario === usuario; })) {
+            numero++;
+            usuario = 'gorrion' + numero + '_' + base;
+        }
+
+        // Check if name is already taken
+        var dupNombre = lista.find(function(g) {
+            return g.nombre.toLowerCase() === nombre.toLowerCase();
+        });
+        if (dupNombre) { showErr('Ya existe una cuenta con ese nombre'); return; }
+
+        var nuevo = {
+            nombre:      nombre,
+            numero:      numero,
+            telefono:    telefono,
+            direccion:   '',
+            usuario:     usuario,
+            password:    pass1,
+            registradoEn: new Date().toISOString()
+        };
+
+        lista.push(nuevo);
+        if (typeof guardarGorriones === 'function') guardarGorriones(lista);
+
+        // Auto-login the new gorrion
+        sesionActual = {
+            usuario:    nuevo.usuario,
+            rol:        'WORKER',
+            gorrionIdx: lista.length - 1,
+            nombre:     nuevo.nombre,
+            numero:     nuevo.numero
+        };
+
+        cerrarRegistroGorrion();
+        if (typeof entrarApp === 'function') entrarApp();
+    }
 
     /* ╔════════════════════════════════════════════════════════╗
        ║  OPERATIONAL LAYER — Alerts · WhatsApp · Notifs · UX  ║
