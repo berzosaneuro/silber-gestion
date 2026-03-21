@@ -21,7 +21,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <title>SILBER GESTIÓN</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/cyberpunk.css?v=1">
+    <link rel="stylesheet" href="css/cyberpunk.css?v=2">
 
 </head>
 <body>
@@ -2527,6 +2527,42 @@
             clearTimeout(el._t);
             el._t = setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translateX(-50%) translateY(8px)'; }, 1400);
         }
+    })();
+
+    /* ── 3D card tilt on desktop (mouse tracking) ───────────── */
+    (function _initCardTilt() {
+        if (window.innerWidth < 768) return; // mobile: CSS hover fallback only
+        var RAD = 10; // max tilt degrees
+        function applyTilt(card, e) {
+            var r = card.getBoundingClientRect();
+            var x = (e.clientX - r.left) / r.width  - 0.5;
+            var y = (e.clientY - r.top)  / r.height - 0.5;
+            card.style.transform =
+                'perspective(700px)'
+                + ' rotateX(' + (-y * RAD) + 'deg)'
+                + ' rotateY(' + ( x * RAD) + 'deg)'
+                + ' translateZ(8px)';
+            card.classList.add('cp-tilt');
+        }
+        function resetTilt(card) {
+            card.style.transform = '';
+            card.classList.remove('cp-tilt');
+        }
+        // Attach to all current + future cards via delegation on document
+        document.addEventListener('mousemove', function(e) {
+            var card = e.target.closest('.section-card');
+            if (card) { applyTilt(card, e); }
+        }, { passive: true });
+        document.addEventListener('mouseleave', function(e) {
+            var card = e.target.closest && e.target.closest('.section-card');
+            if (card) resetTilt(card);
+        }, true);
+        // Reset when mouse exits the card itself
+        document.addEventListener('mouseover', function(e) {
+            if (!e.target.closest('.section-card')) {
+                document.querySelectorAll('.section-card.cp-tilt').forEach(resetTilt);
+            }
+        }, { passive: true });
     })();
 
     /* ── Fecha de cobro: inicializar calendario al abrir modal ── */

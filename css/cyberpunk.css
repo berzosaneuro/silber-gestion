@@ -316,3 +316,179 @@ body::after {
 
 /* ── 19. Sync / notification badges ─────────────────────── */
 .sync-badge { box-shadow: 0 0 8px #00FF88, 0 0 16px rgba(0,255,136,.5) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   3D LAYER — Perspective grid, card tilt, button depth,
+               extruded text. Pure CSS + tiny JS tilt hook.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Extra keyframes ─────────────────────────────────────── */
+@keyframes cp-grid-breathe {
+  0%,100% { opacity: .55; }
+  50%     { opacity: .85; }
+}
+@keyframes cp-float {
+  0%,100% { transform: perspective(300px) rotateX(72deg) translateY(0); }
+  50%     { transform: perspective(300px) rotateX(72deg) translateY(-6px); }
+}
+
+/* ── 20. Tron floor grid (perspective) ───────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left:  -60%;
+  right: -60%;
+  height: 55vh;
+  background:
+    linear-gradient(rgba(0,229,255,.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,.09) 1px, transparent 1px);
+  background-size: 48px 48px;
+  transform: perspective(280px) rotateX(72deg);
+  transform-origin: bottom center;
+  pointer-events: none;
+  z-index: 0;
+  mask-image: linear-gradient(to top, rgba(0,0,0,.8) 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,.8) 0%, transparent 100%);
+  animation: cp-grid-breathe 4s ease-in-out infinite;
+}
+
+/* ── 21. 3D card tilt (CSS base — JS enhances on desktop) ── */
+.section-card {
+  transform-style: preserve-3d;
+  transition: transform .35s cubic-bezier(.17,.67,.35,1.1), border-color .25s, box-shadow .25s !important;
+  will-change: transform;
+}
+/* .cp-tilt class added by JS on mousemove */
+.section-card.cp-tilt {
+  box-shadow:
+    0 0 18px rgba(0,229,255,.18),
+    0 20px 40px rgba(0,0,0,.7),
+    0 0 0 1px rgba(0,229,255,.12) !important;
+}
+/* Static tilt hint on hover (mobile-safe fallback) */
+@media (hover: hover) {
+  .section-card:hover {
+    transform: perspective(700px) rotateX(-2deg) rotateY(1.5deg) translateZ(6px) !important;
+  }
+}
+
+/* ── 22. 3D button depth ─────────────────────────────────── */
+.btn-primary {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 4px 0 rgba(0, 80, 120, .7),
+    0 6px 0 rgba(0, 50, 90, .5),
+    0 8px 16px rgba(0,229,255,.2),
+    0 0 12px rgba(0,229,255,.3) !important;
+  animation: none !important; /* override pulse while we have depth */
+}
+.btn-primary:active {
+  transform: translateY(2px) !important;
+  box-shadow:
+    0 1px 0 rgba(0, 80, 120, .7),
+    0 2px 6px rgba(0,229,255,.15) !important;
+}
+.btn-danger {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 4px 0 rgba(120, 0, 60, .7),
+    0 6px 0 rgba(90, 0, 40, .5),
+    0 8px 16px rgba(255,0,170,.15),
+    0 0 12px rgba(255,0,170,.25) !important;
+  animation: none !important;
+}
+.btn-danger:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 rgba(120,0,60,.7) !important;
+}
+.btn-secondary {
+  transform: translateY(-1px) !important;
+  box-shadow:
+    0 3px 0 rgba(0,229,255,.12),
+    0 4px 8px rgba(0,0,0,.4) !important;
+}
+.btn-secondary:active {
+  transform: translateY(1px) !important;
+  box-shadow: 0 1px 0 rgba(0,229,255,.08) !important;
+}
+
+/* FAB 3D */
+.fab {
+  transform: translateY(-3px) !important;
+  box-shadow:
+    0 5px 0 rgba(0,70,110,.8),
+    0 8px 0 rgba(0,50,80,.5),
+    0 10px 24px rgba(0,229,255,.3),
+    0 0 30px rgba(0,229,255,.2) !important;
+  animation: none !important;
+}
+.fab:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 rgba(0,70,110,.8), 0 4px 10px rgba(0,229,255,.15) !important;
+}
+
+/* ── 23. 3D extruded text on Orbitron titles ─────────────── */
+.section-title {
+  text-shadow:
+    0  1px 0 rgba(0,229,255,.9),
+    0  2px 0 rgba(0,200,230,.7),
+    0  3px 0 rgba(0,160,200,.5),
+    0  4px 0 rgba(0,120,160,.35),
+    0  5px 0 rgba(0, 80,130,.2),
+    0  8px 16px rgba(0,229,255,.35),
+    0  0  28px rgba(0,229,255,.25) !important;
+}
+.modal-title {
+  text-shadow:
+    0  1px 0 rgba(0,229,255,.85),
+    0  2px 0 rgba(0,200,230,.65),
+    0  3px 0 rgba(0,150,190,.4),
+    0  5px 12px rgba(0,229,255,.3),
+    0  0  20px rgba(0,229,255,.2) !important;
+}
+.header-title, .app-header #headerTitle {
+  text-shadow:
+    0  1px 0 rgba(0,229,255,.8),
+    0  2px 0 rgba(0,180,220,.5),
+    0  3px 0 rgba(0,140,180,.3),
+    0  6px 14px rgba(0,229,255,.4),
+    0  0  30px rgba(0,229,255,.3) !important;
+  animation: cp-flicker 9s infinite;
+}
+.login-title {
+  text-shadow:
+    0  1px 0 rgba(0,229,255,.9),
+    0  2px 0 rgba(0,200,240,.7),
+    0  4px 0 rgba(0,150,190,.4),
+    0  6px 0 rgba(0,100,150,.2),
+    0  10px 24px rgba(0,229,255,.45),
+    0   0  40px rgba(0,229,255,.3) !important;
+  animation: cp-flicker 9s infinite;
+}
+
+/* ── 24. 3D modal entrance ───────────────────────────────── */
+@keyframes cp-modal-in {
+  0%   { opacity: 0; transform: perspective(800px) rotateX(-12deg) translateY(-20px) scale(.95); }
+  100% { opacity: 1; transform: perspective(800px) rotateX(0deg)   translateY(0)      scale(1);   }
+}
+.modal-overlay.active .modal-content {
+  animation: cp-modal-in .3s cubic-bezier(.17,.67,.35,1.1) both;
+}
+
+/* ── 25. 3D nav active lift ──────────────────────────────── */
+.nav-item.active {
+  transform: translateY(-1px);
+}
+
+/* ── 26. Depth shadow on section-card header bar ─────────── */
+.section-card::before {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0,229,255,.6) 30%,
+    rgba(255,0,170,.4) 60%,
+    transparent 100%) !important;
+  height: 1px !important;
+  display: block !important;
+  box-shadow: 0 0 12px rgba(0,229,255,.5);
+}
