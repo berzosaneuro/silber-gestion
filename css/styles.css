@@ -1503,3 +1503,310 @@ select option { background:var(--bg-card); color:var(--text-primary); }
 }
 .an-locked-icon { font-size: 44px; margin-bottom: 12px; opacity:.4; }
 .an-locked-text { font-size: 13px; font-weight: 600; }
+
+/* ═══════════════════════════════════════════════════════════
+   DESKTOP LAYOUT — sidebar + content (≥1024px)
+   Mobile experience is UNCHANGED below 1024px
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 1024px) {
+
+  /* ── Root layout ─────────────────────────────────────── */
+  body { overflow: hidden; height: 100vh; }
+
+  .app-container {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    overflow: hidden;
+    padding-left: 0; /* sidebar is fixed */
+  }
+
+  /* ── Hide mobile chrome ──────────────────────────────── */
+  .app-header { display: none !important; }
+  #bottom-nav { display: none !important; }
+  .back-btn   { display: none !important; }
+
+  /* ── Screens become scrollable content pane ─────────── */
+  .screen {
+    position: relative !important;
+    top: auto !important; left: auto !important;
+    right: auto !important; bottom: auto !important;
+    flex: 1 1 0;
+    min-height: 100vh;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-top: 28px !important;
+    padding-bottom: 28px !important;
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+    margin-left: 240px; /* sidebar width */
+    display: none;
+    box-sizing: border-box;
+  }
+  .screen.active {
+    display: block !important;
+  }
+  /* Login stays full-screen / centered */
+  #screen-login {
+    margin-left: 0 !important;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+  }
+  #screen-login.active { display: flex !important; }
+
+  /* ── Sidebar ─────────────────────────────────────────── */
+  #desktop-sidebar {
+    display: flex !important;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 240px;
+    background: rgba(4,5,15,0.98);
+    border-right: 1px solid rgba(0,229,255,0.1);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    z-index: 9000;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  body.login-visible #desktop-sidebar { display: none !important; }
+
+  /* Brand block */
+  .dsb-brand {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .dsb-brand-icon {
+    width: 36px; height: 36px;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.25);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .dsb-brand-name {
+    font-size: 13px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+  .dsb-brand-name span {
+    display: block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: rgba(0,229,255,0.6);
+  }
+
+  /* Nav */
+  .dsb-nav {
+    flex: 1;
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .dsb-section-label {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: rgba(148,163,184,0.4);
+    text-transform: uppercase;
+    padding: 12px 10px 4px;
+  }
+  .dsb-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .18s, color .18s;
+    position: relative;
+    color: rgba(148,163,184,0.75);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .dsb-item:hover {
+    background: rgba(255,255,255,0.04);
+    color: #fff;
+  }
+  .dsb-item.active {
+    background: rgba(0,229,255,0.08);
+    color: #00E5FF;
+  }
+  .dsb-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 20px;
+    background: #00E5FF;
+    border-radius: 0 3px 3px 0;
+    box-shadow: 0 0 8px rgba(0,229,255,.6);
+  }
+  .dsb-icon {
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: background .18s;
+  }
+  .dsb-item.active .dsb-icon {
+    background: rgba(0,229,255,0.12);
+  }
+  .dsb-alert-dot {
+    margin-left: auto;
+    min-width: 18px; height: 18px;
+    background: #EF4444;
+    border-radius: 9px;
+    font-size: 10px; font-weight: 900; color: #fff;
+    display: none; align-items: center; justify-content: center;
+    padding: 0 4px;
+  }
+  .dsb-alert-dot.visible { display: flex; }
+
+  /* Footer / user */
+  .dsb-footer {
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .dsb-user-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .dsb-user-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 900; color: #00E5FF;
+    flex-shrink: 0;
+  }
+  .dsb-user-name {
+    font-size: 12px; font-weight: 700; color: #fff;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .dsb-user-role {
+    font-size: 10px; color: rgba(148,163,184,0.6);
+  }
+
+  /* ── Dashboard desktop layout ────────────────────────── */
+  #screen-dashboard .dashboard-content {
+    max-width: 960px;
+    gap: 20px;
+  }
+  #screen-dashboard .summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  #screen-dashboard .summary-card {
+    padding: 20px 18px;
+  }
+  #screen-dashboard .summary-value {
+    font-size: 28px;
+  }
+  /* Dashboard 2-col: donut left, ranking right */
+  .dsb-dashboard-main {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  #screen-dashboard .donut-section {
+    margin: 0;
+  }
+  #screen-dashboard .ranking-section {
+    margin: 0;
+  }
+
+  /* ── Clientes desktop table ──────────────────────────── */
+  .dsb-table-header {
+    display: grid !important;
+    grid-template-columns: 1fr 110px 1fr;
+    gap: 16px;
+    padding: 8px 16px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: rgba(148,163,184,0.5);
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    margin-bottom: 4px;
+  }
+  .dsb-table-header span:last-child { text-align: right; }
+  #clientes-list .cliente-card {
+    display: grid;
+    grid-template-columns: 1fr 110px 1fr;
+    gap: 16px;
+    align-items: center;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 2px;
+    transform: none !important;
+  }
+  #clientes-list .cliente-card::before { display: none; }
+  #clientes-list .cliente-header {
+    display: contents;
+  }
+  #clientes-list .cliente-nombre {
+    font-size: 13px;
+  }
+  #clientes-list .cliente-deuda {
+    font-size: 15px;
+    text-align: center;
+  }
+  #clientes-list .cliente-info {
+    font-size: 11px;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Analytics desktop: KPI + chart side by side ─────── */
+  #screen-analytics .content-section {
+    max-width: 960px;
+  }
+  .an-desktop-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  #an-panel-summary .an-kpi-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  #an-panel-summary .an-chart {
+    height: auto;
+  }
+
+  /* ── General content max-width ───────────────────────── */
+  #screen-config .content-section,
+  #screen-llegadas .content-section,
+  #screen-metricas .content-section,
+  #screen-timeline .content-section {
+    max-width: 800px;
+  }
+  #screen-gastos .categories-screen,
+  #screen-ingresos .categories-screen {
+    max-width: 760px;
+  }
+
+  /* FAB repositioning on desktop */
+  .fab {
+    position: fixed !important;
+    bottom: 28px;
+    right: 28px;
+  }
+}

@@ -34,6 +34,61 @@
             </button>
         </div>
 
+        <!-- DESKTOP SIDEBAR — display:none on mobile via CSS -->
+        <div id="desktop-sidebar" style="display:none;">
+            <div class="dsb-brand">
+                <div class="dsb-brand-icon">⚡</div>
+                <div class="dsb-brand-name">Silber<span>Gestión</span></div>
+            </div>
+            <nav class="dsb-nav">
+                <div class="dsb-section-label">Principal</div>
+                <div class="dsb-item" data-screen="dashboard" onclick="cambiarPantalla('dashboard')">
+                    <span class="dsb-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+                    Dashboard
+                </div>
+                <div class="dsb-item" data-screen="deuda" onclick="cambiarPantalla('deuda')">
+                    <span class="dsb-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a5 5 0 0110 0v2"/><circle cx="17" cy="9" r="3"/><path d="M22 21v-1.5a4 4 0 00-4-4"/></svg></span>
+                    Clientes
+                </div>
+                <div class="dsb-item" data-screen="gastos" onclick="cambiarPantalla('gastos')">
+                    <span class="dsb-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7-7 7 7"/></svg></span>
+                    Gastos
+                </div>
+                <div class="dsb-item" data-screen="ingresos" onclick="cambiarPantalla('ingresos')">
+                    <span class="dsb-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7 7 7-7"/></svg></span>
+                    Ingresos
+                </div>
+                <div class="dsb-section-label">Gestión</div>
+                <div class="dsb-item" data-screen="llegadas" onclick="if(typeof renderLlegadas==='function')renderLlegadas();cambiarPantalla('llegadas')">
+                    <span class="dsb-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+                    Llegadas
+                    <span class="dsb-alert-dot" id="dsb-dot-llegadas"></span>
+                </div>
+                <div class="dsb-item" data-screen="analytics" onclick="if(typeof renderAnalytics==='function')renderAnalytics();cambiarPantalla('analytics')">
+                    <span class="dsb-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+                    Analíticas
+                    <span class="dsb-alert-dot" id="dsb-dot-alertas"></span>
+                </div>
+                <div class="dsb-item" data-screen="oficina" onclick="cambiarPantalla('oficina')">
+                    <span class="dsb-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V12h6v9"/></svg></span>
+                    Oficina
+                </div>
+                <div class="dsb-item" data-screen="config" onclick="cambiarPantalla('config')">
+                    <span class="dsb-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+                    Configuración
+                </div>
+            </nav>
+            <div class="dsb-footer">
+                <div class="dsb-user-row">
+                    <div class="dsb-user-avatar" id="dsb-user-avatar">--</div>
+                    <div>
+                        <div class="dsb-user-name" id="dsb-user-name">Usuario</div>
+                        <div class="dsb-user-role" id="dsb-user-role">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="menu-overlay" id="menuOverlay" onclick="cerrarMenu()">
             <div class="menu-content" onclick="event.stopPropagation()">
             </div>
@@ -123,6 +178,9 @@
                     </div>
                 </div>
 
+                <!-- Desktop 2-col: donut left / ranking right -->
+                <div class="dsb-dashboard-main">
+
                 <!-- Donut + time machine + period selector -->
                 <div class="donut-section">
                     <div class="donut-glow"></div>
@@ -153,6 +211,8 @@
                     </div>
                     <div class="ranking-list" id="ranking-list"></div>
                 </div>
+
+                </div><!-- /dsb-dashboard-main -->
 
                 <!-- Stock alert (hidden by default) -->
                 <div class="section-card" id="dashboard-productos-alerta" style="display:none;border:1px solid rgba(245,158,11,0.25);background:rgba(245,158,11,0.04);">
@@ -217,6 +277,12 @@
                 </div>
                 <div class="section-card">
                     <div class="section-title">Clientes con Deuda</div>
+                    <!-- Desktop-only table header (hidden on mobile via CSS) -->
+                    <div class="dsb-table-header" style="display:none;">
+                        <span>Cliente</span>
+                        <span style="text-align:center;">Deuda</span>
+                        <span style="text-align:right;">Contacto / Info</span>
+                    </div>
                     <div id="clientes-list"></div>
                 </div>
             </div>
@@ -1349,17 +1415,17 @@
         </div>
     </div>
 
-    <script src="js/state.js?v=12"></script>
-    <script src="js/supabase.js?v=12"></script>
-    <script src="js/dashboard.js?v=12"></script>
-    <script src="js/transacciones.js?v=12"></script>
-    <script src="js/clientes.js?v=12"></script>
-    <script src="js/ui.js?v=12"></script>
-    <script src="js/metrics.js?v=12"></script>
-    <script src="js/timeline.js?v=12"></script>
-    <script src="js/app.js?v=12"></script>
-    <script src="js/master-security.js?v=12"></script>
-    <script src="js/productos.js?v=12"></script>
+    <script src="js/state.js?v=13"></script>
+    <script src="js/supabase.js?v=13"></script>
+    <script src="js/dashboard.js?v=13"></script>
+    <script src="js/transacciones.js?v=13"></script>
+    <script src="js/clientes.js?v=13"></script>
+    <script src="js/ui.js?v=13"></script>
+    <script src="js/metrics.js?v=13"></script>
+    <script src="js/timeline.js?v=13"></script>
+    <script src="js/app.js?v=13"></script>
+    <script src="js/master-security.js?v=13"></script>
+    <script src="js/productos.js?v=13"></script>
     <script>
     window._silberDebug = function() {
       try { if (typeof console !== 'undefined' && console.log) console.log.apply(console, ['[Silber]'].concat(Array.prototype.slice.call(arguments))); } catch(e) {}
@@ -1669,6 +1735,91 @@
             }
         }
         setTimeout(tryBoot, 1200);
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       DESKTOP SIDEBAR — sync active state + user info
+       ══════════════════════════════════════════════════════════ */
+    (function _initDesktopSidebar() {
+        var IS_DESKTOP = window.innerWidth >= 1024;
+        if (!IS_DESKTOP) return; /* skip entirely on mobile */
+
+        /* Screen → sidebar data-screen mapping */
+        var SCREEN_MAP = {
+            'screen-dashboard': 'dashboard',
+            'screen-deuda':     'deuda',
+            'screen-gastos':    'gastos',
+            'screen-ingresos':  'ingresos',
+            'screen-llegadas':  'llegadas',
+            'screen-analytics': 'analytics',
+            'screen-oficina':   'oficina',
+            'screen-config':    'config',
+            /* sub-screens inherit parent */
+            'screen-cuentas':       'oficina',
+            'screen-transferencias':'oficina',
+            'screen-stock':         'oficina',
+            'screen-productos':     'oficina',
+            'screen-gorriones':     'oficina',
+            'screen-timeline':      'oficina',
+            'screen-metricas':      'oficina',
+            'screen-tabla-precios': 'oficina'
+        };
+
+        function syncSidebar() {
+            var active = document.querySelector('.screen.active');
+            if (!active) return;
+            var mapped = SCREEN_MAP[active.id] || '';
+            document.querySelectorAll('.dsb-item').forEach(function(el) {
+                el.classList.toggle('active', el.dataset.screen === mapped);
+            });
+        }
+
+        /* Observe all screen class changes */
+        var obs = new MutationObserver(syncSidebar);
+        document.querySelectorAll('.screen').forEach(function(s) {
+            obs.observe(s, { attributes: true, attributeFilter: ['class'] });
+        });
+        syncSidebar();
+
+        /* Update user info in sidebar footer */
+        function updateSidebarUser() {
+            if (typeof sesionActual === 'undefined' || !sesionActual) {
+                setTimeout(updateSidebarUser, 600);
+                return;
+            }
+            var name = sesionActual.username || 'Usuario';
+            var role = sesionActual.role || '';
+            var av   = document.getElementById('dsb-user-avatar');
+            var nm   = document.getElementById('dsb-user-name');
+            var rl   = document.getElementById('dsb-user-role');
+            if (av) av.textContent = name.slice(0,2).toUpperCase();
+            if (nm) nm.textContent = name;
+            if (rl) rl.textContent = role;
+        }
+        setTimeout(updateSidebarUser, 800);
+
+        /* Sync alert dot on Analíticas sidebar item */
+        function syncSidebarAlertDot() {
+            if (typeof getAlertas !== 'function') return;
+            var count = getAlertas().length;
+            var dot   = document.getElementById('dsb-dot-alertas');
+            if (dot) {
+                dot.textContent = count > 0 ? count : '';
+                dot.classList.toggle('visible', count > 0);
+            }
+        }
+        setInterval(syncSidebarAlertDot, 15000);
+        setTimeout(syncSidebarAlertDot, 2000);
+
+        /* Resize guard: if user resizes below 1024, remove sidebar forced display */
+        window.addEventListener('resize', function() {
+            var sb = document.getElementById('desktop-sidebar');
+            if (!sb) return;
+            if (window.innerWidth < 1024) {
+                sb.style.display = 'none';
+            }
+            /* CSS handles display:flex at >=1024 via media query */
+        });
     })();
 
     /* ══════════════════════════════════════════════════════════
