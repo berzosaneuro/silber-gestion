@@ -2453,54 +2453,62 @@ select option { background:var(--bg-card); color:var(--text-primary); }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   AMOR LAYER — Love Toast · Special Moment Overlay
+   AMOR LAYER  —  Premium emotional feedback (La Jefaza only)
    All position:fixed — zero layout impact.
    ═══════════════════════════════════════════════════════════ */
 
-/* ── Love Toast (bottom, warm glow) ─────────────────────── */
+/* ── Love Toast — scale-in, soft glow, no slide ─────────── */
 .silber-love-toast {
   position: fixed;
-  bottom: calc(76px + env(safe-area-inset-bottom, 0px) + 10px);
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px) + 12px);
   left: 50%;
-  transform: translateX(-50%) translateY(18px);
+  /* starts small + invisible — scale-in feels premium, not bouncy */
+  transform: translateX(-50%) scale(0.88);
   opacity: 0;
   z-index: 9997;
   pointer-events: none;
-  transition: transform .38s cubic-bezier(.34,1.56,.64,1), opacity .32s ease;
+  transition:
+    transform .36s cubic-bezier(.22, 1, .36, 1),
+    opacity   .28s ease;
   white-space: nowrap;
   max-width: calc(100vw - 40px);
 }
 .silber-love-toast.slt-visible {
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(-50%) scale(1);
   opacity: 1;
 }
+
 .slt-pill {
   display: flex;
   align-items: center;
-  padding: 10px 22px;
-  background: linear-gradient(135deg,
-    rgba(40, 8, 55, 0.95) 0%,
-    rgba(20, 5, 35, 0.96) 100%);
-  border: 1px solid rgba(255, 107, 157, 0.38);
+  padding: 11px 24px;
+  /* Deep, dark purple-rose — elegant, not bright */
+  background: linear-gradient(145deg,
+    rgba(32, 6, 48, 0.97) 0%,
+    rgba(18, 4, 32, 0.98) 100%);
+  border: 1px solid rgba(240, 160, 190, 0.22);
   border-radius: 40px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  /* Soft double-ring glow — very subtle */
   box-shadow:
-    0 4px 28px rgba(196, 77, 255, 0.28),
     0 0 0 1px rgba(255,255,255,0.04),
-    inset 0 1px 0 rgba(255,255,255,0.06);
+    0 4px 20px rgba(180, 60, 120, 0.22),
+    0 1px 3px  rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.07);
 }
+
 .slt-text {
   font-size: 13px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.92);
-  letter-spacing: .25px;
+  font-weight: 500;   /* slightly lighter = more elegant */
+  color: rgba(255, 240, 248, 0.93);
+  letter-spacing: .3px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* ── Special Moment Overlay ──────────────────────────────── */
+/* ── Special Moment Overlay — cinematic ──────────────────── */
 .silber-special-ov {
   position: fixed;
   inset: 0;
@@ -2508,88 +2516,116 @@ select option { background:var(--bg-card); color:var(--text-primary); }
   pointer-events: none;
   overflow: hidden;
   opacity: 0;
-  transition: opacity .4s ease;
+  transition: opacity .45s ease;
 }
 .silber-special-ov.sso-visible { opacity: 1; }
-.silber-special-ov.sso-out    { opacity: 0; transition: opacity .7s ease; }
+.silber-special-ov.sso-out    { opacity: 0; transition: opacity .8s ease; }
 
-/* Message pill */
+/* Atmospheric veil — very subtle, purely depth */
+.sso-veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 60%,
+    rgba(60, 0, 80, 0.18) 0%,
+    rgba(0, 0, 0, 0.0) 70%
+  );
+  pointer-events: none;
+}
+
+/* Cinematic message — scale spring, delayed entrance */
 .sso-msg {
   position: absolute;
-  top: 38%;
+  top: 40%;
   left: 50%;
-  transform: translateX(-50%) translateY(-14px);
-  padding: 16px 30px;
-  background: linear-gradient(135deg,
-    rgba(25, 8, 40, 0.92) 0%,
-    rgba(15, 4, 28, 0.94) 100%);
-  border: 1px solid rgba(255, 107, 157, 0.35);
-  border-radius: 22px;
-  font-size: 16px;
-  font-weight: 700;
-  color: #fff;
+  transform: translateX(-50%) scale(0.90);
+  padding: 18px 36px;
+  background: linear-gradient(160deg,
+    rgba(22, 6, 36, 0.95) 0%,
+    rgba(14, 3, 24, 0.97) 100%);
+  border: 1px solid rgba(230, 150, 185, 0.25);
+  border-radius: 20px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: .4px;
+  color: rgba(255, 242, 250, 0.97);
   text-align: center;
   white-space: nowrap;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
   box-shadow:
-    0 8px 48px rgba(196, 77, 255, 0.35),
-    0 2px 12px rgba(0,0,0,0.4);
+    0 0 0 1px rgba(255,255,255,0.05),
+    0 12px 60px rgba(160, 40, 100, 0.3),
+    0 4px 16px rgba(0,0,0,0.45);
   opacity: 0;
-  transition: opacity .5s ease .25s, transform .5s cubic-bezier(.34,1.56,.64,1) .25s;
+  /* delayed so particles appear first */
+  transition:
+    opacity   .55s ease .3s,
+    transform .55s cubic-bezier(.22, 1, .36, 1) .3s;
   max-width: calc(100vw - 48px);
 }
 .silber-special-ov.sso-visible .sso-msg {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(-50%) scale(1);
 }
 
-/* Floating hearts */
+/* Hearts — parallax via CSS custom property --drift ─────── */
 .sso-heart {
   position: absolute;
-  bottom: -24px;
-  animation: sso-float-up linear forwards;
+  bottom: -28px;
+  animation: sso-float-up ease-out forwards;
   pointer-events: none;
   will-change: transform, opacity;
   user-select: none;
   line-height: 1;
 }
 @keyframes sso-float-up {
-  0%   { transform: translateY(0)      scale(1)    rotate(-5deg); opacity: .95; }
-  20%  { transform: translateY(-18vh)  scale(1.08) rotate(6deg);  opacity: .9;  }
-  60%  { transform: translateY(-62vh)  scale(.85)  rotate(-3deg); opacity: .65; }
-  100% { transform: translateY(-108vh) scale(.4)   rotate(10deg); opacity: 0;   }
+  0%   {
+    transform: translateY(0)       translateX(0)             scale(1)    rotate(-4deg);
+    opacity: .9;
+  }
+  30%  {
+    transform: translateY(-28vh)   translateX(var(--drift, 0px))  scale(1.05) rotate(5deg);
+    opacity: .85;
+  }
+  65%  {
+    transform: translateY(-68vh)   translateX(calc(var(--drift, 0px) * .5)) scale(.8) rotate(-2deg);
+    opacity: .55;
+  }
+  100% {
+    transform: translateY(-112vh)  translateX(0)             scale(.35)  rotate(8deg);
+    opacity: 0;
+  }
 }
 
-/* Confetti particles */
+/* Confetti — soft palette, gentle fall ──────────────────── */
 .sso-conf {
   position: absolute;
-  top: -12px;
+  top: -14px;
   border-radius: 3px;
-  animation: sso-conf-fall linear forwards;
+  animation: sso-conf-fall ease-in forwards;
   pointer-events: none;
   will-change: transform, opacity;
 }
-.sso-conf--bar {
-  border-radius: 1px;
-}
+.sso-conf--bar { border-radius: 1px; }
+
 @keyframes sso-conf-fall {
-  0%   { transform: translateY(0)     rotate(0deg);   opacity: 1;   }
-  15%  { opacity: 1; }
-  80%  { opacity: .7; }
-  100% { transform: translateY(105vh) rotate(600deg); opacity: 0;   }
+  0%   { transform: translateY(0)      rotate(0deg);   opacity: .9; }
+  20%  { opacity: .9; }
+  75%  { opacity: .55; }
+  100% { transform: translateY(108vh)  rotate(520deg); opacity: 0;  }
 }
 
-/* Desktop: love toast bottom-right, avoid nav */
+/* Desktop: love toast bottom-right ─────────────────────── */
 @media (min-width: 1024px) {
   .silber-love-toast {
     bottom: 28px;
     right: 28px;
     left: auto;
-    transform: translateY(12px);
-    max-width: 320px;
+    transform: scale(0.88);
+    max-width: 340px;
   }
   .silber-love-toast.slt-visible {
-    transform: translateY(0);
+    transform: scale(1);
   }
 }
