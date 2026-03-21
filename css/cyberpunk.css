@@ -22,31 +22,13 @@
   20%,24%,55%                      { opacity: .85; }
 }
 
-/* ── 1. Body grid + scanline beam ────────────────────────── */
+/* ── 1. Body grid ────────────────────────────────────────── */
 body {
   background-color: #03040d !important;
   background-image:
     linear-gradient(rgba(0,229,255,.028) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0,229,255,.028) 1px, transparent 1px) !important;
   background-size: 32px 32px !important;
-}
-body::after {
-  content: '';
-  position: fixed;
-  left: 0; right: 0;
-  height: 120px;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(0,229,255,.025) 40%,
-    rgba(0,229,255,.055) 50%,
-    rgba(0,229,255,.025) 60%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 9000;
-  animation: cp-scan 7s linear infinite;
-  will-change: transform;
 }
 
 /* ── 2. Typography — Orbitron on titles ─────────────────── */
