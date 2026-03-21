@@ -2322,3 +2322,132 @@ select option { background:var(--bg-card); color:var(--text-primary); }
   #screen-analytics .analytics-panel { grid-area: panel; }
   #screen-analytics .analytics-panel.active { display: block !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PULL-TO-REFRESH  +  SYNC TOAST
+   Mobile-first. Zero impact on layout — position:fixed only.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Pull-to-Refresh indicator ───────────────────────────── */
+#silber-ptr {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  /* starts offscreen — JS drives transform/opacity */
+  transform: translateY(-60px);
+  opacity: 0;
+  transition: transform .2s ease, opacity .2s ease;
+  will-change: transform, opacity;
+}
+#silber-ptr.sptr-loading {
+  /* stay visible while loading */
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+  transition: transform .25s ease, opacity .25s ease;
+}
+.sptr-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px 8px 14px;
+  margin-top: max(env(safe-area-inset-top, 8px), 8px);
+  background: rgba(30, 41, 59, 0.92);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 40px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+}
+.sptr-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #00E5FF;
+  border-radius: 50%;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity .2s;
+}
+#silber-ptr.sptr-loading .sptr-spinner {
+  opacity: 1;
+  animation: silber-spin .7s linear infinite;
+}
+#silber-ptr.sptr-ready .sptr-arrow {
+  transform: rotate(180deg);
+}
+.sptr-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  letter-spacing: .3px;
+  white-space: nowrap;
+}
+@keyframes silber-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Sync Toast notification ─────────────────────────────── */
+.silber-sync-toast {
+  position: fixed;
+  /* sits below the app header (~64px) with safe-area offset */
+  top: max(calc(64px + env(safe-area-inset-top, 0px) + 8px), 80px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px);
+  opacity: 0;
+  z-index: 9999;
+  pointer-events: none;
+  transition: transform .28s cubic-bezier(.34,1.56,.64,1), opacity .28s ease;
+  white-space: nowrap;
+}
+.silber-sync-toast.sst-visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.sst-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px 8px 12px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 40px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+.sst-icon {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.sst-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: .2px;
+}
+.silber-sync-toast--warn .sst-pill {
+  border-color: rgba(251,191,36,0.3);
+  background: rgba(30,20,0,0.92);
+}
+.silber-sync-toast--ok .sst-pill {
+  border-color: rgba(0,229,255,0.25);
+}
+
+/* On desktop, toast sits just below the sidebar top */
+@media (min-width: 1024px) {
+  .silber-sync-toast {
+    top: 20px;
+    right: 24px;
+    left: auto;
+    transform: translateY(-8px);
+  }
+  .silber-sync-toast.sst-visible {
+    transform: translateY(0);
+  }
+}
