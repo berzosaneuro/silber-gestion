@@ -289,6 +289,7 @@
                     <div class="menu-item" id="oficina-menu-ruta" onclick="abrirModalRutaClientes()" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">🗺️</div><div class="menu-item-text">Optimizar ruta de clientes</div></div>
                     <div class="menu-item" id="oficina-menu-timeline" onclick="cambiarPantalla('timeline')" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">📜</div><div class="menu-item-text">Timeline del Negocio</div></div>
                     <div class="menu-item" id="oficina-menu-llegadas" onclick="if(typeof renderLlegadas==='function')renderLlegadas();cambiarPantalla('llegadas');" style="margin-bottom:8px;"><div class="menu-item-icon">📍</div><div class="menu-item-text">Registro de Llegadas</div></div>
+                    <div class="menu-item" id="oficina-menu-analytics" onclick="if(typeof renderAnalytics==='function')renderAnalytics();cambiarPantalla('analytics');" style="margin-bottom:8px;"><div class="menu-item-icon">📊</div><div class="menu-item-text">Analíticas</div></div>
                     <div class="menu-item" id="oficina-menu-config" onclick="cambiarPantalla('config')"><div class="menu-item-icon">⚙️</div><div class="menu-item-text">Configuración</div></div>
                 </div>
             </div>
@@ -1102,6 +1103,64 @@
             </div>
         </div>
 
+        <!-- ANALYTICS — Summary · Profit · Tools -->
+        <div class="screen" id="screen-analytics">
+            <div class="content-section">
+
+                <!-- Tab bar -->
+                <div class="analytics-tabs" id="analytics-tabs">
+                    <button class="analytics-tab-btn active" onclick="switchAnalyticsTab('summary',this)">📊 Resumen</button>
+                    <button class="analytics-tab-btn" id="analytics-tab-profit" onclick="switchAnalyticsTab('profit',this)">📈 Beneficio</button>
+                    <button class="analytics-tab-btn" id="analytics-tab-tools" onclick="switchAnalyticsTab('tools',this)">⚙️ Herramientas</button>
+                </div>
+
+                <!-- Period selector (shared by summary + profit) -->
+                <div class="an-period-row" id="an-period-row">
+                    <button class="an-period-btn active" data-period="day"   onclick="setAnalyticsPeriod('day',this)">HOY</button>
+                    <button class="an-period-btn" data-period="week"  onclick="setAnalyticsPeriod('week',this)">SEMANA</button>
+                    <button class="an-period-btn" data-period="month" onclick="setAnalyticsPeriod('month',this)">MES</button>
+                    <button class="an-period-btn" data-period="year"  onclick="setAnalyticsPeriod('year',this)">AÑO</button>
+                </div>
+
+                <!-- ── TAB: SUMMARY ── -->
+                <div class="analytics-panel active" id="an-panel-summary">
+                    <div class="an-kpi-row">
+                        <div class="an-kpi-card">
+                            <div class="an-kpi-label">Ingresos</div>
+                            <div class="an-kpi-value green" id="an-sum-ingresos">0€</div>
+                        </div>
+                        <div class="an-kpi-card">
+                            <div class="an-kpi-label">Gastos</div>
+                            <div class="an-kpi-value red" id="an-sum-gastos">0€</div>
+                        </div>
+                    </div>
+                    <div class="an-kpi-row">
+                        <div class="an-kpi-card" style="grid-column:1/-1;">
+                            <div class="an-kpi-label">Balance neto</div>
+                            <div class="an-kpi-value blue" id="an-sum-balance">0€</div>
+                        </div>
+                    </div>
+                    <div class="an-chart" id="an-sum-chart">
+                        <div class="an-chart-title">Ingresos vs Gastos</div>
+                        <div id="an-sum-bars"></div>
+                    </div>
+                </div>
+
+                <!-- ── TAB: PROFIT ── -->
+                <div class="analytics-panel" id="an-panel-profit">
+                    <!-- Access guard rendered by JS -->
+                    <div id="an-profit-inner"></div>
+                </div>
+
+                <!-- ── TAB: TOOLS ── -->
+                <div class="analytics-panel" id="an-panel-tools">
+                    <!-- Access guard rendered by JS -->
+                    <div id="an-tools-inner"></div>
+                </div>
+
+            </div>
+        </div>
+
         <!-- NAV -->
         <div class="bottom-nav" id="bottom-nav">
             <div class="nav-item active" data-screen="dashboard" onclick="cambiarPantalla('dashboard')">
@@ -1290,17 +1349,17 @@
         </div>
     </div>
 
-    <script src="js/state.js?v=11"></script>
-    <script src="js/supabase.js?v=11"></script>
-    <script src="js/dashboard.js?v=11"></script>
-    <script src="js/transacciones.js?v=11"></script>
-    <script src="js/clientes.js?v=11"></script>
-    <script src="js/ui.js?v=11"></script>
-    <script src="js/metrics.js?v=11"></script>
-    <script src="js/timeline.js?v=11"></script>
-    <script src="js/app.js?v=11"></script>
-    <script src="js/master-security.js?v=11"></script>
-    <script src="js/productos.js?v=11"></script>
+    <script src="js/state.js?v=12"></script>
+    <script src="js/supabase.js?v=12"></script>
+    <script src="js/dashboard.js?v=12"></script>
+    <script src="js/transacciones.js?v=12"></script>
+    <script src="js/clientes.js?v=12"></script>
+    <script src="js/ui.js?v=12"></script>
+    <script src="js/metrics.js?v=12"></script>
+    <script src="js/timeline.js?v=12"></script>
+    <script src="js/app.js?v=12"></script>
+    <script src="js/master-security.js?v=12"></script>
+    <script src="js/productos.js?v=12"></script>
     <script>
     window._silberDebug = function() {
       try { if (typeof console !== 'undefined' && console.log) console.log.apply(console, ['[Silber]'].concat(Array.prototype.slice.call(arguments))); } catch(e) {}
@@ -1611,6 +1670,254 @@
         }
         setTimeout(tryBoot, 1200);
     })();
+
+    /* ══════════════════════════════════════════════════════════
+       ANALYTICS — Summary · Profit · Tools
+       ══════════════════════════════════════════════════════════ */
+    var TOOLS_KEY = 'silber_tools_v1';
+    var _analyticsPeriod = 'day';
+    var _analyticsTab    = 'summary';
+
+    /* Default tool states — non-breaking (all defaults mirror current behaviour) */
+    var TOOLS_DEFAULTS = {
+        fraud_detection_enabled:    true,
+        credit_limit_alerts:        true,
+        gps_tracking_enabled:       true,
+        route_deviation_detection:  true,
+        stop_detection:             false,
+        whatsapp_notifications:     false,
+        reminders_enabled:          true,
+        stock_control_enabled:      true
+    };
+
+    function getTools() {
+        try { return Object.assign({}, TOOLS_DEFAULTS, JSON.parse(localStorage.getItem(TOOLS_KEY) || '{}')); }
+        catch(e) { return Object.assign({}, TOOLS_DEFAULTS); }
+    }
+    function saveTool(key, val) {
+        try {
+            var t = getTools();
+            t[key] = val;
+            localStorage.setItem(TOOLS_KEY, JSON.stringify(t));
+        } catch(e) {}
+    }
+    function toggleTool(key, el) {
+        el.classList.toggle('active');
+        saveTool(key, el.classList.contains('active'));
+    }
+
+    /* ── Data computation ─────────────────────────────────── */
+    function getAnalyticsData(period) {
+        if (typeof estado === 'undefined' || !estado) return { ingresos:0, gastos:0, costoProducto:0 };
+        var gastos   = estado.gastosRegistros   || [];
+        var ingresos = estado.ingresosRegistros || [];
+        var regs     = estado.registrosDiarios  || {};
+        var now      = new Date();
+        var desde;
+
+        if (period === 'day') {
+            var hoyKey = now.toISOString().split('T')[0];
+            var dIng = ingresos.filter(function(r){ return r.fecha === hoyKey; });
+            var dGas = gastos.filter(function(r){ return r.fecha === hoyKey; });
+            var totalIng  = dIng.reduce(function(s,r){ return s+(r.monto||0); }, 0);
+            var totalGas  = dGas.reduce(function(s,r){ return s+(r.monto||0); }, 0);
+            var costoProd = dGas.filter(function(r){ return r.esRecarga; }).reduce(function(s,r){ return s+(r.monto||0); }, 0);
+            return { ingresos: totalIng, gastos: totalGas, costoProducto: costoProd };
+        }
+
+        if (period === 'week')  { desde = new Date(now); desde.setDate(now.getDate()-6); }
+        else if (period === 'month') { desde = new Date(now.getFullYear(), now.getMonth(), 1); }
+        else if (period === 'year')  { desde = new Date(now.getFullYear(), 0, 1); }
+
+        function inRange(dateStr) {
+            if (!dateStr) return false;
+            var d = new Date(dateStr);
+            return d >= desde && d <= now;
+        }
+
+        var totalIng  = ingresos.filter(function(r){ return inRange(r.fecha); }).reduce(function(s,r){ return s+(r.monto||0); }, 0);
+        var totalGas  = gastos.filter(function(r){ return inRange(r.fecha); }).reduce(function(s,r){ return s+(r.monto||0); }, 0);
+        var costoProd = gastos.filter(function(r){ return inRange(r.fecha) && r.esRecarga; }).reduce(function(s,r){ return s+(r.monto||0); }, 0);
+
+        /* Fallback: if no registros, use registrosDiarios aggregation */
+        if (totalIng === 0 && totalGas === 0) {
+            Object.keys(regs).forEach(function(k) {
+                if (inRange(k)) {
+                    totalIng += (regs[k].ingresos || 0);
+                    totalGas += (regs[k].gastos   || 0);
+                }
+            });
+        }
+        return { ingresos: totalIng, gastos: totalGas, costoProducto: costoProd };
+    }
+
+    function fmtEur(n) {
+        if (Math.abs(n) >= 1000) return (n/1000).toFixed(1)+'k€';
+        return n.toFixed(0)+'€';
+    }
+
+    /* ── Bar chart ────────────────────────────────────────── */
+    function renderAnBars(containerId, bars) {
+        /* bars: [{label, amount, color}] */
+        var el = document.getElementById(containerId);
+        if (!el) return;
+        var max = Math.max.apply(null, bars.map(function(b){ return b.amount||0; })) || 1;
+        el.innerHTML = bars.map(function(b) {
+            var pct = Math.max(0, Math.min(100, ((b.amount||0)/max)*100));
+            return '<div class="an-bar-group">' +
+                '<div class="an-bar-label-row">' +
+                    '<span class="an-bar-name">'+ b.label +'</span>' +
+                    '<span class="an-bar-amt">'+ fmtEur(b.amount||0) +'</span>' +
+                '</div>' +
+                '<div class="an-bar-track"><div class="an-bar-fill" style="width:'+ pct +'%;background:'+ b.color +';"></div></div>' +
+            '</div>';
+        }).join('');
+    }
+
+    /* ── Tab: Summary ─────────────────────────────────────── */
+    function renderSummaryTab(period) {
+        var d = getAnalyticsData(period);
+        var balance = d.ingresos - d.gastos;
+        var el;
+        el = document.getElementById('an-sum-ingresos'); if(el) el.textContent = fmtEur(d.ingresos);
+        el = document.getElementById('an-sum-gastos');   if(el) el.textContent = fmtEur(d.gastos);
+        el = document.getElementById('an-sum-balance');
+        if(el) {
+            el.textContent = (balance >= 0 ? '+' : '') + fmtEur(balance);
+            el.className   = 'an-kpi-value ' + (balance >= 0 ? 'green' : 'red');
+        }
+        renderAnBars('an-sum-bars', [
+            { label: 'Ingresos', amount: d.ingresos, color: '#10B981' },
+            { label: 'Gastos',   amount: d.gastos,   color: '#EF4444' }
+        ]);
+    }
+
+    /* ── Tab: Profit (MASTER only) ────────────────────────── */
+    function renderProfitTab(period) {
+        var inner = document.getElementById('an-profit-inner');
+        if (!inner) return;
+
+        if (typeof esJefazo !== 'function' || (!esJefazo() && !esJefaza())) {
+            inner.innerHTML = '<div class="an-locked"><div class="an-locked-icon">🔒</div><div class="an-locked-text">Solo accesible para Jefazo / Jefaza</div></div>';
+            return;
+        }
+
+        var d          = getAnalyticsData(period);
+        var opExpenses = d.gastos - d.costoProducto;
+        var netProfit  = d.ingresos - d.gastos;
+        var isLoss     = netProfit < 0;
+
+        inner.innerHTML =
+            '<div class="an-profit-hero'+ (isLoss?' loss':'') +'">' +
+                '<div class="an-profit-hero-label">'+ (isLoss ? '⚠️ Pérdida neta' : '✅ Beneficio neto') +'</div>' +
+                '<div class="an-profit-hero-value">'+ (netProfit>=0?'+':'') + fmtEur(netProfit) +'</div>' +
+            '</div>' +
+            '<div class="an-kpi-row">' +
+                '<div class="an-kpi-card"><div class="an-kpi-label">Ingresos</div><div class="an-kpi-value green">'+ fmtEur(d.ingresos) +'</div></div>' +
+                '<div class="an-kpi-card"><div class="an-kpi-label">Gastos operativos</div><div class="an-kpi-value amber">'+ fmtEur(opExpenses) +'</div></div>' +
+            '</div>' +
+            '<div class="an-kpi-row">' +
+                '<div class="an-kpi-card" style="grid-column:1/-1;"><div class="an-kpi-label">Coste de producto (recargas)</div><div class="an-kpi-value red">'+ fmtEur(d.costoProducto) +'</div></div>' +
+            '</div>' +
+            '<div class="an-chart" id="an-profit-chart">' +
+                '<div class="an-chart-title">Comparativa</div>' +
+                '<div id="an-profit-bars"></div>' +
+            '</div>';
+
+        renderAnBars('an-profit-bars', [
+            { label: 'Ingresos',            amount: d.ingresos,      color: '#10B981' },
+            { label: 'Coste producto',       amount: d.costoProducto, color: '#EF4444' },
+            { label: 'Gastos operativos',    amount: opExpenses,      color: '#F59E0B' },
+            { label: 'Beneficio neto',       amount: Math.max(0,netProfit), color: '#60A5FA' }
+        ]);
+    }
+
+    /* ── Tab: Tools (MASTER only) ─────────────────────────── */
+    function renderToolsTab() {
+        var inner = document.getElementById('an-tools-inner');
+        if (!inner) return;
+
+        if (typeof esJefazo !== 'function' || (!esJefazo() && !esJefaza())) {
+            inner.innerHTML = '<div class="an-locked"><div class="an-locked-icon">🔒</div><div class="an-locked-text">Solo accesible para Jefazo / Jefaza</div></div>';
+            return;
+        }
+
+        var tools = getTools();
+        function row(key, icon, bg, label, sub) {
+            var on = tools[key] ? ' active' : '';
+            return '<div class="an-tools-row">' +
+                '<div class="an-tools-row-left">' +
+                    '<div class="an-tools-row-icon" style="background:'+ bg +';">'+ icon +'</div>' +
+                    '<div><div class="an-tools-row-text">'+ label +'</div><div class="an-tools-row-sub">'+ sub +'</div></div>' +
+                '</div>' +
+                '<button class="an-toggle'+ on +'" onclick="toggleTool(\''+ key +'\',this)" aria-label="'+ label +'"></button>' +
+            '</div>';
+        }
+        function group(title, rows) {
+            return '<div class="an-tools-group"><div class="an-tools-group-title">'+ title +'</div>'+ rows.join('') +'</div>';
+        }
+
+        inner.innerHTML =
+            group('Alertas', [
+                row('fraud_detection_enabled',   '🛡️', 'rgba(239,68,68,.2)',   'Detección de fraude',       'Analiza patrones sospechosos'),
+                row('credit_limit_alerts',        '💳', 'rgba(245,158,11,.2)',  'Alertas de crédito',        'Avisa cuando se supera el límite')
+            ]) +
+            group('Seguimiento', [
+                row('gps_tracking_enabled',       '📍', 'rgba(16,185,129,.2)',  'Rastreo GPS',               'Geolocalización en llegadas'),
+                row('route_deviation_detection',  '🗺️', 'rgba(99,102,241,.2)', 'Desviación de ruta',        'Detecta rutas fuera de zona'),
+                row('stop_detection',             '⏱️', 'rgba(148,163,184,.15)','Detección de paradas',     'Analiza tiempos de visita')
+            ]) +
+            group('Comunicación', [
+                row('whatsapp_notifications',     '💬', 'rgba(37,211,102,.2)',  'Notificaciones WhatsApp',   'Envío automático de recordatorios'),
+                row('reminders_enabled',          '🔔', 'rgba(251,191,36,.2)',  'Recordatorios',             'Avisos de cobros pendientes')
+            ]) +
+            group('Negocio', [
+                row('stock_control_enabled',      '📦', 'rgba(96,165,250,.2)',  'Control de stock',          'Alertas de stock mínimo')
+            ]);
+    }
+
+    /* ── Main render dispatcher ───────────────────────────── */
+    function renderAnalytics() {
+        renderSummaryTab(_analyticsPeriod);
+        if (_analyticsTab === 'profit') renderProfitTab(_analyticsPeriod);
+        if (_analyticsTab === 'tools')  renderToolsTab();
+        /* Hide tabs the worker can't access */
+        var isWorker = (typeof esGorrion === 'function' && esGorrion()) || (typeof esMaster === 'function' && !esMaster() && typeof esJefaza === 'function' && !esJefaza());
+        var profitBtn = document.getElementById('analytics-tab-profit');
+        var toolsBtn  = document.getElementById('analytics-tab-tools');
+        if (isWorker) {
+            if (profitBtn) profitBtn.style.display = 'none';
+            if (toolsBtn)  toolsBtn.style.display  = 'none';
+        } else {
+            if (profitBtn) profitBtn.style.display = '';
+            if (toolsBtn)  toolsBtn.style.display  = '';
+        }
+    }
+
+    /* ── Period switch ────────────────────────────────────── */
+    function setAnalyticsPeriod(period, btn) {
+        _analyticsPeriod = period;
+        document.querySelectorAll('.an-period-btn').forEach(function(b){ b.classList.remove('active'); });
+        if (btn) btn.classList.add('active');
+        renderSummaryTab(period);
+        if (_analyticsTab === 'profit') renderProfitTab(period);
+    }
+
+    /* ── Tab switch ───────────────────────────────────────── */
+    function switchAnalyticsTab(tab, btn) {
+        _analyticsTab = tab;
+        document.querySelectorAll('.analytics-tab-btn').forEach(function(b){ b.classList.remove('active'); });
+        if (btn) btn.classList.add('active');
+        document.querySelectorAll('.analytics-panel').forEach(function(p){ p.classList.remove('active'); });
+        var panel = document.getElementById('an-panel-'+tab);
+        if (panel) panel.classList.add('active');
+        /* Period row hidden on tools tab */
+        var pr = document.getElementById('an-period-row');
+        if (pr) pr.style.display = (tab === 'tools') ? 'none' : '';
+        if (tab === 'summary') renderSummaryTab(_analyticsPeriod);
+        if (tab === 'profit')  renderProfitTab(_analyticsPeriod);
+        if (tab === 'tools')   renderToolsTab();
+    }
 
     /* ── Registro de Llegadas — panel global ──────────────────── */
     var _llegadasFiltro = 'todos';
