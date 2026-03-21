@@ -1076,3 +1076,201 @@ select option { background:var(--bg-card); color:var(--text-primary); }
     padding: 11px 8px; border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 .table tr:last-child td { border-bottom: none; }
+
+/* ╔══════════════════════════════════════════╗
+   ║  OPERATIONAL LAYER — Alerts & Speed UX   ║
+   ╚══════════════════════════════════════════╝ */
+
+/* ── Alert bell in header ─────────────────────────────────── */
+.alert-bell-btn {
+    position: relative;
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+    font-size: 18px; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+.alert-bell-btn:active { background: rgba(255,255,255,0.1); transform: scale(0.93); }
+.alert-bell-btn.has-alerts {
+    background: rgba(239,68,68,0.1);
+    border-color: rgba(239,68,68,0.4);
+    animation: alertPulse 2.5s ease-in-out infinite;
+}
+@keyframes alertPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }
+    50%      { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+}
+.alert-badge {
+    position: absolute; top: -4px; right: -4px;
+    min-width: 18px; height: 18px;
+    background: #EF4444;
+    border-radius: 9px;
+    border: 2px solid #04050F;
+    font-size: 10px; font-weight: 900;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+/* ── Dashboard alert card ─────────────────────────────────── */
+.alert-dashboard-card {
+    background: rgba(239,68,68,0.06);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    display: none;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+    overflow: hidden;
+}
+.alert-dashboard-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #EF4444, #F97316, #EF4444);
+}
+.alert-dashboard-card:active { background: rgba(239,68,68,0.1); }
+.alert-dashboard-row {
+    display: flex; align-items: center; justify-content: space-between;
+}
+.alert-dashboard-left {
+    display: flex; align-items: center; gap: 10px;
+}
+.alert-dashboard-count {
+    font-size: 28px; font-weight: 900; color: #F87171; line-height: 1;
+}
+.alert-dashboard-label {
+    font-size: 12px; font-weight: 700; color: #F87171;
+}
+.alert-dashboard-sub {
+    font-size: 11px; color: rgba(248,113,113,0.7); margin-top: 2px;
+}
+.alert-dashboard-cta {
+    font-size: 11px; font-weight: 700; color: #F87171;
+    background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 20px; padding: 5px 12px; white-space: nowrap;
+}
+
+/* ── Alert modal items ────────────────────────────────────── */
+.alert-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 13px 14px;
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.alert-item:active { opacity: 0.75; }
+.alert-item.critical {
+    background: rgba(239,68,68,0.07);
+    border-color: rgba(239,68,68,0.25);
+}
+.alert-item.warning {
+    background: rgba(245,158,11,0.07);
+    border-color: rgba(245,158,11,0.25);
+}
+.alert-item.info {
+    background: rgba(14,165,233,0.07);
+    border-color: rgba(14,165,233,0.2);
+}
+.alert-item-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+.alert-item-body { flex: 1; min-width: 0; }
+.alert-item-title {
+    font-size: 13px; font-weight: 700; color: var(--text-primary);
+    margin-bottom: 2px;
+}
+.alert-item-desc { font-size: 11px; color: rgba(148,163,184,0.75); }
+.alert-item-cta {
+    font-size: 10px; font-weight: 700; padding: 4px 10px;
+    border-radius: 12px; flex-shrink: 0; margin-top: 2px;
+    align-self: flex-start; border: 1px solid; white-space: nowrap;
+}
+.alert-item.critical .alert-item-cta { color: #F87171; background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); }
+.alert-item.warning  .alert-item-cta { color: #FBBF24; background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); }
+.alert-item.info     .alert-item-cta { color: var(--primary); background: rgba(0,229,255,0.08); border-color: rgba(0,229,255,0.25); }
+
+/* ── Quick amount buttons ─────────────────────────────────── */
+.quick-amounts {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.quick-amt-btn {
+    padding: 10px 4px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 800;
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+}
+.quick-amt-btn:active {
+    background: rgba(0,229,255,0.12);
+    border-color: rgba(0,229,255,0.4);
+    transform: scale(0.94);
+}
+
+/* ── WhatsApp button ──────────────────────────────────────── */
+.btn-whatsapp {
+    background: rgba(37,211,102,0.1);
+    border: 1px solid rgba(37,211,102,0.4);
+    color: #25D366;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    width: 100%; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    -webkit-tap-highlight-color: transparent;
+}
+.btn-whatsapp:active {
+    background: rgba(37,211,102,0.2);
+    transform: scale(0.97);
+}
+
+/* ── Sticky action bar inside modal ──────────────────────── */
+.sticky-modal-actions {
+    position: sticky;
+    bottom: -18px;
+    background: rgba(10,13,26,0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    margin: 16px -24px -18px;
+    padding: 14px 24px 18px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    z-index: 10;
+}
+
+/* ── Nav badge ────────────────────────────────────────────── */
+.nav-item { position: relative; }
+.nav-badge {
+    position: absolute; top: 2px; right: 10px;
+    min-width: 16px; height: 16px;
+    background: #EF4444;
+    border-radius: 8px; border: 2px solid #04050F;
+    font-size: 9px; font-weight: 900; color: #fff;
+    display: none; align-items: center; justify-content: center;
+    padding: 0 3px; line-height: 1;
+}
+.nav-badge.visible { display: flex; }
+
+/* ── Empty state for alerts ───────────────────────────────── */
+.alerts-empty {
+    text-align: center; padding: 36px 16px;
+    color: rgba(148,163,184,0.5);
+}
+.alerts-empty-icon { font-size: 40px; margin-bottom: 10px; opacity: 0.4; }
+.alerts-empty-text { font-size: 13px; }
