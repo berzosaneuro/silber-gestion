@@ -2451,3 +2451,145 @@ select option { background:var(--bg-card); color:var(--text-primary); }
     transform: translateY(0);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   AMOR LAYER — Love Toast · Special Moment Overlay
+   All position:fixed — zero layout impact.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Love Toast (bottom, warm glow) ─────────────────────── */
+.silber-love-toast {
+  position: fixed;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px) + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(18px);
+  opacity: 0;
+  z-index: 9997;
+  pointer-events: none;
+  transition: transform .38s cubic-bezier(.34,1.56,.64,1), opacity .32s ease;
+  white-space: nowrap;
+  max-width: calc(100vw - 40px);
+}
+.silber-love-toast.slt-visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.slt-pill {
+  display: flex;
+  align-items: center;
+  padding: 10px 22px;
+  background: linear-gradient(135deg,
+    rgba(40, 8, 55, 0.95) 0%,
+    rgba(20, 5, 35, 0.96) 100%);
+  border: 1px solid rgba(255, 107, 157, 0.38);
+  border-radius: 40px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 4px 28px rgba(196, 77, 255, 0.28),
+    0 0 0 1px rgba(255,255,255,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.slt-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: .25px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Special Moment Overlay ──────────────────────────────── */
+.silber-special-ov {
+  position: fixed;
+  inset: 0;
+  z-index: 10002;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity .4s ease;
+}
+.silber-special-ov.sso-visible { opacity: 1; }
+.silber-special-ov.sso-out    { opacity: 0; transition: opacity .7s ease; }
+
+/* Message pill */
+.sso-msg {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-14px);
+  padding: 16px 30px;
+  background: linear-gradient(135deg,
+    rgba(25, 8, 40, 0.92) 0%,
+    rgba(15, 4, 28, 0.94) 100%);
+  border: 1px solid rgba(255, 107, 157, 0.35);
+  border-radius: 22px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    0 8px 48px rgba(196, 77, 255, 0.35),
+    0 2px 12px rgba(0,0,0,0.4);
+  opacity: 0;
+  transition: opacity .5s ease .25s, transform .5s cubic-bezier(.34,1.56,.64,1) .25s;
+  max-width: calc(100vw - 48px);
+}
+.silber-special-ov.sso-visible .sso-msg {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Floating hearts */
+.sso-heart {
+  position: absolute;
+  bottom: -24px;
+  animation: sso-float-up linear forwards;
+  pointer-events: none;
+  will-change: transform, opacity;
+  user-select: none;
+  line-height: 1;
+}
+@keyframes sso-float-up {
+  0%   { transform: translateY(0)      scale(1)    rotate(-5deg); opacity: .95; }
+  20%  { transform: translateY(-18vh)  scale(1.08) rotate(6deg);  opacity: .9;  }
+  60%  { transform: translateY(-62vh)  scale(.85)  rotate(-3deg); opacity: .65; }
+  100% { transform: translateY(-108vh) scale(.4)   rotate(10deg); opacity: 0;   }
+}
+
+/* Confetti particles */
+.sso-conf {
+  position: absolute;
+  top: -12px;
+  border-radius: 3px;
+  animation: sso-conf-fall linear forwards;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.sso-conf--bar {
+  border-radius: 1px;
+}
+@keyframes sso-conf-fall {
+  0%   { transform: translateY(0)     rotate(0deg);   opacity: 1;   }
+  15%  { opacity: 1; }
+  80%  { opacity: .7; }
+  100% { transform: translateY(105vh) rotate(600deg); opacity: 0;   }
+}
+
+/* Desktop: love toast bottom-right, avoid nav */
+@media (min-width: 1024px) {
+  .silber-love-toast {
+    bottom: 28px;
+    right: 28px;
+    left: auto;
+    transform: translateY(12px);
+    max-width: 320px;
+  }
+  .silber-love-toast.slt-visible {
+    transform: translateY(0);
+  }
+}
