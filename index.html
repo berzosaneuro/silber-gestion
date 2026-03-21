@@ -28,7 +28,10 @@
                 <img id="header-logo" src="logo.png" alt="" style="height:32px;width:auto;object-fit:contain;display:none;" onload="this.style.display='block'" onerror="this.style.display='none'">
                 <div class="header-title" id="headerTitle">SILBER GESTIÓN</div>
             </div>
-            <div style="width:40px;"></div>
+            <button class="alert-bell-btn" id="btn-alert-bell" onclick="abrirAlertas()" aria-label="Alertas" style="display:none;">
+                🔔
+                <span class="alert-badge" id="alert-badge-count" style="display:none;">0</span>
+            </button>
         </div>
 
         <div class="menu-overlay" id="menuOverlay" onclick="cerrarMenu()">
@@ -86,6 +89,20 @@
         <!-- DASHBOARD -->
         <div class="screen" id="screen-dashboard">
             <div class="dashboard-content">
+
+                <!-- Alerts card — shown only when there are active problems -->
+                <div class="alert-dashboard-card" id="alert-dashboard-card" onclick="abrirAlertas()">
+                    <div class="alert-dashboard-row">
+                        <div class="alert-dashboard-left">
+                            <div class="alert-dashboard-count" id="alert-dashboard-count">0</div>
+                            <div>
+                                <div class="alert-dashboard-label">Alertas activas</div>
+                                <div class="alert-dashboard-sub" id="alert-dashboard-sub">Toca para ver</div>
+                            </div>
+                        </div>
+                        <div class="alert-dashboard-cta">Ver →</div>
+                    </div>
+                </div>
 
                 <!-- KPI Hero — tap to navigate -->
                 <div class="summary-grid">
@@ -1025,6 +1042,25 @@
             </div>
         </div>
 
+        <!-- MODAL ALERTAS SISTEMA -->
+        <div class="modal-overlay" id="modalAlertasSistema" onclick="if(event.target===this)cerrarAlertas()">
+            <div class="modal-content" style="max-height:82vh;display:flex;flex-direction:column;">
+                <div class="modal-header" style="margin-bottom:12px;">
+                    <div class="modal-title" style="color:#F87171;">🚨 Alertas del sistema</div>
+                    <div class="modal-subtitle" id="alertas-modal-subtitle" style="color:rgba(148,163,184,0.6);"></div>
+                </div>
+                <div class="modal-body" style="overflow-y:auto;flex:1;padding-right:2px;" id="alertas-modal-lista">
+                    <div class="alerts-empty">
+                        <div class="alerts-empty-icon">✅</div>
+                        <div class="alerts-empty-text">Sin alertas activas</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-full" onclick="cerrarAlertas()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+
         <!-- REGISTRO DE LLEGADAS — Panel global (MASTER) -->
         <div class="screen" id="screen-llegadas">
             <div class="content-section">
@@ -1048,6 +1084,7 @@
                 <!-- Filter chips -->
                 <div class="llegadas-filter-bar" id="llegadas-filter-bar">
                     <button class="llegadas-filter-chip active" data-filter="todos" onclick="filtrarLlegadas('todos',this)">Todas</button>
+                    <button class="llegadas-filter-chip" data-filter="incidencias" onclick="filtrarLlegadas('incidencias',this)">🚨 Solo incidencias</button>
                     <button class="llegadas-filter-chip" data-filter="ok" onclick="filtrarLlegadas('ok',this)">✅ OK</button>
                     <button class="llegadas-filter-chip" data-filter="fuera" onclick="filtrarLlegadas('fuera',this)">⚠️ Fuera zona</button>
                     <button class="llegadas-filter-chip" data-filter="sin-gps" onclick="filtrarLlegadas('sin-gps',this)">📵 Sin GPS</button>
@@ -1080,6 +1117,7 @@
                 <div class="nav-label">INGRESOS</div>
             </div>
             <div class="nav-item" data-screen="oficina" onclick="cambiarPantalla('oficina')">
+                <span class="nav-badge" id="nav-badge-oficina">0</span>
                 <div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V12h6v9"/><path d="M9 9h.01M15 9h.01"/></svg></div>
                 <div class="nav-label">OFICINA</div>
             </div>
@@ -1093,6 +1131,19 @@
                     <div class="modal-subtitle" id="modal-transaccion-categoria">Casa</div>
                 </div>
                 <div class="modal-body">
+                    <div class="input-group">
+                        <label class="input-label">Monto rápido</label>
+                        <div class="quick-amounts" id="quick-amounts-row">
+                            <button type="button" class="quick-amt-btn" onclick="setQuickMonto(5)">5€</button>
+                            <button type="button" class="quick-amt-btn" onclick="setQuickMonto(10)">10€</button>
+                            <button type="button" class="quick-amt-btn" onclick="setQuickMonto(20)">20€</button>
+                            <button type="button" class="quick-amt-btn" onclick="setQuickMonto(25)">25€</button>
+                            <button type="button" class="quick-amt-btn" onclick="setQuickMonto(28)">28€</button>
+                            <button type="button" class="quick-amt-btn" onclick="setQuickMonto(30)">30€</button>
+                            <button type="button" class="quick-amt-btn" onclick="setQuickMonto(50)">50€</button>
+                            <button type="button" class="quick-amt-btn" onclick="setQuickMonto(100)">100€</button>
+                        </div>
+                    </div>
                     <div class="input-group">
                         <label class="input-label">Monto (€)</label>
                         <input type="number" class="input-field" id="transaccion-monto" placeholder="0.00" step="0.01">
@@ -1191,25 +1242,16 @@
                     </div>
 
                     <!-- GPS / Llegada row -->
-                    <div id="cliente-gps-row" style="display:none;gap:8px;margin-bottom:14px;">
+                    <div id="cliente-gps-row" style="display:none;gap:8px;margin-bottom:12px;">
                         <button id="btn-navegar-cliente" class="btn btn-secondary" style="flex:1;display:none;" onclick="navegarACliente()">🗺️ Navegar</button>
                         <button id="btn-he-llegado" class="btn btn-primary" style="flex:1;display:none;" onclick="registrarLlegada()">📍 He llegado</button>
                     </div>
 
-                    <!-- Payment actions -->
-                    <div style="display:flex;gap:10px;margin-bottom:16px;">
-                        <button class="btn btn-primary" style="flex:1;font-size:13px;padding:14px 8px;" onclick="pagoTotal()">✅ Pago Total</button>
-                        <button class="btn btn-secondary" style="flex:1;font-size:13px;padding:14px 8px;" onclick="mostrarPagoParcial()">💸 Pago Parcial</button>
-                    </div>
-
-                    <!-- Partial payment form -->
-                    <div id="pago-parcial-form" style="display:none;margin-bottom:16px;">
-                        <div class="input-group" style="margin-bottom:8px;">
-                            <label class="input-label">Monto del Pago (€)</label>
-                            <input type="number" class="input-field" id="pago-parcial-monto" placeholder="0.00" step="0.01">
-                        </div>
-                        <button class="btn btn-primary btn-full" onclick="ejecutarPagoParcial()">Aplicar Pago</button>
-                    </div>
+                    <!-- WhatsApp button -->
+                    <button class="btn-whatsapp" id="btn-whatsapp-cliente" onclick="enviarWhatsAppCliente()" style="margin-bottom:14px;display:none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        Enviar WhatsApp
+                    </button>
 
                     <!-- Movement history -->
                     <div style="margin-top:4px;">
@@ -1223,6 +1265,23 @@
                         <div id="llegadas-cliente"></div>
                     </div>
 
+                    <!-- Partial payment form (inline, above sticky bar) -->
+                    <div id="pago-parcial-form" style="display:none;margin-top:16px;">
+                        <div class="input-group" style="margin-bottom:8px;">
+                            <label class="input-label">Monto del Pago (€)</label>
+                            <input type="number" class="input-field" id="pago-parcial-monto" placeholder="0.00" step="0.01">
+                        </div>
+                        <button class="btn btn-primary btn-full" onclick="ejecutarPagoParcial()">Aplicar Pago</button>
+                    </div>
+
+                    <!-- Sticky primary actions -->
+                    <div class="sticky-modal-actions">
+                        <div style="display:flex;gap:10px;">
+                            <button class="btn btn-primary" style="flex:1;font-size:13px;padding:14px 8px;" onclick="pagoTotal()">✅ Cobrar todo</button>
+                            <button class="btn btn-secondary" style="flex:1;font-size:13px;padding:14px 8px;" onclick="mostrarPagoParcial()">💸 Parcial</button>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary btn-full" onclick="cerrarModalDetalleCliente()">Cerrar</button>
@@ -1231,21 +1290,327 @@
         </div>
     </div>
 
-    <script src="js/state.js?v=10"></script>
-    <script src="js/supabase.js?v=10"></script>
-    <script src="js/dashboard.js?v=10"></script>
-    <script src="js/transacciones.js?v=10"></script>
-    <script src="js/clientes.js?v=10"></script>
-    <script src="js/ui.js?v=10"></script>
-    <script src="js/metrics.js?v=10"></script>
-    <script src="js/timeline.js?v=10"></script>
-    <script src="js/app.js?v=10"></script>
-    <script src="js/master-security.js?v=10"></script>
-    <script src="js/productos.js?v=10"></script>
+    <script src="js/state.js?v=11"></script>
+    <script src="js/supabase.js?v=11"></script>
+    <script src="js/dashboard.js?v=11"></script>
+    <script src="js/transacciones.js?v=11"></script>
+    <script src="js/clientes.js?v=11"></script>
+    <script src="js/ui.js?v=11"></script>
+    <script src="js/metrics.js?v=11"></script>
+    <script src="js/timeline.js?v=11"></script>
+    <script src="js/app.js?v=11"></script>
+    <script src="js/master-security.js?v=11"></script>
+    <script src="js/productos.js?v=11"></script>
     <script>
     window._silberDebug = function() {
       try { if (typeof console !== 'undefined' && console.log) console.log.apply(console, ['[Silber]'].concat(Array.prototype.slice.call(arguments))); } catch(e) {}
     };
+
+    /* ╔════════════════════════════════════════════════════════╗
+       ║  OPERATIONAL LAYER — Alerts · WhatsApp · Notifs · UX  ║
+       ╚════════════════════════════════════════════════════════╝ */
+
+    /* ── Notification foundation ──────────────────────────────── */
+    var NOTIF_KEY = 'silber_notif_v1';
+
+    function createNotification(type, data) {
+        try {
+            var list = JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]');
+            var entry = { id: Date.now(), type: type, data: data || {}, read: false, ts: new Date().toISOString() };
+            list.unshift(entry);
+            if (list.length > 200) list = list.slice(0, 200);
+            localStorage.setItem(NOTIF_KEY, JSON.stringify(list));
+            return entry.id;
+        } catch(e) { return null; }
+    }
+
+    function markNotificationRead(id) {
+        try {
+            var list = JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]');
+            list.forEach(function(n) { if (n.id === id) n.read = true; });
+            localStorage.setItem(NOTIF_KEY, JSON.stringify(list));
+        } catch(e) {}
+    }
+
+    function getUnreadNotificationsCount() {
+        try {
+            var list = JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]');
+            return list.filter(function(n) { return !n.read; }).length;
+        } catch(e) { return 0; }
+    }
+
+    /* ── Alert engine — aggregates all alert types ─────────────── */
+    function getAlertas() {
+        var alertas = [];
+        var hoy = new Date().toISOString().split('T')[0];
+        var diaHoy = new Date().getDate();
+
+        if (typeof estado === 'undefined' || !estado) return alertas;
+
+        /* 1 ── Credit limits near/exceeded */
+        (estado.clientes || []).forEach(function(c) {
+            if (!c.deuda || c.deuda <= 0) return;
+            if (c.limite > 0 && c.deuda >= c.limite) {
+                alertas.push({ type: 'limite_excedido', severity: 'critical', icon: '🚨',
+                    titulo: 'Límite excedido: ' + c.nombre,
+                    desc: c.deuda.toFixed(2) + '€ / límite ' + c.limite + '€',
+                    accionLabel: 'Ver deudas', accionScreen: 'deuda' });
+            } else if (c.limite > 0 && c.deuda >= c.limite * 0.85) {
+                alertas.push({ type: 'limite_proximo', severity: 'warning', icon: '⚠️',
+                    titulo: 'Límite casi alcanzado: ' + c.nombre,
+                    desc: c.deuda.toFixed(2) + '€ / límite ' + c.limite + '€',
+                    accionLabel: 'Ver deudas', accionScreen: 'deuda' });
+            }
+        });
+
+        /* 2 ── Clients to collect today */
+        var cobrarHoy = (estado.clientes || []).filter(function(c) { return c.diaPago === diaHoy && c.deuda > 0; });
+        if (cobrarHoy.length > 0) {
+            var totalHoy = cobrarHoy.reduce(function(s,c){return s+(c.deuda||0);},0);
+            alertas.push({ type: 'cobrar_hoy', severity: 'warning', icon: '💳',
+                titulo: cobrarHoy.length + ' cliente' + (cobrarHoy.length > 1 ? 's' : '') + ' cobran hoy',
+                desc: totalHoy.toFixed(2) + '€ pendiente de cobro',
+                accionLabel: 'Ver hoy', accionScreen: 'deuda' });
+        }
+
+        /* 3 ── Low stock */
+        var sp = estado.stockProductos || {};
+        Object.keys(sp).forEach(function(cat) {
+            var prod = sp[cat];
+            if (typeof prod.stock === 'number' && prod.stock > 0 && prod.stock <= 5) {
+                alertas.push({ type: 'stock_bajo', severity: 'warning', icon: '📦',
+                    titulo: 'Stock bajo: ' + cat,
+                    desc: prod.stock.toFixed(1) + 'g restantes',
+                    accionLabel: 'Ver stock', accionScreen: 'stock' });
+            }
+        });
+        if (typeof estado.stockTotalB === 'number' && estado.stockTotalB <= 5 && estado.stockTotalB >= 0) {
+            alertas.push({ type: 'stock_b_bajo', severity: 'critical', icon: '🔵',
+                titulo: 'Stock B crítico: ' + estado.stockTotalB.toFixed(1) + 'g',
+                desc: 'Recarga B casi agotada',
+                accionLabel: 'Ver stock', accionScreen: 'stock' });
+        }
+
+        /* 4 ── Visit anomalies today */
+        var llegadasHoy = (estado.llegadas || []).filter(function(l) { return l.fecha === hoy; });
+        var incidenciasHoy = llegadasHoy.filter(function(l) { return l.fueraDeZona || l.sinGPS; });
+        if (incidenciasHoy.length > 0) {
+            alertas.push({ type: 'visita_anomalia', severity: 'warning', icon: '📍',
+                titulo: incidenciasHoy.length + ' visita' + (incidenciasHoy.length > 1 ? 's' : '') + ' con incidencia hoy',
+                desc: 'Fuera de zona o sin GPS verificado',
+                accionLabel: 'Ver llegadas', accionScreen: 'llegadas' });
+        }
+
+        /* 5 ── Fraud / suspicious activity from activity log */
+        try {
+            var logRaw = localStorage.getItem('activity_log');
+            if (logRaw) {
+                var logList = JSON.parse(logRaw) || [];
+                var suspicious = logList.filter(function(e) {
+                    return (e.action === 'SUSPICIOUS_ACTIVITY' || e.action === 'SUSPICIOUS_SALES_PATTERN' || e.action === 'LOG_TAMPERING_DETECTED') && e.timestamp && e.timestamp.slice(0,10) === hoy;
+                });
+                if (suspicious.length > 0) {
+                    alertas.push({ type: 'fraude', severity: 'critical', icon: '🔐',
+                        titulo: 'Alerta de seguridad detectada',
+                        desc: suspicious.length + ' evento' + (suspicious.length > 1 ? 's' : '') + ' sospechoso' + (suspicious.length > 1 ? 's' : '') + ' hoy',
+                        accionLabel: 'Auditoría', accionFn: function() { if(typeof cerrarAlertas==='function')cerrarAlertas(); if(typeof abrirAuditoria==='function')abrirAuditoria(); } });
+                }
+                var highVal = logList.filter(function(e) { return e.action === 'HIGH_VALUE_TRANSACTION' && e.timestamp && e.timestamp.slice(0,10) === hoy; });
+                if (highVal.length > 0) {
+                    alertas.push({ type: 'alto_valor', severity: 'warning', icon: '💰',
+                        titulo: highVal.length + ' transacción' + (highVal.length > 1 ? 'es' : '') + ' de alto valor hoy',
+                        desc: 'Por encima del umbral configurado',
+                        accionLabel: 'Ver', accionFn: function() { if(typeof cerrarAlertas==='function')cerrarAlertas(); if(typeof abrirAuditoria==='function')abrirAuditoria(); } });
+                }
+            }
+        } catch(eLog) {}
+
+        return alertas;
+    }
+
+    /* ── Update alert badge everywhere ────────────────────────── */
+    function actualizarContadorAlertas() {
+        try {
+            var alertas = getAlertas();
+            var count = alertas.length;
+            var criticalCount = alertas.filter(function(a){ return a.severity === 'critical'; }).length;
+
+            /* Header bell */
+            var bell = document.getElementById('btn-alert-bell');
+            var badge = document.getElementById('alert-badge-count');
+            if (bell) {
+                bell.style.display = count > 0 ? 'flex' : 'none';
+                bell.classList.toggle('has-alerts', criticalCount > 0);
+            }
+            if (badge) {
+                badge.style.display = count > 0 ? 'flex' : 'none';
+                badge.textContent = count > 9 ? '9+' : String(count);
+            }
+
+            /* Oficina nav badge */
+            var navBadge = document.getElementById('nav-badge-oficina');
+            if (navBadge) {
+                navBadge.classList.toggle('visible', count > 0);
+                navBadge.textContent = count > 9 ? '9+' : String(count);
+            }
+
+            /* Dashboard alert card */
+            var dashCard = document.getElementById('alert-dashboard-card');
+            var dashCount = document.getElementById('alert-dashboard-count');
+            var dashSub = document.getElementById('alert-dashboard-sub');
+            if (dashCard) {
+                dashCard.style.display = count > 0 ? 'block' : 'none';
+                if (dashCount) dashCount.textContent = count;
+                if (dashSub) {
+                    var types = alertas.map(function(a){ return a.icon; }).slice(0,3).join(' ');
+                    dashSub.textContent = types || 'Toca para ver';
+                }
+            }
+        } catch(eA) {}
+    }
+
+    function abrirAlertas() {
+        var alertas = getAlertas();
+        var lista = document.getElementById('alertas-modal-lista');
+        var sub = document.getElementById('alertas-modal-subtitle');
+        if (sub) sub.textContent = alertas.length > 0 ? alertas.length + ' problema' + (alertas.length > 1 ? 's' : '') + ' activo' + (alertas.length > 1 ? 's' : '') : 'Sin problemas activos';
+        if (lista) {
+            if (alertas.length === 0) {
+                lista.innerHTML = '<div class="alerts-empty"><div class="alerts-empty-icon">✅</div><div class="alerts-empty-text">Sin alertas activas</div></div>';
+            } else {
+                lista.innerHTML = alertas.map(function(a, idx) {
+                    return '<div class="alert-item ' + a.severity + '" onclick="ejecutarAlertaAccion(' + idx + ')">' +
+                        '<div class="alert-item-icon">' + a.icon + '</div>' +
+                        '<div class="alert-item-body">' +
+                            '<div class="alert-item-title">' + a.titulo + '</div>' +
+                            '<div class="alert-item-desc">' + a.desc + '</div>' +
+                        '</div>' +
+                        '<span class="alert-item-cta">' + a.accionLabel + '</span>' +
+                    '</div>';
+                }).join('');
+            }
+        }
+        var modal = document.getElementById('modalAlertasSistema');
+        if (modal) modal.classList.add('active');
+    }
+
+    function cerrarAlertas() {
+        var modal = document.getElementById('modalAlertasSistema');
+        if (modal) modal.classList.remove('active');
+    }
+
+    /* Store last alert list for action dispatch */
+    function ejecutarAlertaAccion(idx) {
+        try {
+            var alertas = getAlertas();
+            var a = alertas[idx];
+            if (!a) return;
+            cerrarAlertas();
+            if (typeof a.accionFn === 'function') { a.accionFn(); return; }
+            if (a.accionScreen) {
+                if (a.accionScreen === 'llegadas' && typeof renderLlegadas === 'function') renderLlegadas();
+                cambiarPantalla(a.accionScreen);
+            }
+        } catch(eAc) {}
+    }
+
+    /* Auto-refresh badge every 15s when app is active */
+    var _alertPollTimer = null;
+    function startAlertPoll() {
+        if (_alertPollTimer) return;
+        _alertPollTimer = setInterval(actualizarContadorAlertas, 15000);
+        actualizarContadorAlertas();
+    }
+
+    /* ── WhatsApp integration (structure + safe placeholders) ─── */
+
+    /**
+     * sendWhatsAppReminder — INTEGRATION HOOK
+     * Replace body with actual WhatsApp API call when ready.
+     * Currently opens wa.me with pre-filled message.
+     * @param {object} client  — estado.clientes entry
+     */
+    function sendWhatsAppReminder(client) {
+        if (!client || !client.whatsapp) return;
+        var num = String(client.whatsapp).replace(/[^0-9+]/g, '');
+        var msg = '¡Hola ' + (client.nombre || '') + '! Te recordamos que tienes un pago pendiente de ' + (client.deuda || 0).toFixed(2) + '€. Gracias 🙏';
+        var url = 'https://wa.me/' + num.replace('+','') + '?text=' + encodeURIComponent(msg);
+        window.open(url, '_blank');
+        if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'WHATSAPP_REMINDER_SENT', details: 'Recordatorio enviado a ' + (client.nombre || '') });
+        createNotification('whatsapp_sent', { cliente: client.nombre, monto: client.deuda });
+    }
+
+    /**
+     * sendWhatsAppAlert — INTEGRATION HOOK
+     * Placeholder for automated WhatsApp alerts (fraud, limits, etc.)
+     * @param {string} type    — alert type key
+     * @param {object} payload — data for the message
+     */
+    function sendWhatsAppAlert(type, payload) {
+        /* PLACEHOLDER — connect to WhatsApp Business API / Twilio / etc. */
+        if (typeof console !== 'undefined') console.log('[Silber] WhatsApp alert queued:', type, payload);
+        createNotification('whatsapp_alert', { type: type, payload: payload });
+    }
+
+    /** Button handler — sends reminder to current open client */
+    function enviarWhatsAppCliente() {
+        var c = (typeof estado !== 'undefined') ? estado.clienteActual : null;
+        if (!c) { alert('No hay cliente activo'); return; }
+        if (!c.whatsapp) { alert('Este cliente no tiene WhatsApp registrado'); return; }
+        sendWhatsAppReminder(c);
+    }
+
+    /* ── Quick transaction amount ──────────────────────────────── */
+    function setQuickMonto(valor) {
+        var el = document.getElementById('transaccion-monto');
+        if (el) {
+            el.value = valor;
+            el.focus();
+            /* Visual feedback on selected button */
+            var btns = document.querySelectorAll('.quick-amt-btn');
+            if (btns) btns.forEach(function(b){ b.style.borderColor = 'rgba(255,255,255,0.1)'; b.style.background = 'rgba(255,255,255,0.04)'; });
+            var clicked = event && event.target;
+            if (clicked && clicked.classList.contains('quick-amt-btn')) {
+                clicked.style.borderColor = 'rgba(0,229,255,0.5)';
+                clicked.style.background = 'rgba(0,229,255,0.1)';
+            }
+        }
+    }
+
+    /* ── Show WhatsApp button when client has phone ────────────── */
+    function _actualizarBotonesCliente() {
+        var c = (typeof estado !== 'undefined') ? estado.clienteActual : null;
+        var btn = document.getElementById('btn-whatsapp-cliente');
+        if (btn) btn.style.display = (c && c.whatsapp) ? 'flex' : 'none';
+    }
+
+    /* Hook into abrirDetalleCliente without modifying clientes.js
+       We poll for modalDetalleCliente.active and sync the button */
+    var _clienteModalObserver = null;
+    try {
+        var _modalDetalle = document.getElementById('modalDetalleCliente');
+        if (_modalDetalle && window.MutationObserver) {
+            _clienteModalObserver = new MutationObserver(function(mutations) {
+                mutations.forEach(function(m) {
+                    if (m.attributeName === 'class') _actualizarBotonesCliente();
+                });
+            });
+            _clienteModalObserver.observe(_modalDetalle, { attributes: true });
+        }
+    } catch(eObs) {}
+
+    /* ── Bootstrap on app ready ────────────────────────────────── */
+    (function _bootstrapOperationalLayer() {
+        /* Wait for estado to be ready, then start */
+        function tryBoot() {
+            if (typeof estado !== 'undefined' && estado && typeof sesionActual !== 'undefined' && sesionActual) {
+                startAlertPoll();
+            } else {
+                setTimeout(tryBoot, 500);
+            }
+        }
+        setTimeout(tryBoot, 1200);
+    })();
 
     /* ── Registro de Llegadas — panel global ──────────────────── */
     var _llegadasFiltro = 'todos';
@@ -1256,11 +1621,23 @@
 
         // Apply filter
         var filtradas = lista.filter(function(l) {
-            if (_llegadasFiltro === 'ok')      return !l.fueraDeZona && !l.sinGPS;
-            if (_llegadasFiltro === 'fuera')   return !!l.fueraDeZona;
-            if (_llegadasFiltro === 'sin-gps') return !!l.sinGPS;
-            if (_llegadasFiltro === 'hoy')     return l.fecha === hoy;
+            if (_llegadasFiltro === 'ok')           return !l.fueraDeZona && !l.sinGPS;
+            if (_llegadasFiltro === 'fuera')        return !!l.fueraDeZona;
+            if (_llegadasFiltro === 'sin-gps')      return !!l.sinGPS;
+            if (_llegadasFiltro === 'incidencias')  return !!l.fueraDeZona || !!l.sinGPS;
+            if (_llegadasFiltro === 'hoy')          return l.fecha === hoy;
             return true;
+        });
+
+        // Sort: problems first (fueraDeZona > sinGPS > OK), then by date/time desc
+        filtradas.sort(function(a, b) {
+            var sevA = a.fueraDeZona ? 2 : (a.sinGPS ? 1 : 0);
+            var sevB = b.fueraDeZona ? 2 : (b.sinGPS ? 1 : 0);
+            if (sevB !== sevA) return sevB - sevA; // higher severity first
+            // same severity → most recent first
+            var dtA = (a.fecha || '') + 'T' + (a.hora || '');
+            var dtB = (b.fecha || '') + 'T' + (b.hora || '');
+            return dtB > dtA ? 1 : dtB < dtA ? -1 : 0;
         });
 
         // KPIs (always from full list)
