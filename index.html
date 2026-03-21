@@ -264,30 +264,46 @@
 
         <!-- DEUDA -->
         <div class="screen" id="screen-deuda">
-            <div class="content-section">
-                <button class="btn btn-primary btn-full" onclick="cambiarPantalla('oficina')" style="margin-bottom:16px;font-size:14px;letter-spacing:1px;">🏢 Deuda por Oficina →</button>
-                <div class="section-card" id="deuda-resumen-card" style="display:none;">
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
-                        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">TOTAL DEUDA</div><div id="res-total" style="font-size:20px;font-weight:900;color:#EF4444;">0€</div></div>
-                        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">CLIENTES</div><div id="res-clientes" style="font-size:20px;font-weight:900;color:var(--primary);">0</div></div>
-                        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">COBRAR HOY</div><div id="res-hoy" style="font-size:20px;font-weight:900;color:#F59E0B;">0€</div></div>
+            <!-- dsb-master-detail: on desktop becomes a 2-col split; on mobile content-section as normal -->
+            <div class="content-section dsb-master-detail">
+
+                <!-- LEFT: client list panel -->
+                <div id="dsb-client-left">
+                    <button class="btn btn-primary btn-full dsb-hide-desktop" onclick="cambiarPantalla('oficina')" style="margin-bottom:16px;font-size:14px;letter-spacing:1px;">🏢 Deuda por Oficina →</button>
+                    <div class="section-card" id="deuda-resumen-card" style="display:none;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+                            <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">TOTAL DEUDA</div><div id="res-total" style="font-size:20px;font-weight:900;color:#EF4444;">0€</div></div>
+                            <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">CLIENTES</div><div id="res-clientes" style="font-size:20px;font-weight:900;color:var(--primary);">0</div></div>
+                            <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">COBRAR HOY</div><div id="res-hoy" style="font-size:20px;font-weight:900;color:#F59E0B;">0€</div></div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-bottom:8px;">
+                        <button class="btn btn-secondary" id="filtro-todos" onclick="filtrarDeudas('todos')" style="flex:1;font-size:11px;padding:8px;">Todos</button>
+                        <button class="btn btn-secondary" id="filtro-pendientes" onclick="filtrarDeudas('pendientes')" style="flex:1;font-size:11px;padding:8px;">Pendientes</button>
+                        <button class="btn btn-secondary" id="filtro-hoy" onclick="filtrarDeudas('hoy')" style="flex:1;font-size:11px;padding:8px;">Hoy</button>
+                    </div>
+                    <div class="section-card dsb-list-card">
+                        <div class="section-title dsb-hide-desktop">Clientes con Deuda</div>
+                        <div class="dsb-table-header" style="display:none;">
+                            <span>Cliente</span>
+                            <span style="text-align:center;">Deuda</span>
+                            <span style="text-align:right;">Contacto / Info</span>
+                        </div>
+                        <div id="clientes-list"></div>
                     </div>
                 </div>
-                <div style="display:flex;gap:8px;margin-bottom:8px;">
-                    <button class="btn btn-secondary" id="filtro-todos" onclick="filtrarDeudas('todos')" style="flex:1;font-size:11px;padding:8px;">Todos</button>
-                    <button class="btn btn-secondary" id="filtro-pendientes" onclick="filtrarDeudas('pendientes')" style="flex:1;font-size:11px;padding:8px;">Pendientes</button>
-                    <button class="btn btn-secondary" id="filtro-hoy" onclick="filtrarDeudas('hoy')" style="flex:1;font-size:11px;padding:8px;">Hoy</button>
-                </div>
-                <div class="section-card">
-                    <div class="section-title">Clientes con Deuda</div>
-                    <!-- Desktop-only table header (hidden on mobile via CSS) -->
-                    <div class="dsb-table-header" style="display:none;">
-                        <span>Cliente</span>
-                        <span style="text-align:center;">Deuda</span>
-                        <span style="text-align:right;">Contacto / Info</span>
+
+                <!-- RIGHT: persistent detail panel (desktop only, empty on mobile) -->
+                <div id="dsb-client-detail-panel">
+                    <div id="dsb-client-detail-inner">
+                        <div class="dcp-empty-state">
+                            <div style="font-size:52px;opacity:.12;margin-bottom:14px;">👤</div>
+                            <div style="font-size:13px;font-weight:600;color:rgba(148,163,184,.35);margin-bottom:6px;">Ningún cliente seleccionado</div>
+                            <div style="font-size:11px;color:rgba(148,163,184,.2);">Haz clic en una fila para ver el detalle</div>
+                        </div>
                     </div>
-                    <div id="clientes-list"></div>
                 </div>
+
             </div>
             <button class="fab" onclick="abrirModalNuevoCliente()">+</button>
         </div>
@@ -1418,17 +1434,17 @@
         </div>
     </div>
 
-    <script src="js/state.js?v=13"></script>
-    <script src="js/supabase.js?v=13"></script>
-    <script src="js/dashboard.js?v=13"></script>
-    <script src="js/transacciones.js?v=13"></script>
-    <script src="js/clientes.js?v=13"></script>
-    <script src="js/ui.js?v=13"></script>
-    <script src="js/metrics.js?v=13"></script>
-    <script src="js/timeline.js?v=13"></script>
-    <script src="js/app.js?v=13"></script>
-    <script src="js/master-security.js?v=13"></script>
-    <script src="js/productos.js?v=13"></script>
+    <script src="js/state.js?v=14"></script>
+    <script src="js/supabase.js?v=14"></script>
+    <script src="js/dashboard.js?v=14"></script>
+    <script src="js/transacciones.js?v=14"></script>
+    <script src="js/clientes.js?v=14"></script>
+    <script src="js/ui.js?v=14"></script>
+    <script src="js/metrics.js?v=14"></script>
+    <script src="js/timeline.js?v=14"></script>
+    <script src="js/app.js?v=14"></script>
+    <script src="js/master-security.js?v=14"></script>
+    <script src="js/productos.js?v=14"></script>
     <script>
     window._silberDebug = function() {
       try { if (typeof console !== 'undefined' && console.log) console.log.apply(console, ['[Silber]'].concat(Array.prototype.slice.call(arguments))); } catch(e) {}
@@ -2181,6 +2197,214 @@
           btn.onclick = function() { loginFallback(); return false; };
         }
       }, 100);
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       DESKTOP CRM LAYER — Master-Detail · Quick Actions · Shortcuts
+       Only active at ≥1024px — mobile is completely untouched
+       ══════════════════════════════════════════════════════════ */
+    (function _initDesktopCRM() {
+        if (window.innerWidth < 1024) return;
+
+        /* ── Client detail panel renderer ─────────────────── */
+        window._renderClientDetailPanel = function(cliente) {
+            var inner = document.getElementById('dsb-client-detail-inner');
+            if (!inner || !cliente) return;
+            var diaHoy  = new Date().getDate();
+            var cobrarHoy = cliente.diaPago === diaHoy && (cliente.deuda || 0) > 0;
+            var deuda   = cliente.deuda   || 0;
+            var limite  = cliente.limite  || 0;
+            var uso     = limite > 0 ? Math.min(100, (deuda / limite) * 100) : 0;
+            var usoCol  = uso > 80 ? '#EF4444' : uso > 50 ? '#F59E0B' : '#10B981';
+            var historial = (cliente.historial || []).slice().reverse().slice(0, 7);
+            var histHtml  = historial.length ? historial.map(function(h) {
+                var neg = (h.monto || 0) < 0 || ((h.tipo || '').toLowerCase().indexOf('pago') > -1);
+                return '<div class="dcp-hist-row">' +
+                    '<span class="dcp-hist-fecha">' + (h.fecha || '') + '</span>' +
+                    '<span class="dcp-hist-tipo" style="color:' + (neg ? '#34D399' : '#60A5FA') + ';">' + (h.tipo || '') + '</span>' +
+                    '<span class="dcp-hist-amt" style="color:' + (neg ? '#34D399' : '#F87171') + ';">' + ((h.monto > 0 ? '+' : '') + (h.monto || 0) + '€') + '</span>' +
+                '</div>';
+            }).join('') : '<div class="dcp-hist-empty">Sin movimientos registrados</div>';
+
+            inner.innerHTML =
+                '<div class="dcp-header">' +
+                    '<div class="dcp-avatar">' + (cliente.nombre || '?').slice(0,2).toUpperCase() + '</div>' +
+                    '<div class="dcp-header-info">' +
+                        '<div class="dcp-name">' + (cliente.nombre || '') + (cobrarHoy ? ' <span class="dcp-badge-hoy">HOY</span>' : '') + '</div>' +
+                        '<div class="dcp-sub">' + (cliente.whatsapp || '—') + ' · Día ' + (cliente.diaPago || '—') + (cliente.producto ? ' · ' + cliente.producto : '') + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="dcp-kpi-row">' +
+                    '<div class="dcp-kpi">' +
+                        '<div class="dcp-kpi-label">Deuda</div>' +
+                        '<div class="dcp-kpi-val" style="color:' + (deuda > 0 ? '#F87171' : '#34D399') + ';">' + deuda.toFixed(2) + '€</div>' +
+                    '</div>' +
+                    '<div class="dcp-kpi">' +
+                        '<div class="dcp-kpi-label">Límite</div>' +
+                        '<div class="dcp-kpi-val">' + limite + '€</div>' +
+                    '</div>' +
+                    '<div class="dcp-kpi">' +
+                        '<div class="dcp-kpi-label">Uso</div>' +
+                        '<div class="dcp-kpi-val" style="color:' + usoCol + ';">' + uso.toFixed(0) + '%</div>' +
+                    '</div>' +
+                '</div>' +
+                (limite > 0 ? '<div class="dcp-limit-track"><div class="dcp-limit-fill" style="width:' + uso + '%;background:' + usoCol + ';"></div></div>' : '') +
+                '<div class="dcp-actions">' +
+                    '<button class="dcp-btn dcp-btn-primary" onclick="pagoTotal();setTimeout(function(){_renderClientDetailPanel(estado.clienteActual)},200)">✅ Cobrar todo</button>' +
+                    '<button class="dcp-btn dcp-btn-secondary" onclick="var m=document.getElementById(\'modalDetalleCliente\');if(m)m.classList.add(\'active\')">💸 Pago parcial</button>' +
+                    (cliente.whatsapp ? '<button class="dcp-btn dcp-btn-wa" onclick="enviarWhatsAppCliente()">💬 WhatsApp</button>' : '') +
+                    '<button class="dcp-btn dcp-btn-gps" onclick="registrarLlegada()">📍 Llegada</button>' +
+                '</div>' +
+                '<div class="dcp-section-label">Historial de movimientos</div>' +
+                '<div class="dcp-historial">' + histHtml + '</div>' +
+                '<div class="dcp-footer-btns">' +
+                    '<button class="dcp-link-btn" onclick="var m=document.getElementById(\'modalDetalleCliente\');if(m)m.classList.add(\'active\')">Abrir ficha completa →</button>' +
+                '</div>';
+        };
+
+        /* ── Intercept client list clicks (capture phase) ─── */
+        var _selectedNombre = null;
+        var listEl = document.getElementById('clientes-list');
+        if (listEl) {
+            listEl.addEventListener('click', function(e) {
+                if (window.innerWidth < 1024) return;
+                if (e.target.closest('.dsb-row-actions')) return; /* let row-action buttons pass */
+                var card = e.target.closest('.cliente-card');
+                if (!card) return;
+                e.stopPropagation(); /* prevent abrirDetalleCliente from opening modal */
+                var nombre  = card.dataset.nombre || '';
+                var cliente = (estado.clientes || []).find(function(c) { return c.nombre === nombre; });
+                if (!cliente) return;
+                /* Highlight row */
+                listEl.querySelectorAll('.cliente-card').forEach(function(c) { c.classList.remove('dsb-row-selected'); });
+                card.classList.add('dsb-row-selected');
+                _selectedNombre = nombre;
+                /* Set clienteActual + populate modal DOM (payment functions need it) */
+                estado.clienteActual = cliente;
+                if (typeof abrirDetalleCliente === 'function') abrirDetalleCliente(cliente);
+                setTimeout(function() {
+                    var modal = document.getElementById('modalDetalleCliente');
+                    if (modal) modal.classList.remove('active'); /* close modal, use panel instead */
+                }, 0);
+                _renderClientDetailPanel(cliente);
+            }, true); /* capture = true: fires before card's onclick */
+        }
+
+        /* ── renderizarClientes override — add desktop row data + actions ── */
+        function _tryOverrideRender() {
+            if (typeof renderizarClientes !== 'function') { setTimeout(_tryOverrideRender, 400); return; }
+            var _orig = window.renderizarClientes;
+            window.renderizarClientes = function() {
+                _orig.apply(this, arguments);
+                _patchDesktopRows();
+                /* Restore selected highlight */
+                if (_selectedNombre) {
+                    var cards = listEl ? listEl.querySelectorAll('.cliente-card') : [];
+                    cards.forEach(function(c) { if (c.dataset.nombre === _selectedNombre) c.classList.add('dsb-row-selected'); });
+                }
+            };
+        }
+        _tryOverrideRender();
+
+        function _patchDesktopRows() {
+            if (!listEl) return;
+            listEl.querySelectorAll('.cliente-card').forEach(function(card) {
+                if (card.dataset.dsbPatched) return;
+                card.dataset.dsbPatched = '1';
+                /* Store nombre for lookup */
+                var nombreEl = card.querySelector('.cliente-nombre');
+                var nombre   = nombreEl ? nombreEl.textContent.replace(/HOY/gi, '').trim() : '';
+                card.dataset.nombre = nombre;
+                var cli = (estado.clientes || []).find(function(c) { return c.nombre === nombre; });
+                /* Hover quick-action buttons */
+                var acts = document.createElement('div');
+                acts.className = 'dsb-row-actions';
+                acts.innerHTML =
+                    '<button class="dsb-row-btn" title="Registrar llegada" onclick="event.stopPropagation();_dsbQuickLlegada(\'' + nombre.replace(/'/g,"\\'") + '\')">📍</button>' +
+                    (cli && cli.whatsapp ? '<button class="dsb-row-btn dsb-row-btn-wa" title="WhatsApp" onclick="event.stopPropagation();_dsbQuickWA(\'' + (cli.whatsapp||'').replace(/['"]/g,'') + '\',\'' + nombre.replace(/'/g,"\\'") + '\')">💬</button>' : '');
+                card.appendChild(acts);
+            });
+        }
+
+        /* ── Quick row action helpers ─────────────────────── */
+        window._dsbQuickLlegada = function(nombre) {
+            var cli = (estado.clientes || []).find(function(c) { return c.nombre === nombre; });
+            if (!cli) return;
+            estado.clienteActual = cli;
+            if (typeof registrarLlegada === 'function') registrarLlegada();
+        };
+        window._dsbQuickWA = function(wa, nombre) {
+            var msg = encodeURIComponent('Hola ' + nombre + ', te contactamos para recordarte tu saldo pendiente.');
+            window.open('https://wa.me/' + wa.replace(/[\s+\-(). ]/g,'') + '?text=' + msg, '_blank');
+        };
+
+    })(); /* end _initDesktopCRM */
+
+    /* ── Keyboard Shortcuts (desktop only) ──────────────────── */
+    (function _initKeyboardShortcuts() {
+        if (window.innerWidth < 1024) return;
+        var _chord = '', _chordTimer = null;
+
+        document.addEventListener('keydown', function(e) {
+            if (window.innerWidth < 1024) return;
+            var active = document.activeElement;
+            if (active && active.matches('input,textarea,select,[contenteditable]')) return;
+
+            var k = e.key;
+
+            /* Escape: close all open modals */
+            if (k === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(function(m) { m.classList.remove('active'); });
+                _chord = ''; clearTimeout(_chordTimer); return;
+            }
+
+            /* g chord: g+d, g+c, g+a, g+o */
+            if (k === 'g' && !_chord) {
+                _chord = 'g'; clearTimeout(_chordTimer);
+                _chordTimer = setTimeout(function() { _chord = ''; }, 1500);
+                return;
+            }
+            if (_chord === 'g') {
+                clearTimeout(_chordTimer); _chord = '';
+                var dest = { d: 'dashboard', c: 'deuda', a: 'analytics', o: 'oficina' }[k];
+                if (dest) {
+                    if (dest === 'analytics' && typeof renderAnalytics === 'function') renderAnalytics();
+                    if (typeof cambiarPantalla === 'function') cambiarPantalla(dest);
+                    _kbToast({ d:'g+d → Dashboard', c:'g+c → Clientes', a:'g+a → Analíticas', o:'g+o → Oficina' }[k]);
+                }
+                return;
+            }
+
+            /* n → new client (only on clients screen) */
+            if (k === 'n') {
+                var scr = document.querySelector('.screen.active');
+                if (scr && scr.id === 'screen-deuda' && typeof abrirModalNuevoCliente === 'function') {
+                    abrirModalNuevoCliente(); _kbToast('n → Nuevo cliente');
+                }
+                return;
+            }
+
+            /* / → focus search if present */
+            if (k === '/') {
+                e.preventDefault();
+                var srch = document.querySelector('.screen.active input[type="search"], .screen.active input[placeholder*="uscar"]');
+                if (srch) { srch.focus(); srch.select(); }
+                return;
+            }
+        });
+
+        function _kbToast(msg) {
+            var el = document.getElementById('_dsb_kb_toast');
+            if (!el) {
+                el = document.createElement('div'); el.id = '_dsb_kb_toast';
+                el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(4,5,15,.95);border:1px solid rgba(0,229,255,.25);color:#00E5FF;padding:7px 18px;border-radius:10px;font-size:12px;font-weight:700;letter-spacing:.6px;z-index:99999;pointer-events:none;opacity:0;transition:opacity .2s,transform .2s;';
+                document.body.appendChild(el);
+            }
+            el.textContent = msg;
+            el.style.opacity = '1'; el.style.transform = 'translateX(-50%) translateY(0)';
+            clearTimeout(el._t);
+            el._t = setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translateX(-50%) translateY(8px)'; }, 1400);
+        }
     })();
     </script>
 </body>
