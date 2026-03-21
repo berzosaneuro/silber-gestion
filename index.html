@@ -21,7 +21,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <title>SILBER GESTIÓN</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/cyberpunk.css?v=3">
+    <link rel="stylesheet" href="css/cyberpunk.css?v=4">
 
 </head>
 <body>
@@ -2527,6 +2527,46 @@
             clearTimeout(el._t);
             el._t = setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translateX(-50%) translateY(8px)'; }, 1400);
         }
+    })();
+
+    /* ── Donut chart cyberpunk colors ───────────────────────── */
+    (function _patchDonut() {
+        function _drawCyberpunk() {
+            var canvas = document.getElementById('donutCanvas');
+            if (!canvas || !canvas.getContext) return;
+            var ctx = canvas.getContext('2d');
+            var w = canvas.width || 220, h = canvas.height || 220;
+            if (w <= 0 || h <= 0) return;
+            if (typeof estado === 'undefined' || !estado) return;
+            var diaData = typeof getDiaData === 'function' ? getDiaData(estado.diaOffset) : { ingresos: 0 };
+            var pct    = Math.min(((diaData.ingresos || 0) / 500) * 100, 100);
+            var angulo = (pct / 100) * 360;
+            var cx = w/2, cy = h/2, radius = Math.min(w,h)/2 - 14, lw = 24;
+            ctx.clearRect(0, 0, w, h);
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, 2*Math.PI);
+            ctx.strokeStyle = 'rgba(0,229,255,0.07)';
+            ctx.lineWidth = lw;
+            ctx.stroke();
+            if (angulo > 0) {
+                var g = ctx.createLinearGradient(0, 0, w, h);
+                g.addColorStop(0,   '#00e5ff');
+                g.addColorStop(0.5, '#aa00ff');
+                g.addColorStop(1,   '#ff00aa');
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, -Math.PI/2, -Math.PI/2 + (angulo*Math.PI/180));
+                ctx.strokeStyle = g;
+                ctx.lineWidth = lw;
+                ctx.lineCap = 'round';
+                ctx.shadowBlur = 22;
+                ctx.shadowColor = 'rgba(0,229,255,0.8)';
+                ctx.stroke();
+            }
+        }
+        window.dibujarDonut = _drawCyberpunk;
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(_drawCyberpunk, 300);
+        });
     })();
 
     /* ── 3D card tilt on desktop (mouse tracking) ───────────── */

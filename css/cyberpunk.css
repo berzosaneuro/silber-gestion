@@ -87,41 +87,79 @@ body {
 }
 .settings-row-icon { border-radius: 6px !important; }
 
-/* ── 6. Primary button ───────────────────────────────────── */
+/* ── 6. Buttons — iOS solid + 3D depth ───────────────────── */
 .btn-primary {
-  background: linear-gradient(135deg, #001a2e 0%, #002d4a 100%) !important;
-  border: 1px solid #00e5ff !important;
-  border-radius: 4px !important;
-  color: #00e5ff !important;
-  text-shadow: 0 0 8px rgba(0,229,255,.7);
-  box-shadow: 0 0 10px rgba(0,229,255,.25), inset 0 1px 0 rgba(0,229,255,.12) !important;
+  background: linear-gradient(180deg, #00dff5 0%, #00a8cc 60%, #0088aa 100%) !important;
+  border: none !important;
+  border-radius: 14px !important;
+  color: #001824 !important;
+  font-weight: 800 !important;
   font-family: 'Orbitron', 'Inter', sans-serif !important;
-  letter-spacing: .8px !important;
+  letter-spacing: .6px !important;
   font-size: 12px !important;
-  animation: cp-pulse 3s ease-in-out infinite;
+  text-shadow: 0 1px 0 rgba(255,255,255,.25) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.35),
+    0 4px 0 #005577,
+    0 5px 0 #003d55,
+    0 8px 16px rgba(0,180,220,.45),
+    0 2px 4px rgba(0,0,0,.4) !important;
+  transform: translateY(-3px) !important;
+  animation: none !important;
+  transition: transform .1s, box-shadow .1s !important;
 }
 .btn-primary:active {
-  box-shadow: 0 0 26px rgba(0,229,255,.6), inset 0 0 8px rgba(0,229,255,.15) !important;
-  transform: scale(0.97) !important;
+  transform: translateY(1px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.2),
+    0 1px 0 #005577,
+    0 3px 8px rgba(0,180,220,.3) !important;
 }
 .btn-secondary {
-  background: rgba(0,229,255,.04) !important;
-  border: 1px solid rgba(0,229,255,.22) !important;
-  border-radius: 4px !important;
-  color: rgba(0,229,255,.8) !important;
+  background: linear-gradient(180deg, #0d1e38 0%, #081428 100%) !important;
+  border: 1px solid rgba(0,229,255,.35) !important;
+  border-radius: 14px !important;
+  color: #00e5ff !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 6px rgba(0,229,255,.5) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(0,229,255,.12),
+    0 3px 0 rgba(0,20,40,.9),
+    0 5px 10px rgba(0,0,0,.5) !important;
+  transform: translateY(-2px) !important;
+  transition: transform .1s, box-shadow .1s !important;
+  animation: none !important;
 }
 .btn-secondary:active {
-  background: rgba(0,229,255,.1) !important;
-  border-color: rgba(0,229,255,.5) !important;
+  transform: translateY(1px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(0,229,255,.08),
+    0 1px 0 rgba(0,20,40,.9),
+    0 2px 5px rgba(0,0,0,.4) !important;
 }
 .btn-danger {
-  background: linear-gradient(135deg, #1a0010 0%, #2e0020 100%) !important;
-  border: 1px solid #ff00aa !important;
-  border-radius: 4px !important;
-  color: #ff00aa !important;
-  text-shadow: 0 0 8px rgba(255,0,170,.7);
-  box-shadow: 0 0 10px rgba(255,0,170,.2) !important;
-  animation: cp-pulse-pink 3s ease-in-out infinite;
+  background: linear-gradient(180deg, #ff2090 0%, #cc0066 60%, #aa0050 100%) !important;
+  border: none !important;
+  border-radius: 14px !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+  text-shadow: 0 1px 0 rgba(0,0,0,.3) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.25),
+    0 4px 0 #880033,
+    0 5px 0 #660022,
+    0 8px 16px rgba(255,0,128,.35),
+    0 2px 4px rgba(0,0,0,.4) !important;
+  transform: translateY(-3px) !important;
+  animation: none !important;
+  transition: transform .1s, box-shadow .1s !important;
+}
+.btn-danger:active {
+  transform: translateY(1px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.15),
+    0 1px 0 #880033,
+    0 3px 8px rgba(255,0,128,.25) !important;
 }
 
 /* ── 7. Inputs ───────────────────────────────────────────── */
@@ -355,45 +393,7 @@ body::before {
   }
 }
 
-/* ── 22. 3D button depth ─────────────────────────────────── */
-.btn-primary {
-  transform: translateY(-2px) !important;
-  box-shadow:
-    0 4px 0 rgba(0, 80, 120, .7),
-    0 6px 0 rgba(0, 50, 90, .5),
-    0 8px 16px rgba(0,229,255,.2),
-    0 0 12px rgba(0,229,255,.3) !important;
-  animation: none !important; /* override pulse while we have depth */
-}
-.btn-primary:active {
-  transform: translateY(2px) !important;
-  box-shadow:
-    0 1px 0 rgba(0, 80, 120, .7),
-    0 2px 6px rgba(0,229,255,.15) !important;
-}
-.btn-danger {
-  transform: translateY(-2px) !important;
-  box-shadow:
-    0 4px 0 rgba(120, 0, 60, .7),
-    0 6px 0 rgba(90, 0, 40, .5),
-    0 8px 16px rgba(255,0,170,.15),
-    0 0 12px rgba(255,0,170,.25) !important;
-  animation: none !important;
-}
-.btn-danger:active {
-  transform: translateY(2px) !important;
-  box-shadow: 0 1px 0 rgba(120,0,60,.7) !important;
-}
-.btn-secondary {
-  transform: translateY(-1px) !important;
-  box-shadow:
-    0 3px 0 rgba(0,229,255,.12),
-    0 4px 8px rgba(0,0,0,.4) !important;
-}
-.btn-secondary:active {
-  transform: translateY(1px) !important;
-  box-shadow: 0 1px 0 rgba(0,229,255,.08) !important;
-}
+/* ── 22. 3D button depth — handled in section 6 above ───── */
 
 /* FAB 3D */
 .fab {
