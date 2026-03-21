@@ -1,0 +1,318 @@
+/* ═══════════════════════════════════════════════════════════
+   CYBERPUNK THEME — Visual upgrade layer
+   Pure CSS overrides. Zero logic changes. Loaded after
+   styles.css so every rule here wins via cascade order.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 0. Keyframes ────────────────────────────────────────── */
+@keyframes cp-scan {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+@keyframes cp-pulse {
+  0%,100% { box-shadow: 0 0 8px rgba(0,229,255,.4),  0 0 20px rgba(0,229,255,.15); }
+  50%     { box-shadow: 0 0 18px rgba(0,229,255,.7), 0 0 42px rgba(0,229,255,.3); }
+}
+@keyframes cp-pulse-pink {
+  0%,100% { box-shadow: 0 0 8px rgba(255,0,170,.35), 0 0 20px rgba(255,0,170,.12); }
+  50%     { box-shadow: 0 0 18px rgba(255,0,170,.6), 0 0 40px rgba(255,0,170,.25); }
+}
+@keyframes cp-flicker {
+  0%,19%,21%,23%,25%,54%,56%,100% { opacity: 1; }
+  20%,24%,55%                      { opacity: .85; }
+}
+
+/* ── 1. Body grid + scanline beam ────────────────────────── */
+body {
+  background-color: #03040d !important;
+  background-image:
+    linear-gradient(rgba(0,229,255,.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,.028) 1px, transparent 1px) !important;
+  background-size: 32px 32px !important;
+}
+body::after {
+  content: '';
+  position: fixed;
+  left: 0; right: 0;
+  height: 120px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0,229,255,.025) 40%,
+    rgba(0,229,255,.055) 50%,
+    rgba(0,229,255,.025) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 9000;
+  animation: cp-scan 7s linear infinite;
+  will-change: transform;
+}
+
+/* ── 2. Typography — Orbitron on titles ─────────────────── */
+.section-title,
+.modal-title,
+.header-title,
+.app-header #headerTitle,
+.dsb-nav-label,
+.settings-section-label,
+.menu-item-text {
+  font-family: 'Orbitron', 'Inter', sans-serif !important;
+  letter-spacing: 1.5px !important;
+}
+.section-title,
+.modal-title {
+  text-shadow: 0 0 12px rgba(0,229,255,.7), 0 0 30px rgba(0,229,255,.25) !important;
+}
+.header-title, .app-header #headerTitle {
+  text-shadow: 0 0 10px rgba(0,229,255,.6) !important;
+  animation: cp-flicker 9s infinite;
+}
+
+/* ── 3. Header ───────────────────────────────────────────── */
+.app-header {
+  background: rgba(3,4,13,.96) !important;
+  border-bottom: 1px solid rgba(0,229,255,.25) !important;
+  box-shadow:
+    0 1px 0 rgba(0,229,255,.15),
+    0 4px 24px rgba(0,0,0,.9) !important;
+}
+
+/* ── 4. Section cards ────────────────────────────────────── */
+.section-card {
+  background: rgba(6,9,22,.92) !important;
+  border: 1px solid rgba(0,229,255,.18) !important;
+  border-radius: 6px !important;
+  box-shadow:
+    0 0 0 1px rgba(0,229,255,.04),
+    inset 0 1px 0 rgba(0,229,255,.06),
+    0 8px 32px rgba(0,0,0,.7) !important;
+  transition: border-color .25s, box-shadow .25s;
+}
+.section-card:hover {
+  border-color: rgba(0,229,255,.32) !important;
+  box-shadow: 0 0 18px rgba(0,229,255,.1), 0 8px 32px rgba(0,0,0,.7) !important;
+}
+
+/* ── 5. Settings groups ──────────────────────────────────── */
+.settings-group {
+  background: rgba(6,9,22,.88) !important;
+  border: 1px solid rgba(0,229,255,.12) !important;
+  border-radius: 6px !important;
+}
+.settings-row {
+  border-bottom-color: rgba(0,229,255,.07) !important;
+}
+.settings-row-icon { border-radius: 6px !important; }
+
+/* ── 6. Primary button ───────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #001a2e 0%, #002d4a 100%) !important;
+  border: 1px solid #00e5ff !important;
+  border-radius: 4px !important;
+  color: #00e5ff !important;
+  text-shadow: 0 0 8px rgba(0,229,255,.7);
+  box-shadow: 0 0 10px rgba(0,229,255,.25), inset 0 1px 0 rgba(0,229,255,.12) !important;
+  font-family: 'Orbitron', 'Inter', sans-serif !important;
+  letter-spacing: .8px !important;
+  font-size: 12px !important;
+  animation: cp-pulse 3s ease-in-out infinite;
+}
+.btn-primary:active {
+  box-shadow: 0 0 26px rgba(0,229,255,.6), inset 0 0 8px rgba(0,229,255,.15) !important;
+  transform: scale(0.97) !important;
+}
+.btn-secondary {
+  background: rgba(0,229,255,.04) !important;
+  border: 1px solid rgba(0,229,255,.22) !important;
+  border-radius: 4px !important;
+  color: rgba(0,229,255,.8) !important;
+}
+.btn-secondary:active {
+  background: rgba(0,229,255,.1) !important;
+  border-color: rgba(0,229,255,.5) !important;
+}
+.btn-danger {
+  background: linear-gradient(135deg, #1a0010 0%, #2e0020 100%) !important;
+  border: 1px solid #ff00aa !important;
+  border-radius: 4px !important;
+  color: #ff00aa !important;
+  text-shadow: 0 0 8px rgba(255,0,170,.7);
+  box-shadow: 0 0 10px rgba(255,0,170,.2) !important;
+  animation: cp-pulse-pink 3s ease-in-out infinite;
+}
+
+/* ── 7. Inputs ───────────────────────────────────────────── */
+.input-field, .select-field, .textarea-field {
+  background: rgba(3,4,13,.9) !important;
+  border: 1px solid rgba(0,229,255,.2) !important;
+  border-radius: 4px !important;
+  color: #d0f0ff !important;
+  caret-color: #00e5ff;
+}
+.input-field:focus, .select-field:focus, .textarea-field:focus {
+  border-color: #00e5ff !important;
+  box-shadow: 0 0 0 2px rgba(0,229,255,.18), 0 0 12px rgba(0,229,255,.15) !important;
+  outline: none !important;
+}
+.input-label {
+  color: rgba(0,229,255,.6) !important;
+  letter-spacing: 1.8px !important;
+}
+
+/* ── 8. Bottom nav ───────────────────────────────────────── */
+#bottom-nav {
+  background: rgba(3,4,13,.97) !important;
+  border-top: 1px solid rgba(0,229,255,.2) !important;
+  box-shadow: 0 -4px 24px rgba(0,0,0,.9), 0 -1px 0 rgba(0,229,255,.1) !important;
+}
+.nav-item.active {
+  background: rgba(0,229,255,.06) !important;
+}
+.nav-item.active::before {
+  background: #00e5ff !important;
+  box-shadow: 0 0 12px #00e5ff, 0 0 30px rgba(0,229,255,.6), 0 0 54px rgba(0,229,255,.3) !important;
+}
+.nav-item.active .nav-icon {
+  filter: drop-shadow(0 0 6px #00e5ff) drop-shadow(0 0 14px rgba(0,229,255,.6)) !important;
+}
+.nav-item.active .nav-label {
+  color: #00e5ff !important;
+  text-shadow: 0 0 10px rgba(0,229,255,.9), 0 0 22px rgba(0,229,255,.4) !important;
+  font-family: 'Orbitron', 'Inter', sans-serif !important;
+  font-size: 8px !important;
+  letter-spacing: 1px !important;
+}
+
+/* ── 9. FAB ──────────────────────────────────────────────── */
+.fab {
+  background: linear-gradient(135deg, #001a2e, #003050) !important;
+  border: 1px solid #00e5ff !important;
+  border-radius: 6px !important;
+  color: #00e5ff !important;
+  text-shadow: 0 0 12px rgba(0,229,255,.9);
+  box-shadow:
+    0 0 20px rgba(0,229,255,.4),
+    0 0 42px rgba(0,229,255,.15),
+    0 6px 20px rgba(0,0,0,.6) !important;
+  animation: cp-pulse 2.5s ease-in-out infinite;
+}
+
+/* ── 10. Modals ──────────────────────────────────────────── */
+.modal-overlay {
+  background: rgba(0,0,0,.8) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+.modal-content {
+  background: rgba(4,6,18,.97) !important;
+  border: 1px solid rgba(0,229,255,.25) !important;
+  border-radius: 8px !important;
+  box-shadow:
+    0 0 0 1px rgba(0,229,255,.07),
+    0 0 40px rgba(0,229,255,.12),
+    0 24px 60px rgba(0,0,0,.9) !important;
+}
+.modal-header { border-bottom: 1px solid rgba(0,229,255,.1) !important; }
+.modal-footer  { border-top:    1px solid rgba(0,229,255,.1) !important; }
+
+/* ── 11. Client cards ────────────────────────────────────── */
+.cliente-card {
+  background: rgba(5,8,20,.9) !important;
+  border: 1px solid rgba(0,229,255,.1) !important;
+  border-radius: 5px !important;
+  transition: border-color .2s, box-shadow .2s;
+}
+.cliente-card:hover, .cliente-card:active {
+  background: rgba(0,229,255,.05) !important;
+  border-color: rgba(0,229,255,.3) !important;
+  box-shadow: 0 0 12px rgba(0,229,255,.1) !important;
+}
+
+/* ── 12. Category buttons ────────────────────────────────── */
+.category-icon {
+  border-radius: 8px !important;
+  box-shadow: 0 0 0 1px rgba(0,229,255,.15) !important;
+}
+.category-btn.selected .category-icon,
+.category-btn:active .category-icon {
+  box-shadow:
+    0 0 14px rgba(0,229,255,.5),
+    0 0 28px rgba(0,229,255,.2) !important;
+}
+
+/* ── 13. Neon numbers ────────────────────────────────────── */
+.stat-value, .balance-amount, .kpi-value {
+  text-shadow: 0 0 8px currentColor;
+}
+.stat-row { border-bottom-color: rgba(0,229,255,.07) !important; }
+
+/* ── 14. Desktop sidebar ─────────────────────────────────── */
+#desktop-sidebar {
+  background: rgba(3,4,13,.98) !important;
+  border-right: 1px solid rgba(0,229,255,.18) !important;
+  box-shadow: 4px 0 24px rgba(0,0,0,.8) !important;
+}
+.dsb-nav-item.active {
+  background: rgba(0,229,255,.07) !important;
+  border-left-color: #00e5ff !important;
+  color: #00e5ff !important;
+  text-shadow: 0 0 8px rgba(0,229,255,.5);
+}
+.dsb-logo-text {
+  font-family: 'Orbitron', sans-serif !important;
+  text-shadow: 0 0 10px rgba(0,229,255,.5);
+}
+
+/* ── 15. Period / tab toggles ────────────────────────────── */
+.period-btn.active, .an-period-btn.active, .an-tab-btn.active {
+  background: rgba(0,229,255,.1) !important;
+  color: #00e5ff !important;
+  border-color: rgba(0,229,255,.3) !important;
+  text-shadow: 0 0 8px rgba(0,229,255,.6);
+}
+
+/* ── 16. Login screen ────────────────────────────────────── */
+#screen-login {
+  background:
+    linear-gradient(rgba(0,229,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,.025) 1px, transparent 1px),
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,229,255,.08) 0%, transparent 60%),
+    #03040d !important;
+  background-size: 32px 32px, 32px 32px, 100% 100%, 100% 100% !important;
+}
+.login-btn-primary {
+  background: linear-gradient(135deg, #001a2e, #003050) !important;
+  border: 1px solid #00e5ff !important;
+  color: #00e5ff !important;
+  text-shadow: 0 0 8px rgba(0,229,255,.7);
+  box-shadow: 0 0 14px rgba(0,229,255,.3) !important;
+  border-radius: 6px !important;
+  font-family: 'Orbitron', 'Inter', sans-serif !important;
+  letter-spacing: 1px !important;
+  animation: cp-pulse 3s ease-in-out infinite;
+}
+.login-title {
+  font-family: 'Orbitron', 'Inter', sans-serif !important;
+  text-shadow: 0 0 16px rgba(0,229,255,.6), 0 0 40px rgba(0,229,255,.2) !important;
+  animation: cp-flicker 9s infinite;
+}
+
+/* ── 17. Scrollbars ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: rgba(0,229,255,.03); }
+::-webkit-scrollbar-thumb { background: rgba(0,229,255,.25); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,229,255,.5); }
+
+/* ── 18. Menu panel ──────────────────────────────────────── */
+.menu-overlay .menu-content,
+#menuOverlay .menu-content {
+  background: rgba(4,6,18,.97) !important;
+  border-right: 1px solid rgba(0,229,255,.2) !important;
+  box-shadow: 8px 0 40px rgba(0,0,0,.9) !important;
+}
+.menu-item { border-bottom-color: rgba(0,229,255,.07) !important; }
+.menu-item-text { font-size: 11px !important; letter-spacing: 1px !important; }
+
+/* ── 19. Sync / notification badges ─────────────────────── */
+.sync-badge { box-shadow: 0 0 8px #00FF88, 0 0 16px rgba(0,255,136,.5) !important; }
