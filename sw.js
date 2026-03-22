@@ -70,3 +70,35 @@ self.addEventListener('fetch', function(e) {
     }
     // Cross-origin (not Supabase/CDN — e.g. custom APIs): pass through
 });
+
+/* ── Push: show notification ────────────────────────────── */
+self.addEventListener('push', function(event) {
+    var data = {};
+    try { data = event.data ? event.data.json() : {}; } catch (e) {}
+    event.waitUntil(
+        self.registration.showNotification(data.title || 'Silber Gestión', {
+            body:    data.body    || '',
+            icon:    '/icon-192.png',
+            badge:   '/icon-192.png',
+            data:    data.url    || '/',
+            vibrate: [100, 50, 100]
+        })
+    );
+});
+
+/* ── Notification click: focus or open app ──────────────── */
+self.addEventListener('notificationclick', function(event) {
+    event.notification.close();
+    var target = event.notification.data || '/';
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+            .then(function(list) {
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].url && list[i].focus) {
+                        return list[i].focus();
+                    }
+                }
+                return self.clients.openWindow(target);
+            })
+    );
+});

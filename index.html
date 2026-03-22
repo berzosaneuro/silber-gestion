@@ -1054,6 +1054,50 @@
                     </div>
                 </div>
 
+                <!-- ZONA ADMIN — solo visible para jefazo/jefaza -->
+                <div id="admin-zona-reset" style="display:none;">
+                    <div class="settings-section-label" style="color:rgba(239,68,68,0.7);">⚠️ Zona Admin</div>
+                    <div class="settings-group" style="border-color:rgba(239,68,68,0.2);">
+                        <div class="settings-row" onclick="abrirModalReset()" style="cursor:pointer;">
+                            <div class="settings-row-left">
+                                <div class="settings-row-icon" style="background:rgba(239,68,68,0.12);">🗑️</div>
+                                <div class="settings-row-body">
+                                    <div class="settings-row-text" style="color:#F87171;">Reiniciar datos (modo limpio)</div>
+                                    <div class="settings-row-sub">Borra transacciones, clientes y saldos. Mantiene config y roles.</div>
+                                </div>
+                            </div>
+                            <div class="settings-chevron" style="color:rgba(239,68,68,0.6);">›</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- MODAL RESET SUAVE — solo admins -->
+        <div class="modal-overlay" id="modal-reset-confirm" style="display:none;z-index:9999;">
+            <div class="modal-content" style="border-color:rgba(239,68,68,0.5);box-shadow:0 0 40px rgba(239,68,68,0.25);max-width:340px;">
+                <div class="modal-header" style="border-color:rgba(239,68,68,0.2);">
+                    <div class="modal-title" style="color:#F87171;">⚠️ Reiniciar App</div>
+                </div>
+                <div class="modal-body" style="text-align:center;padding:20px 20px 8px;">
+                    <div style="font-size:40px;margin-bottom:14px;">🗑️</div>
+                    <p style="font-size:14px;font-weight:700;color:#F87171;margin-bottom:10px;">¿Seguro que quieres borrar todos los datos?</p>
+                    <p style="font-size:12px;color:rgba(223,240,255,0.55);line-height:1.6;margin-bottom:4px;">Se borrarán permanentemente:</p>
+                    <ul style="font-size:12px;color:rgba(223,240,255,0.45);text-align:left;line-height:1.8;margin:0 0 12px 20px;">
+                        <li>Clientes y deudas</li>
+                        <li>Gastos e ingresos</li>
+                        <li>Historial de transferencias</li>
+                        <li>Stock y movimientos</li>
+                        <li>Saldos de cuentas (→ 0)</li>
+                    </ul>
+                    <p style="font-size:11px;color:rgba(16,185,129,0.8);line-height:1.5;">✅ Se mantienen: configuración, roles, precios y gramajes.</p>
+                    <p style="font-size:11px;color:rgba(223,240,255,0.4);margin-top:8px;">Esta acción se sincronizará con todos los dispositivos.</p>
+                </div>
+                <div class="modal-footer" style="border-color:rgba(239,68,68,0.15);">
+                    <button class="btn btn-secondary" onclick="cerrarModalReset()">Cancelar</button>
+                    <button class="btn btn-danger" onclick="resetSuave()" style="background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.5);color:#F87171;">Sí, reiniciar</button>
+                </div>
             </div>
         </div>
 
@@ -1499,6 +1543,7 @@
     <script src="js/master-security.js?v=23"></script>
     <script src="js/productos.js?v=23"></script>
     <script src="js/amor.js?v=23"></script>
+    <script src="js/silber-alerts.js?v=1"></script>
     <script>
     window._silberDebug = function() {
       try { if (typeof console !== 'undefined' && console.log) console.log.apply(console, ['[Silber]'].concat(Array.prototype.slice.call(arguments))); } catch(e) {}
