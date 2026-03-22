@@ -1,10 +1,29 @@
 {
   "version": 2,
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    }
+  ],
   "rewrites": [
-    { "source": "/css/:path*", "destination": "/css/:path*" },
-    { "source": "/js/:path*", "destination": "/js/:path*" },
-    { "source": "/logo.png", "destination": "/logo.png" },
-    { "source": "/favicon.ico", "destination": "/favicon.ico" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/css/:path*",       "destination": "/css/:path*" },
+    { "source": "/js/:path*",        "destination": "/js/:path*" },
+    { "source": "/logo.png",         "destination": "/logo.png" },
+    { "source": "/favicon.ico",      "destination": "/favicon.ico" },
+    { "source": "/manifest.json",    "destination": "/manifest.json" },
+    { "source": "/sw.js",            "destination": "/sw.js" },
+    { "source": "/icon-192.png",     "destination": "/icon-192.png" },
+    { "source": "/icon-512.png",     "destination": "/icon-512.png" },
+    { "source": "/(.*)",             "destination": "/index.html" }
   ]
 }

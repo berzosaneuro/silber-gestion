@@ -111,6 +111,129 @@ function _applyCloudData(cloudData, sessionFields) {
     Object.assign(estado, cloudData, keep);
 }
 
+/**
+ * _mergeEstados(localSnap, cloudSnap)
+ * Returns a merged estado that preserves transactions from BOTH devices.
+ * Arrays are merged by id (union); cuentas get local-only deltas applied;
+ * registrosDiarios is recomputed from merged arrays.
+ */
+function _mergeEstados(localSnap, cloudSnap) {
+    var ARRAY_FIELDS = [
+        'gastosRegistros', 'ingresosRegistros', 'listaStock',
+        'historialTransferencias', 'llegadas', 'stock_movements', 'productos'
+    ];
+
+    // Start with cloud as base (cloud holds the newer scalar state)
+    var merged = JSON.parse(JSON.stringify(cloudSnap));
+
+    // ── 1. Union array fields by id ──────────────────────────
+    //
+    // Strategy:
+    //   • Items WITH id   → dedup by String(id) only (safe, no false positives)
+    //   • Items WITHOUT id → dedup by content fingerprint (legacy data fallback)
+    //     Fingerprint = fecha|hora|monto|categoria|cuenta for transactions,
+    //     else JSON.stringify. Logs ID_MISSING_FIXED when this path is taken.
+    //
+    ARRAY_FIELDS.forEach(function(field) {
+        var localArr = localSnap[field] || [];
+        var cloudArr = cloudSnap[field] || [];
+        var seenById  = {};  // id   → true
+        var seenByFp  = {};  // fingerprint → true  (no-id items only)
+        var result    = [];
+
+        function _fp(item) {
+            // Transaction fingerprint: most useful for gastosRegistros/ingresosRegistros
+            if (item.fecha != null && item.hora != null && item.monto != null) {
+                return (item.fecha || '') + '|' + (item.hora || '') + '|' + (item.monto || 0) + '|' + (item.categoria || '') + '|' + (item.cuenta || '');
+            }
+            return JSON.stringify(item);
+        }
+
+        function _addItem(item, source) {
+            if (item.id != null) {
+                var key = String(item.id);
+                if (!seenById[key]) {
+                    seenById[key] = true;
+                    seenByFp[_fp(item)] = true;  // also register fingerprint to block no-id dupes
+                    result.push(item);
+                } else {
+                    silberLog('[SYNC] DUPLICATE_SKIPPED (' + source + ', id=' + key + ') in ' + field);
+                }
+            } else {
+                // No id — use fingerprint fallback
+                silberWarn('[SYNC] ID_MISSING_FIXED — item without id in ' + field + ' (' + source + '), using fingerprint');
+                var fp = _fp(item);
+                if (!seenByFp[fp]) {
+                    seenByFp[fp] = true;
+                    result.push(item);
+                } else {
+                    silberLog('[SYNC] DUPLICATE_SKIPPED (' + source + ', no-id fingerprint) in ' + field);
+                }
+            }
+        }
+
+        cloudArr.forEach(function(item) { _addItem(item, 'cloud'); });
+        localArr.forEach(function(item) { _addItem(item, 'local'); });
+        merged[field] = result;
+    });
+
+    // ── 2. Apply cuentas deltas for local-only transactions ──
+    //
+    // Safety rules:
+    //   • Only items WITH a valid id are considered (id guarantees uniqueness)
+    //   • An item is "local-only" if its id is NOT in the cloud snapshot's array
+    //   • Items without id are SKIPPED (can't guarantee they haven't already been
+    //     accounted for in the cloud's cuentas) → DELTA_SKIPPED log
+    //
+    var cloudGastoIds   = {};
+    var cloudIngresoIds = {};
+    (cloudSnap.gastosRegistros   || []).forEach(function(r) { if (r.id != null) cloudGastoIds[String(r.id)]   = true; });
+    (cloudSnap.ingresosRegistros || []).forEach(function(r) { if (r.id != null) cloudIngresoIds[String(r.id)] = true; });
+    if (!merged.cuentas) merged.cuentas = {};
+
+    (localSnap.gastosRegistros || []).forEach(function(r) {
+        if (r.id == null) {
+            silberLog('[SYNC] DELTA_SKIPPED (gasto sin id, monto=' + (r.monto || 0) + ')');
+            return;
+        }
+        if (!cloudGastoIds[String(r.id)]) {
+            var c = r.cuenta || 'efectivo';
+            merged.cuentas[c] = (merged.cuentas[c] || 0) - (r.monto || 0);
+            silberLog('[SYNC] DELTA_APPLIED (gasto local-only id=' + r.id + ', -' + (r.monto || 0) + '€ en ' + c + ')');
+        }
+    });
+    (localSnap.ingresosRegistros || []).forEach(function(r) {
+        if (r.id == null) {
+            silberLog('[SYNC] DELTA_SKIPPED (ingreso sin id, monto=' + (r.monto || 0) + ')');
+            return;
+        }
+        if (!cloudIngresoIds[String(r.id)]) {
+            var c = r.cuenta || 'efectivo';
+            merged.cuentas[c] = (merged.cuentas[c] || 0) + (r.monto || 0);
+            silberLog('[SYNC] DELTA_APPLIED (ingreso local-only id=' + r.id + ', +' + (r.monto || 0) + '€ en ' + c + ')');
+        }
+    });
+
+    // ── 3. Merge registrosDiarios ────────────────────────────
+    // Start with union of both (keeps days with no individual records)
+    var mergedRegs = Object.assign({}, cloudSnap.registrosDiarios || {});
+    Object.keys(localSnap.registrosDiarios || {}).forEach(function(k) {
+        if (!mergedRegs[k]) mergedRegs[k] = localSnap.registrosDiarios[k];
+    });
+    // Recompute totals for days that now have individual records
+    var daysWithRecords = {};
+    merged.gastosRegistros.forEach(function(r)   { if (r.fecha) daysWithRecords[r.fecha] = true; });
+    merged.ingresosRegistros.forEach(function(r) { if (r.fecha) daysWithRecords[r.fecha] = true; });
+    Object.keys(daysWithRecords).forEach(function(fecha) {
+        var g = (merged.gastosRegistros   || []).filter(function(r) { return r.fecha === fecha; }).reduce(function(s, r) { return s + (r.monto || 0); }, 0);
+        var i = (merged.ingresosRegistros || []).filter(function(r) { return r.fecha === fecha; }).reduce(function(s, r) { return s + (r.monto || 0); }, 0);
+        mergedRegs[fecha] = { gastos: g, ingresos: i };
+    });
+    merged.registrosDiarios = mergedRegs;
+
+    return merged;
+}
+
 /** Re-render all key UI areas after a state merge */
 function _reRenderAll() {
     try {
@@ -171,12 +294,13 @@ function _showSyncToast(msg, type) {
 
 // ── 1. WRITE: push full estado to the cloud ──────────────────
 /**
- * Before writing, does a lightweight pre-flight check on updated_at.
- * If cloud is newer → pulls instead of pushing. Prevents stale overwrites.
+ * Pre-flight check on updated_at.
+ * If cloud is newer → MERGE (union arrays by id) then push merged state.
+ * If local is same or newer → push directly.
  */
 async function syncEstadoToCloud() {
-    if (!_supabase)        return;
-    if (_isRemoteUpdate)   return;  // never echo a remote update back up
+    if (!_supabase)      return;
+    if (_isRemoteUpdate) return;  // never echo a remote update back up
 
     try {
         // ── Pre-flight: fetch only updated_at (very cheap) ──────
@@ -184,15 +308,15 @@ async function syncEstadoToCloud() {
             .from('app_state')
             .select('updated_at')
             .eq('id', 'global')
-            .maybeSingle();   // won't error if row doesn't exist yet
+            .maybeSingle();
 
         if (!checkRes.error && checkRes.data && checkRes.data.updated_at) {
             var cloudTs = new Date(checkRes.data.updated_at).getTime();
             var localTs = estado._updatedAt ? new Date(estado._updatedAt).getTime() : 0;
 
             if (cloudTs > localTs) {
-                // Cloud is newer — pull the full row and abort our write
-                silberWarn('syncEstadoToCloud — nube más reciente, abortando escritura y aplicando nube…');
+                // CONFLICT: cloud is newer — fetch full row and MERGE
+                silberLog('[SYNC] CONFLICT detectado — cloud más reciente, iniciando MERGE…');
 
                 var fullRes = await _supabase
                     .from('app_state')
@@ -201,18 +325,44 @@ async function syncEstadoToCloud() {
                     .single();
 
                 if (!fullRes.error && fullRes.data && fullRes.data.estado_json) {
+                    var localSnap  = JSON.parse(JSON.stringify(estado));
+                    var mergedSnap = _mergeEstados(localSnap, fullRes.data.estado_json);
+                    mergedSnap._updatedAt = new Date().toISOString();
+
+                    silberLog('[SYNC] MERGE aplicado — gastos: '
+                        + (mergedSnap.gastosRegistros   || []).length
+                        + ', ingresos: '
+                        + (mergedSnap.ingresosRegistros || []).length);
+
                     _isRemoteUpdate = true;
-                    _applyCloudData(fullRes.data.estado_json);
+                    _applyCloudData(mergedSnap);
                     guardarEstado();
                     _reRenderAll();
                     _isRemoteUpdate = false;
-                    _showSyncToast('Datos actualizados desde otro dispositivo');
+
+                    // Push the merged state up to cloud
+                    var mSnap = JSON.parse(JSON.stringify(mergedSnap));
+                    if (Array.isArray(mSnap.clientes)) {
+                        mSnap.clientes.forEach(function(c) { delete c.foto; });
+                    }
+                    delete mSnap.fotoActual;
+
+                    var mergeRes = await _supabase
+                        .from('app_state')
+                        .upsert({ id: 'global', estado_json: mSnap, updated_at: mergedSnap._updatedAt }, { onConflict: 'id' });
+
+                    if (mergeRes.error) {
+                        silberWarn('[SYNC] Error al subir estado mergeado:', mergeRes.error);
+                    } else {
+                        silberLog('[SYNC] PUSH OK (post-merge) — ' + mergedSnap._updatedAt);
+                        _showSyncToast('Sincronizado — datos de ambos dispositivos combinados');
+                    }
+                    return;
                 }
-                return;  // ← do NOT overwrite the cloud
             }
         }
 
-        // ── Proceed with write (local is same or newer) ─────────
+        // ── Local is same or newer — push directly ───────────────
         var snap = JSON.parse(JSON.stringify(estado));
         if (Array.isArray(snap.clientes)) {
             snap.clientes.forEach(function(c) { delete c.foto; });
@@ -230,13 +380,13 @@ async function syncEstadoToCloud() {
             .upsert(payload, { onConflict: 'id' });
 
         if (res.error) {
-            silberWarn('syncEstadoToCloud — error:', res.error);
+            silberWarn('[SYNC] Error al subir:', res.error);
         } else {
-            silberLog('syncEstadoToCloud — OK (' + payload.updated_at + ')');
+            silberLog('[SYNC] PUSH OK — ' + payload.updated_at);
         }
 
     } catch (e) {
-        silberWarn('syncEstadoToCloud — excepción:', e);
+        silberWarn('[SYNC] syncEstadoToCloud — excepción:', e);
     }
 }
 
@@ -258,7 +408,7 @@ async function cargarEstadoFromCloud() {
             .single();
 
         if (res.error || !res.data || !res.data.estado_json) {
-            silberLog('cargarEstadoFromCloud — sin fila global, usando localStorage');
+            silberLog('[SYNC] cargarEstadoFromCloud — sin fila global, usando localStorage');
             return false;
         }
 
@@ -266,19 +416,31 @@ async function cargarEstadoFromCloud() {
         var localTs = estado._updatedAt   ? new Date(estado._updatedAt).getTime()   : 0;
 
         if (cloudTs > localTs) {
-            silberLog('cargarEstadoFromCloud — nube más reciente (' + res.data.updated_at + '), aplicando…');
+            silberLog('[SYNC] CONFLICT detectado — cloud más reciente (' + res.data.updated_at + '), aplicando MERGE…');
+
+            var localSnap  = JSON.parse(JSON.stringify(estado));
+            var mergedSnap = _mergeEstados(localSnap, res.data.estado_json);
+            mergedSnap._updatedAt = res.data.updated_at;  // keep cloud timestamp
+
+            silberLog('[SYNC] MERGE aplicado — gastos: '
+                + (mergedSnap.gastosRegistros   || []).length
+                + ', ingresos: '
+                + (mergedSnap.ingresosRegistros || []).length);
+
             _isRemoteUpdate = true;
-            _applyCloudData(res.data.estado_json);
+            _applyCloudData(mergedSnap);
             guardarEstado();
             _isRemoteUpdate = false;
+
+            silberLog('[SYNC] PULL OK — ' + res.data.updated_at);
             return true;
         }
 
-        silberLog('cargarEstadoFromCloud — local igual o más reciente, sin cambios');
+        silberLog('[SYNC] cargarEstadoFromCloud — local igual o más reciente, sin cambios');
         return false;
 
     } catch (e) {
-        silberWarn('cargarEstadoFromCloud — excepción, continuando en local:', e);
+        silberWarn('[SYNC] cargarEstadoFromCloud — excepción, continuando en local:', e);
         return false;
     }
 }
@@ -308,12 +470,21 @@ function _setupRealtimeSync() {
                         return;
                     }
 
-                    silberLog('Realtime — update recibido (' + payload.new.updated_at + '), aplicando…');
+                    silberLog('[SYNC] CONFLICT detectado (realtime) — aplicando MERGE…');
                     _isRemoteUpdate = true;
 
-                    _applyCloudData(payload.new.estado_json);
+                    var _rtLocal   = JSON.parse(JSON.stringify(estado));
+                    var _rtMerged  = _mergeEstados(_rtLocal, payload.new.estado_json);
+                    _rtMerged._updatedAt = payload.new.updated_at;
+                    silberLog('[SYNC] MERGE aplicado (realtime) — gastos: '
+                        + (_rtMerged.gastosRegistros   || []).length
+                        + ', ingresos: '
+                        + (_rtMerged.ingresosRegistros || []).length);
+
+                    _applyCloudData(_rtMerged);
                     guardarEstado();    // persist locally (won't re-trigger sync)
                     _reRenderAll();
+                    silberLog('[SYNC] PULL OK (realtime) — ' + payload.new.updated_at);
 
                     _isRemoteUpdate = false;
 

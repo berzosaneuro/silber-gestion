@@ -737,7 +737,7 @@ function registrarLlegada() {
     function _grabar(lat, lng, distancia, fueraDeZona, sinGPS) {
         var ahora = new Date();
         var entrada = {
-            id: Date.now(),
+            id: Date.now() + Math.random(),
             fecha: ahora.toISOString().split('T')[0],
             hora: ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
             trabajador: sesionActual ? sesionActual.usuario : 'desconocido',

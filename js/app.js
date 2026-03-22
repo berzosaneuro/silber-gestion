@@ -124,20 +124,22 @@ function esJefe() { return esMaster(); }
 function esGorrion() { return esWorker(); }
 
 function aplicarModoSesion() {
+    var _isAdmin = esMaster();
+    console.log('[ROLE_CHECK]', { role: sesionActual ? sesionActual.rol : null, isAdmin: _isAdmin });
     var elCierre = document.getElementById('oficina-cierre-card');
-    if (elCierre) elCierre.style.display = esMaster() ? 'block' : 'none';
+    if (elCierre) elCierre.style.display = _isAdmin ? 'block' : 'none';
     var elAuditoria = document.getElementById('oficina-menu-auditoria');
-    if (elAuditoria) elAuditoria.style.display = esJefazo() ? 'block' : 'none';
+    if (elAuditoria) elAuditoria.style.display = _isAdmin ? 'block' : 'none';
     var elMetricas = document.getElementById('oficina-menu-metricas');
-    if (elMetricas) elMetricas.style.display = esMaster() ? 'block' : 'none';
+    if (elMetricas) elMetricas.style.display = _isAdmin ? 'block' : 'none';
     var elRuta = document.getElementById('oficina-menu-ruta');
-    if (elRuta) elRuta.style.display = (esMaster() || esWorker()) ? 'block' : 'none';
+    if (elRuta) elRuta.style.display = (_isAdmin || esWorker()) ? 'block' : 'none';
     var elTimeline = document.getElementById('oficina-menu-timeline');
-    if (elTimeline) elTimeline.style.display = esMaster() ? 'block' : 'none';
+    if (elTimeline) elTimeline.style.display = _isAdmin ? 'block' : 'none';
     var elProductos = document.getElementById('oficina-menu-productos');
-    if (elProductos) elProductos.style.display = esMaster() ? 'block' : 'none';
+    if (elProductos) elProductos.style.display = _isAdmin ? 'block' : 'none';
     var elConfig = document.getElementById('oficina-menu-config');
-    if (elConfig) elConfig.style.display = esJefazo() ? 'block' : 'none';
+    if (elConfig) elConfig.style.display = _isAdmin ? 'block' : 'none';
     if (esWorker()) {
         [ 'oficina-menu-cuentas', 'oficina-menu-transferencias', 'oficina-menu-stock', 'oficina-menu-productos', 'oficina-menu-auditoria', 'oficina-menu-metricas', 'oficina-menu-timeline', 'oficina-menu-config' ].forEach(function(id) {
             var el = document.getElementById(id);

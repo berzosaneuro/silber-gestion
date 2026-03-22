@@ -65,7 +65,7 @@ function guardarTransaccion() {
                 else if (categoria.esRecarga === 'recargaV') estado.stockTotalV += gramos;
                 const numStock = estado.listaStock.length + 1;
                 const fechaCorta = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                estado.listaStock.push({ id: Date.now(), nombre: `Stock ${numStock} ${fechaCorta}`, fecha: fechaHoy, gramos, tipo: categoria.esRecarga, monto });
+                estado.listaStock.push({ id: Date.now() + Math.random(), nombre: `Stock ${numStock} ${fechaCorta}`, fecha: fechaHoy, gramos, tipo: categoria.esRecarga, monto });
             }
             estado.stock[categoria.esRecarga] = (estado.stock[categoria.esRecarga] || 0) + monto;
         }
@@ -142,7 +142,7 @@ function renderizarDesgloseGastos() {
     }
     const total = registros.reduce((s, r) => s + r.monto, 0);
     container.innerHTML = '';
-    const puedeBorrar = typeof esJefazo === 'function' && esJefazo();
+    const puedeBorrar = typeof esMaster === 'function' && esMaster();
     [...registros].reverse().forEach(r => {
         const idx = (estado.gastosRegistros || []).findIndex(x => x.id === r.id);
         const fila = document.createElement('div');
@@ -176,7 +176,7 @@ function renderizarDesgloseIngresos() {
     }
     const total = registros.reduce((s, r) => s + r.monto, 0);
     container.innerHTML = '';
-    const puedeBorrarIng = typeof esJefazo === 'function' && esJefazo();
+    const puedeBorrarIng = typeof esMaster === 'function' && esMaster();
     [...registros].reverse().forEach(r => {
         const idx = (estado.ingresosRegistros || []).findIndex(x => x.id === r.id);
         const fila = document.createElement('div');
@@ -212,7 +212,7 @@ function ejecutarTransferencia() {
     if (!estado.historialTransferencias) estado.historialTransferencias = [];
     const fecha = new Date().toISOString().split('T')[0];
     const hora  = new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
-    estado.historialTransferencias.push({ fecha, hora, origen, destino, monto, registradoPor: sesionActual ? sesionActual.usuario : '?' });
+    estado.historialTransferencias.push({ id: Date.now() + Math.random(), fecha, hora, origen, destino, monto, registradoPor: sesionActual ? sesionActual.usuario : '?' });
     actualizarSaldos();
     document.getElementById('transfer-monto').value = '';
     guardarEstado();
@@ -287,8 +287,8 @@ function guardarEditGasto() {
 }
 
 function eliminarGasto(idx, btnEl) {
-    if (typeof esJefazo === 'function' && !esJefazo()) {
-        alert('Solo Jefazo puede eliminar transacciones.');
+    if (typeof esMaster === 'function' && !esMaster()) {
+        alert('Solo Jefazo / Jefaza pueden eliminar transacciones.');
         return;
     }
     const r = (estado.gastosRegistros || [])[idx];
@@ -353,8 +353,8 @@ function guardarEditIngreso() {
 }
 
 function eliminarIngreso(idx, btnEl) {
-    if (typeof esJefazo === 'function' && !esJefazo()) {
-        alert('Solo Jefazo puede eliminar transacciones.');
+    if (typeof esMaster === 'function' && !esMaster()) {
+        alert('Solo Jefazo / Jefaza pueden eliminar transacciones.');
         return;
     }
     const r = (estado.ingresosRegistros || [])[idx];

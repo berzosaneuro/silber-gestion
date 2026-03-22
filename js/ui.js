@@ -51,7 +51,7 @@ function renderizarTablaPrecios() {
         btnEdit.addEventListener('click', function() {
             abrirEditarProducto(this.dataset.cat);
         });
-        if (typeof esJefazo === 'function' && !esJefazo()) btnEdit.style.display = 'none';
+        if (typeof esMaster === 'function' && !esMaster()) btnEdit.style.display = 'none';
 
         row.appendChild(lblCat);
         row.appendChild(lblPrecio);
@@ -78,8 +78,8 @@ function cerrarEditarProducto() {
 }
 
 function guardarEditarProducto() {
-    if (typeof esJefazo === 'function' && !esJefazo()) {
-        alert('Solo Jefazo puede modificar la tabla de precios.');
+    if (typeof esMaster === 'function' && !esMaster()) {
+        alert('Solo Jefazo / Jefaza pueden modificar la tabla de precios.');
         return;
     }
     var doSave = function() {
@@ -546,7 +546,7 @@ function _confirmarBorrado(btnEl, _msg, onConfirmado) {
 
 // ===== COSTE POR GRAMO (solo MASTER + biometría) =====
 function guardarCosteB() {
-    if (typeof esJefazo === 'function' && !esJefazo()) { alert('Solo Jefazo puede cambiar esta configuración.'); return; }
+    if (typeof esMaster === 'function' && !esMaster()) { alert('Solo Jefazo / Jefaza pueden cambiar esta configuración.'); return; }
     var doSave = function() {
         const val = parseFloat(document.getElementById('coste-gramo-b').value);
         if (!val || val <= 0) { alert('Introduce un valor válido'); return; }
@@ -563,7 +563,7 @@ function guardarCosteB() {
 }
 
 function guardarCosteV() {
-    if (typeof esJefazo === 'function' && !esJefazo()) { alert('Solo Jefazo puede cambiar esta configuración.'); return; }
+    if (typeof esMaster === 'function' && !esMaster()) { alert('Solo Jefazo / Jefaza pueden cambiar esta configuración.'); return; }
     var doSave = function() {
         const val = parseFloat(document.getElementById('coste-gramo-v').value);
         if (!val || val <= 0) { alert('Introduce un valor válido'); return; }
@@ -814,7 +814,7 @@ function confirmarCierre() {
         alert('Solo Jefazo o Jefaza pueden confirmar el cierre del día.');
         return;
     }
-    if (typeof esJefazo === 'function' && esJefazo() && typeof requireMasterBiometric === 'function') {
+    if (typeof esMaster === 'function' && esMaster() && typeof requireMasterBiometric === 'function') {
         requireMasterBiometric(function(ok) {
             if (!ok) { alert('Verificación cancelada. No se realizó el cierre.'); return; }
             _ejecutarConfirmarCierre('ok', '');
@@ -878,7 +878,7 @@ function registrarDescuadre() {
         alert('Solo Jefazo o Jefaza pueden registrar un descuadre.');
         return;
     }
-    if (typeof esJefazo === 'function' && esJefazo() && typeof requireMasterBiometric === 'function') {
+    if (typeof esMaster === 'function' && esMaster() && typeof requireMasterBiometric === 'function') {
         requireMasterBiometric(function(ok) {
             if (!ok) { alert('Verificación cancelada.'); return; }
             _ejecutarConfirmarCierre('descuadre', nota);
@@ -916,7 +916,7 @@ function cerrarHistorialCierresCompletos() {
 }
 
 function abrirAuditoria() {
-    if (typeof esJefazo !== 'function' || !esJefazo()) return;
+    if (typeof esMaster !== 'function' || !esMaster()) return;
     if (typeof getAuditData !== 'function') return;
     var data = getAuditData();
     var container = document.getElementById('auditoria-content');

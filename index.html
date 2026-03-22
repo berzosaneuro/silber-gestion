@@ -15,6 +15,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="Logo Silber Gestion.png">
     <link rel="apple-touch-icon" sizes="152x152" href="Logo Silber Gestion.png">
     <link rel="apple-touch-icon" sizes="120x120" href="Logo Silber Gestion.png">
+    <link rel="manifest" href="/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
@@ -1237,6 +1238,14 @@
                     <button class="an-period-btn" data-period="year"  onclick="setAnalyticsPeriod('year',this)">AÑO</button>
                 </div>
 
+                <!-- Custom date range -->
+                <div class="an-date-range-row" id="an-date-range-row">
+                    <input type="date" id="an-date-from" class="an-date-input" oninput="setCustomDateRange()">
+                    <span class="an-date-sep">→</span>
+                    <input type="date" id="an-date-to" class="an-date-input" oninput="setCustomDateRange()">
+                    <button class="an-date-clear" id="an-date-clear" onclick="clearCustomRange()" style="display:none">✕</button>
+                </div>
+
                 <!-- ── TAB: SUMMARY ── -->
                 <div class="analytics-panel active" id="an-panel-summary">
                     <div class="an-kpi-row">
@@ -1253,6 +1262,19 @@
                         <div class="an-kpi-card" style="grid-column:1/-1;">
                             <div class="an-kpi-label">Balance neto</div>
                             <div class="an-kpi-value blue" id="an-sum-balance">0€</div>
+                        </div>
+                    </div>
+                    <!-- Porcentajes -->
+                    <div class="an-pct-block" id="an-pct-block">
+                        <div class="an-pct-row">
+                            <div class="an-pct-label">Gastos / Ingresos</div>
+                            <div class="an-pct-bar-wrap"><div class="an-pct-bar an-pct-bar--red" id="an-pct-gastos-bar" style="width:0%"></div></div>
+                            <div class="an-pct-value" id="an-pct-gastos-val">—</div>
+                        </div>
+                        <div class="an-pct-row">
+                            <div class="an-pct-label">% Beneficio</div>
+                            <div class="an-pct-bar-wrap"><div class="an-pct-bar an-pct-bar--green" id="an-pct-beneficio-bar" style="width:0%"></div></div>
+                            <div class="an-pct-value" id="an-pct-beneficio-val">—</div>
                         </div>
                     </div>
                     <div class="an-chart" id="an-sum-chart">
@@ -1969,6 +1991,8 @@
     var TOOLS_KEY = 'silber_tools_v1';
     var _analyticsPeriod = 'day';
     var _analyticsTab    = 'summary';
+    var _customFrom      = null;  // 'YYYY-MM-DD' or null
+    var _customTo        = null;  // 'YYYY-MM-DD' or null
 
     /* Default tool states — non-breaking (all defaults mirror current behaviour) */
     var TOOLS_DEFAULTS = {
@@ -1998,6 +2022,30 @@
         saveTool(key, el.classList.contains('active'));
     }
 
+    /* ── Date range helpers ───────────────────────────────── */
+    function setCustomDateRange() {
+        var fromEl   = document.getElementById('an-date-from');
+        var toEl     = document.getElementById('an-date-to');
+        var clearBtn = document.getElementById('an-date-clear');
+        _customFrom  = (fromEl && fromEl.value) || null;
+        _customTo    = (toEl   && toEl.value)   || null;
+        if (clearBtn) clearBtn.style.display = (_customFrom || _customTo) ? '' : 'none';
+        renderSummaryTab(_analyticsPeriod);
+        if (_analyticsTab === 'profit') renderProfitTab(_analyticsPeriod);
+    }
+    function clearCustomRange() {
+        _customFrom = null;
+        _customTo   = null;
+        var fromEl   = document.getElementById('an-date-from');
+        var toEl     = document.getElementById('an-date-to');
+        var clearBtn = document.getElementById('an-date-clear');
+        if (fromEl)   fromEl.value   = '';
+        if (toEl)     toEl.value     = '';
+        if (clearBtn) clearBtn.style.display = 'none';
+        renderSummaryTab(_analyticsPeriod);
+        if (_analyticsTab === 'profit') renderProfitTab(_analyticsPeriod);
+    }
+
     /* ── Data computation ─────────────────────────────────── */
     function getAnalyticsData(period) {
         if (typeof estado === 'undefined' || !estado) return { ingresos:0, gastos:0, costoProducto:0 };
@@ -2006,6 +2054,21 @@
         var regs     = estado.registrosDiarios  || {};
         var now      = new Date();
         var desde;
+
+        // Custom date range overrides period buttons
+        if (_customFrom || _customTo) {
+            var cfrom = _customFrom ? new Date(_customFrom) : new Date(2000, 0, 1);
+            var cto   = _customTo   ? new Date(_customTo + 'T23:59:59') : now;
+            function inCustomRange(dateStr) {
+                if (!dateStr) return false;
+                var d = new Date(dateStr);
+                return d >= cfrom && d <= cto;
+            }
+            var totalIngC  = ingresos.filter(function(r){ return inCustomRange(r.fecha); }).reduce(function(s,r){ return s+(r.monto||0); }, 0);
+            var totalGasC  = gastos.filter(function(r){ return inCustomRange(r.fecha); }).reduce(function(s,r){ return s+(r.monto||0); }, 0);
+            var costoProdC = gastos.filter(function(r){ return inCustomRange(r.fecha) && r.esRecarga; }).reduce(function(s,r){ return s+(r.monto||0); }, 0);
+            return { ingresos: totalIngC, gastos: totalGasC, costoProducto: costoProdC };
+        }
 
         if (period === 'day') {
             var hoyKey = now.toISOString().split('T')[0];
@@ -2082,6 +2145,13 @@
             { label: 'Ingresos', amount: d.ingresos, color: '#10B981' },
             { label: 'Gastos',   amount: d.gastos,   color: '#EF4444' }
         ]);
+        // ── Porcentajes ──────────────────────────────────────
+        var pctGastos = d.ingresos > 0 ? Math.min(100, (d.gastos   / d.ingresos) * 100) : 0;
+        var pctBenef  = d.ingresos > 0 ? Math.max(0, Math.min(100, (balance / d.ingresos) * 100)) : 0;
+        el = document.getElementById('an-pct-gastos-bar');  if(el) el.style.width = pctGastos.toFixed(1) + '%';
+        el = document.getElementById('an-pct-gastos-val');  if(el) el.textContent = d.ingresos > 0 ? pctGastos.toFixed(1) + '%' : '—';
+        el = document.getElementById('an-pct-beneficio-bar'); if(el) el.style.width = pctBenef.toFixed(1) + '%';
+        el = document.getElementById('an-pct-beneficio-val'); if(el) el.textContent = d.ingresos > 0 ? pctBenef.toFixed(1) + '%' : '—';
     }
 
     /* ── Tab: Profit (MASTER only) ────────────────────────── */
@@ -2174,7 +2244,7 @@
         if (_analyticsTab === 'profit') renderProfitTab(_analyticsPeriod);
         if (_analyticsTab === 'tools')  renderToolsTab();
         /* Hide tabs the worker can't access */
-        var isWorker = (typeof esGorrion === 'function' && esGorrion()) || (typeof esMaster === 'function' && !esMaster() && typeof esJefaza === 'function' && !esJefaza());
+        var isWorker = typeof esMaster === 'function' ? !esMaster() : true;
         var profitBtn = document.getElementById('analytics-tab-profit');
         var toolsBtn  = document.getElementById('analytics-tab-tools');
         if (isWorker) {
@@ -2203,9 +2273,11 @@
         document.querySelectorAll('.analytics-panel').forEach(function(p){ p.classList.remove('active'); });
         var panel = document.getElementById('an-panel-'+tab);
         if (panel) panel.classList.add('active');
-        /* Period row hidden on tools tab */
+        /* Period row + date range row hidden on tools tab */
         var pr = document.getElementById('an-period-row');
+        var dr = document.getElementById('an-date-range-row');
         if (pr) pr.style.display = (tab === 'tools') ? 'none' : '';
+        if (dr) dr.style.display = (tab === 'tools') ? 'none' : '';
         if (tab === 'summary') renderSummaryTab(_analyticsPeriod);
         if (tab === 'profit')  renderProfitTab(_analyticsPeriod);
         if (tab === 'tools')   renderToolsTab();
@@ -2633,6 +2705,164 @@
                 }
             });
         }).observe(modal, { attributes: true });
+    })();
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════
+         PWA — iOS Install Guide
+         Shown once to iOS users who haven't installed the app.
+         Hidden by default; JS sets display:flex to reveal.
+    ═══════════════════════════════════════════════════════ -->
+    <div id="pwa-ios-guide" style="display:none;position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);align-items:flex-end;justify-content:center;">
+        <div style="background:#0d1117;border:1px solid rgba(255,255,255,0.1);border-radius:20px 20px 0 0;padding:20px 20px 44px;max-width:480px;width:100%;text-align:center;box-shadow:0 -8px 40px rgba(0,0,0,0.6);">
+            <!-- handle -->
+            <div style="width:36px;height:4px;background:rgba(255,255,255,0.18);border-radius:2px;margin:0 auto 18px;"></div>
+            <div style="font-size:32px;margin-bottom:10px;">📲</div>
+            <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:6px;font-family:inherit;">Instala Silber Gestión</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.5;">Añádela a tu pantalla de inicio para acceso directo sin navegador</div>
+            <!-- Steps -->
+            <div style="text-align:left;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:14px 16px;margin-bottom:18px;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+                    <div style="min-width:26px;height:26px;background:rgba(0,229,255,0.15);border:1px solid rgba(0,229,255,0.25);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#00E5FF;">1</div>
+                    <div style="font-size:13px;color:rgba(255,255,255,0.85);line-height:1.4;">Pulsa el botón <strong style="color:#fff;">Compartir</strong> <span style="display:inline-block;background:rgba(28,126,214,0.8);border-radius:4px;padding:1px 6px;font-size:11px;">⬆</span> en la barra de Safari</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+                    <div style="min-width:26px;height:26px;background:rgba(0,229,255,0.15);border:1px solid rgba(0,229,255,0.25);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#00E5FF;">2</div>
+                    <div style="font-size:13px;color:rgba(255,255,255,0.85);line-height:1.4;">Desplázate y toca <strong style="color:#fff;">"Añadir a pantalla de inicio"</strong></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="min-width:26px;height:26px;background:rgba(0,229,255,0.15);border:1px solid rgba(0,229,255,0.25);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#00E5FF;">3</div>
+                    <div style="font-size:13px;color:rgba(255,255,255,0.85);line-height:1.4;">Pulsa <strong style="color:#fff;">"Añadir"</strong> en la esquina superior derecha</div>
+                </div>
+            </div>
+            <button id="pwa-ios-ok"
+                style="width:100%;padding:13px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);border-radius:12px;color:#00E5FF;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.3px;transition:background .2s;">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         PWA — Android Install Banner
+         Shown when beforeinstallprompt fires and user hasn't dismissed.
+         Hidden by default; JS sets display:block to reveal.
+    ═══════════════════════════════════════════════════════ -->
+    <div id="pwa-android-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99998;padding:12px 14px 20px;background:#0d1117;border-top:1px solid rgba(0,229,255,0.18);box-shadow:0 -4px 24px rgba(0,0,0,0.5);">
+        <div style="display:flex;align-items:center;gap:12px;max-width:480px;margin:0 auto;">
+            <img src="logo.png" alt="" style="width:42px;height:42px;border-radius:10px;flex-shrink:0;object-fit:contain;" onerror="this.style.display='none'">
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Silber Gestión</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;">Instala la app para acceso rápido</div>
+            </div>
+            <button id="pwa-install-btn"
+                style="padding:9px 16px;background:rgba(0,229,255,0.12);border:1px solid rgba(0,229,255,0.35);border-radius:9px;color:#00E5FF;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0;transition:background .2s;">
+                Instalar
+            </button>
+            <button id="pwa-android-dismiss"
+                style="padding:8px 6px;background:transparent;border:none;color:rgba(255,255,255,0.35);font-size:20px;cursor:pointer;flex-shrink:0;line-height:1;font-family:inherit;"
+                aria-label="Cerrar">✕</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         PWA — Service Worker + Install Logic
+    ═══════════════════════════════════════════════════════ -->
+    <script>
+    (function() {
+        'use strict';
+
+        /* ── Detect standalone mode (already installed) ─────── */
+        var _standalone =
+            window.matchMedia('(display-mode: standalone)').matches ||
+            window.navigator.standalone === true;
+
+        /* ── Register Service Worker ─────────────────────────── */
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(function(reg) {
+                        console.log('[PWA] SW registered, scope:', reg.scope);
+                    })
+                    .catch(function(err) {
+                        console.warn('[PWA] SW registration failed:', err);
+                    });
+            });
+        }
+
+        /* ── Android: beforeinstallprompt ────────────────────── */
+        if (!_standalone) {
+            var _deferredPrompt = null;
+
+            window.addEventListener('beforeinstallprompt', function(e) {
+                e.preventDefault();
+                _deferredPrompt = e;
+
+                /* Show banner only if user hasn't dismissed it before */
+                if (!localStorage.getItem('silber_pwa_android_dismissed')) {
+                    var banner = document.getElementById('pwa-android-banner');
+                    if (banner) banner.style.display = 'block';
+                }
+            });
+
+            /* Install button click → trigger native prompt */
+            var installBtn = document.getElementById('pwa-install-btn');
+            if (installBtn) {
+                installBtn.addEventListener('click', function() {
+                    if (!_deferredPrompt) return;
+                    _deferredPrompt.prompt();
+                    _deferredPrompt.userChoice.then(function(result) {
+                        if (result.outcome === 'accepted') {
+                            var banner = document.getElementById('pwa-android-banner');
+                            if (banner) banner.style.display = 'none';
+                        }
+                        _deferredPrompt = null;
+                    });
+                });
+            }
+
+            /* Dismiss button */
+            var dismissBtn = document.getElementById('pwa-android-dismiss');
+            if (dismissBtn) {
+                dismissBtn.addEventListener('click', function() {
+                    localStorage.setItem('silber_pwa_android_dismissed', '1');
+                    var banner = document.getElementById('pwa-android-banner');
+                    if (banner) banner.style.display = 'none';
+                });
+            }
+
+            /* Hide banner automatically if app gets installed */
+            window.addEventListener('appinstalled', function() {
+                var banner = document.getElementById('pwa-android-banner');
+                if (banner) banner.style.display = 'none';
+            });
+        }
+
+        /* ── iOS: install guide ──────────────────────────────── */
+        (function() {
+            if (_standalone) return;   /* already installed as app */
+
+            var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+            if (!isIos) return;
+
+            if (localStorage.getItem('silber_pwa_ios_shown')) return;
+
+            /* Show guide 2.5 s after load so the app has time to render */
+            setTimeout(function() {
+                var guide = document.getElementById('pwa-ios-guide');
+                if (guide) guide.style.display = 'flex';
+            }, 2500);
+
+            /* "Entendido" button */
+            var okBtn = document.getElementById('pwa-ios-ok');
+            if (okBtn) {
+                okBtn.addEventListener('click', function() {
+                    localStorage.setItem('silber_pwa_ios_shown', '1');
+                    var guide = document.getElementById('pwa-ios-guide');
+                    if (guide) guide.style.display = 'none';
+                });
+            }
+        })();
+
     })();
     </script>
 </body>

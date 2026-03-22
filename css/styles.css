@@ -1436,6 +1436,95 @@ select option { background:var(--bg-card); color:var(--text-primary); }
     color: #fff;
 }
 
+/* Date range picker */
+.an-date-range-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding: 8px 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+}
+.an-date-input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 12px;
+    padding: 5px 7px;
+    font-family: inherit;
+    cursor: pointer;
+    color-scheme: dark;
+}
+.an-date-input:focus { outline: none; border-color: rgba(14,165,233,0.6); }
+.an-date-sep {
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+.an-date-clear {
+    flex-shrink: 0;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 6px;
+    color: #EF4444;
+    font-size: 13px;
+    padding: 4px 9px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: background .15s;
+}
+.an-date-clear:hover { background: rgba(239,68,68,0.22); }
+
+/* Percentage bars block */
+.an-pct-block {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+.an-pct-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.an-pct-row:last-child { margin-bottom: 0; }
+.an-pct-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    width: 130px;
+    flex-shrink: 0;
+}
+.an-pct-bar-wrap {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.an-pct-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width .4s ease;
+}
+.an-pct-bar--red   { background: linear-gradient(90deg, #EF4444, #F87171); }
+.an-pct-bar--green { background: linear-gradient(90deg, #10B981, #34D399); }
+.an-pct-value {
+    font-size: 12px;
+    font-weight: 800;
+    color: #fff;
+    width: 44px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
 /* Tools — iOS settings rows */
 .an-tools-group {
     background: var(--card-bg);
