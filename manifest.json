@@ -1,0 +1,25 @@
+{
+  "name": "Silber Gestión",
+  "short_name": "Silber",
+  "description": "Gestión financiera y de stock",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#04050F",
+  "theme_color": "#04050F",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

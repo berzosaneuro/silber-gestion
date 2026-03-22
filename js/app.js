@@ -124,20 +124,22 @@ function esJefe() { return esMaster(); }
 function esGorrion() { return esWorker(); }
 
 function aplicarModoSesion() {
+    var _isAdmin = esMaster();
+    console.log('[ROLE_CHECK]', { role: sesionActual ? sesionActual.rol : null, isAdmin: _isAdmin });
     var elCierre = document.getElementById('oficina-cierre-card');
-    if (elCierre) elCierre.style.display = esMaster() ? 'block' : 'none';
+    if (elCierre) elCierre.style.display = _isAdmin ? 'block' : 'none';
     var elAuditoria = document.getElementById('oficina-menu-auditoria');
-    if (elAuditoria) elAuditoria.style.display = esJefazo() ? 'block' : 'none';
+    if (elAuditoria) elAuditoria.style.display = _isAdmin ? 'block' : 'none';
     var elMetricas = document.getElementById('oficina-menu-metricas');
-    if (elMetricas) elMetricas.style.display = esMaster() ? 'block' : 'none';
+    if (elMetricas) elMetricas.style.display = _isAdmin ? 'block' : 'none';
     var elRuta = document.getElementById('oficina-menu-ruta');
-    if (elRuta) elRuta.style.display = (esMaster() || esWorker()) ? 'block' : 'none';
+    if (elRuta) elRuta.style.display = (_isAdmin || esWorker()) ? 'block' : 'none';
     var elTimeline = document.getElementById('oficina-menu-timeline');
-    if (elTimeline) elTimeline.style.display = esMaster() ? 'block' : 'none';
+    if (elTimeline) elTimeline.style.display = _isAdmin ? 'block' : 'none';
     var elProductos = document.getElementById('oficina-menu-productos');
-    if (elProductos) elProductos.style.display = esMaster() ? 'block' : 'none';
+    if (elProductos) elProductos.style.display = _isAdmin ? 'block' : 'none';
     var elConfig = document.getElementById('oficina-menu-config');
-    if (elConfig) elConfig.style.display = esJefazo() ? 'block' : 'none';
+    if (elConfig) elConfig.style.display = _isAdmin ? 'block' : 'none';
     if (esWorker()) {
         [ 'oficina-menu-cuentas', 'oficina-menu-transferencias', 'oficina-menu-stock', 'oficina-menu-productos', 'oficina-menu-auditoria', 'oficina-menu-metricas', 'oficina-menu-timeline', 'oficina-menu-config' ].forEach(function(id) {
             var el = document.getElementById(id);
@@ -150,6 +152,124 @@ function aplicarModoSesion() {
         mostrarBotonCambiarPassword();
     }
     if (esMaster() && typeof startMasterNotificationPoll === 'function') startMasterNotificationPoll();
+
+    /* Reset suave: mostrar bloque solo a admins */
+    var elResetAdmin = document.getElementById('admin-zona-reset');
+    if (elResetAdmin) elResetAdmin.style.display = _isAdmin ? 'block' : 'none';
+}
+
+/* ── RESET SUAVE ──────────────────────────────────────────────────
+   Vacía todos los datos transaccionales de 'silber_gestion_v2'
+   manteniendo: estructura, configuración, roles y otras claves.
+   Después hace push a Supabase para propagar el estado limpio.
+   ──────────────────────────────────────────────────────────────── */
+function resetSuave() {
+    if (!esMaster()) {
+        console.warn('[RESET] Acceso denegado — solo admins');
+        return;
+    }
+
+    /* Construir estado limpio conservando configuración */
+    var estadoLimpio = {
+        /* Navegación */
+        periodo:            'day',
+        diaOffset:          0,
+        historialPantallas: ['dashboard'],
+
+        /* Cuentas a cero (dato transaccional) */
+        cuentas: { efectivo: 0, bbva: 0, caja: 0, monedero: 0 },
+
+        /* Stock a cero, mantener estructura de precios/gramajes */
+        stock:          { recargaB: 0, recargaV: 0 },
+        stockTotalB:    0,
+        stockTotalV:    0,
+        costePorGramoB: estado.costePorGramoB || 22,
+        costePorGramoV: estado.costePorGramoV || 1,
+
+        /* Mantener tabla de precios/gramajes, resetear stock a 0 */
+        stockProductos: (function () {
+            var sp = {};
+            var orig = estado.stockProductos || {};
+            Object.keys(orig).forEach(function (k) {
+                sp[k] = { precio: orig[k].precio, gramaje: orig[k].gramaje, stock: 0 };
+            });
+            return sp;
+        })(),
+
+        /* Mantener trabajadores (configuración estructural) */
+        trabajadores: estado.trabajadores || [],
+
+        /* Vaciar todo lo transaccional */
+        listaStock:             [],
+        registrosDiarios:       {},
+        clientes:               [],
+        gastosRegistros:        [],
+        ingresosRegistros:      [],
+        historialTransferencias:[],
+        llegadas:               [],
+        stock_movements:        [],
+        productos:              [],
+
+        /* Preservar umbrales */
+        umbralAlertaAltoValor: estado.umbralAlertaAltoValor || 200,
+
+        /* UI internals */
+        transaccionActual: null,
+        clienteActual:     null,
+        fotoActual:        null,
+        _ultimoDia:        new Date().toISOString().split('T')[0],
+
+        /* Timestamp reciente → gana en conflictos de sync */
+        _updatedAt: new Date().toISOString()
+    };
+
+    /* Preservar categorías (se asignan en state.js sobre el objeto) */
+    estadoLimpio.categoriasGastos   = estado.categoriasGastos   || [];
+    estadoLimpio.categoriasIngresos = estado.categoriasIngresos || [];
+
+    /* 1 — Actualizar estado en memoria (in-place) */
+    Object.keys(estado).forEach(function (k) { delete estado[k]; });
+    Object.keys(estadoLimpio).forEach(function (k) { estado[k] = estadoLimpio[k]; });
+
+    /* 2 — Persistir en localStorage */
+    if (typeof guardarEstado === 'function') guardarEstado();
+    console.log('[RESET] Estado limpio guardado en localStorage');
+
+    /* 3 — Push a Supabase para propagar a todos los dispositivos */
+    if (typeof syncEstadoToCloud === 'function') {
+        syncEstadoToCloud();
+        console.log('[RESET] Push a Supabase iniciado');
+    }
+
+    /* 4 — Refrescar UI */
+    try {
+        if (typeof actualizarSaldos === 'function')          actualizarSaldos();
+        if (typeof dibujarDonut === 'function')              dibujarDonut();
+        if (typeof renderizarClientes === 'function')        renderizarClientes();
+        if (typeof renderizarTablaPrecios === 'function')    renderizarTablaPrecios();
+        if (typeof actualizarTimeMachine === 'function')     actualizarTimeMachine();
+        if (typeof renderizarCategoriasGastos === 'function')    renderizarCategoriasGastos();
+        if (typeof renderizarCategoriasIngresos === 'function') renderizarCategoriasIngresos();
+    } catch (e) { console.warn('[RESET] Error re-renderizando UI:', e); }
+
+    /* 5 — Cerrar modal y mostrar confirmación */
+    var modal = document.getElementById('modal-reset-confirm');
+    if (modal) modal.style.display = 'none';
+
+    if (typeof mostrarToast === 'function') {
+        mostrarToast('✅ App reiniciada — datos borrados', 'important');
+    }
+    console.log('[RESET] Reset suave completado');
+}
+
+function abrirModalReset() {
+    if (!esMaster()) return;
+    var modal = document.getElementById('modal-reset-confirm');
+    if (modal) modal.style.display = 'flex';
+}
+function cerrarModalReset() {
+    var modal = document.getElementById('modal-reset-confirm');
+    if (modal) modal.style.display = 'none';
 }
 
 function mostrarBotonCambiarPassword() {

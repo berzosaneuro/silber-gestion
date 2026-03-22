@@ -12,6 +12,7 @@ function recordStockMovement(productoIdOrName, tipo, cantidad_gramos, usuario) {
     if (!estado.stock_movements) estado.stock_movements = [];
     var ts = new Date().toISOString().slice(0, 19).replace('T', ' ');
     estado.stock_movements.push({
+        id: Date.now() + Math.random(),
         producto: productoIdOrName,
         tipo: tipo,
         cantidad_gramos: cantidad_gramos,
@@ -24,7 +25,7 @@ function recordStockMovement(productoIdOrName, tipo, cantidad_gramos, usuario) {
 
 function addProducto(nombre, precio_por_gramo, stock_inicial, stock_minimo) {
     if (!estado.productos) estado.productos = [];
-    var id = Date.now();
+    var id = Date.now() + Math.random();
     var created_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
     var p = {
         id: id,

@@ -24,9 +24,9 @@ function _hashPayload(str) {
     return (h >>> 0).toString(16);
 }
 
-// ——— Requiere ser Jefazo (control total) y (si hay biometría) verificación Face ID.
+// ——— Requiere ser admin (Jefazo o Jefaza) y (si hay biometría) verificación Face ID.
 function requireMasterBiometric(onVerified) {
-    if (typeof esJefazo !== 'function' || !esJefazo()) {
+    if (typeof esMaster !== 'function' || !esMaster()) {
         if (typeof onVerified === 'function') onVerified(false);
         return;
     }
