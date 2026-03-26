@@ -128,7 +128,7 @@ function guardarTransaccion() {
     if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
 
     // ── 3. SYNC SUPABASE (opcional; si falla, la app sigue con localStorage) ──
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         _supabase.from('transacciones').insert([{ tipo: tipo, categoria: categoria.nombre, monto: monto, cuenta: cuenta, gramos: gramos, nota: nota, registrado_por: registradoPor }]).then(function() {}).catch(function(err) { console.warn('Supabase sync transacción:', err); });
     }
     } catch (err) {
@@ -230,7 +230,7 @@ function _silberRegistrarIngresoDeuda(opts) {
         nota: opts.nota || 'Pago de deuda'
     });
     _silberSyncDayFromLedgers(fecha);
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         _supabase.from('transacciones').insert([{
             tipo: 'ingreso',
             categoria: categoria,

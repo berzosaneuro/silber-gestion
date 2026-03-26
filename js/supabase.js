@@ -11,6 +11,11 @@ try {
         _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
 } catch (e) { console.warn('Supabase no iniciado:', e); }
+var _silberTableSyncEnabled = !!_supabase;
+var _silberCorePushInFlight = false;
+var _silberCorePullTimer = null;
+var _silberLastCorePushAt = 0;
+if (typeof window !== 'undefined') window.__silberTableSyncEnabled = _silberTableSyncEnabled;
 
 // ===== DASHBOARD DESDE SUPABASE =====
 async function cargarDatosDashboard() {
@@ -31,12 +36,323 @@ function saveWorkerLocation(user, role, lat, lng) {
 // ——— Sync clients to Supabase (upsert by id)
 function syncClientsToSupabase() {
     if (typeof _supabase === 'undefined' || !_supabase || !estado.clientes || !estado.clientes.length) return;
+    if (_silberTableSyncEnabled) {
+        // En modo tablas core, un único sync conserva consistencia entre entidades.
+        _triggerCloudSync();
+        return;
+    }
     try {
         estado.clientes.forEach(function(c) {
             var row = { id: String(c.id), nombre: c.nombre, whatsapp: c.whatsapp || '', limite: c.limite || 0, dia_pago: c.diaPago || 1, producto: c.producto || '', deuda: c.deuda || 0, lat: c.lat != null ? c.lat : null, lng: c.lng != null ? c.lng : null };
-            _supabase.from('clients').upsert(row, { onConflict: 'id' }).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] clients upsert:', err); });
+            _supabase.from('clientes').upsert(row, { onConflict: 'id' }).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] clientes upsert:', err); });
         });
     } catch (err) {}
+}
+
+function _sbNum(v, d) {
+    var n = Number(v);
+    return Number.isFinite(n) ? n : (d || 0);
+}
+function _sbReadDbDeudasLocal() {
+    try {
+        var s = localStorage.getItem('db_deudas');
+        if (s) return JSON.parse(s);
+    } catch (_) {}
+    return { clientes: [], deudas: [], historial: [] };
+}
+function _sbWriteDbDeudasLocal(db) {
+    try { localStorage.setItem('db_deudas', JSON.stringify(db || { clientes: [], deudas: [], historial: [] })); } catch (_) {}
+}
+async function _sbFetchTable(table) {
+    if (!_supabase) return null;
+    try {
+        var res = await _supabase.from(table).select('*');
+        if (res.error) throw res.error;
+        return Array.isArray(res.data) ? res.data : [];
+    } catch (e) {
+        silberWarn('[CORE_SYNC] fetch ' + table + ' falló:', e);
+        return null;
+    }
+}
+function _sbIsCoreBundleEmpty(b) {
+    return (!b.clientes || !b.clientes.length)
+        && (!b.cuentas || !b.cuentas.length)
+        && (!b.transacciones || !b.transacciones.length)
+        && (!b.deudas || !b.deudas.length)
+        && (!b.productos || !b.productos.length);
+}
+function _sbMapCuentasRowsToEstado(rows) {
+    if (!rows || !rows.length) return null;
+    var one = rows[0] || {};
+    if (one.efectivo != null || one.bbva != null || one.caja != null || one.monedero != null) {
+        return {
+            efectivo: _sbNum(one.efectivo, 0),
+            bbva: _sbNum(one.bbva, 0),
+            caja: _sbNum(one.caja, 0),
+            monedero: _sbNum(one.monedero, 0)
+        };
+    }
+    var out = { efectivo: 0, bbva: 0, caja: 0, monedero: 0 };
+    rows.forEach(function(r) {
+        var k = String(r.nombre || r.cuenta || r.id || '').toLowerCase();
+        var val = _sbNum(r.saldo != null ? r.saldo : (r.monto != null ? r.monto : r.valor), 0);
+        if (k === 'efectivo' || k === 'bbva' || k === 'caja' || k === 'monedero') out[k] = val;
+    });
+    return out;
+}
+function _sbBuildCoreRowsFromEstado() {
+    var clientes = (estado.clientes || []).map(function(c) {
+        return {
+            id: String(c.id),
+            nombre: c.nombre || '',
+            telefono: c.telefono || c.whatsapp || '',
+            whatsapp: c.whatsapp || c.telefono || '',
+            limite: _sbNum(c.limite, 0),
+            dia_pago: _sbNum(c.diaPago, 1),
+            producto: c.producto || '',
+            deuda: _sbNum(c.deuda, 0),
+            lat: c.lat != null ? _sbNum(c.lat, null) : null,
+            lng: c.lng != null ? _sbNum(c.lng, null) : null
+        };
+    });
+    var cuentas = ['efectivo', 'bbva', 'caja', 'monedero'].map(function(k) {
+        return { id: k, nombre: k, saldo: _sbNum((estado.cuentas || {})[k], 0) };
+    });
+    var transacciones = [];
+    (estado.gastosRegistros || []).forEach(function(r) {
+        transacciones.push({
+            id: String(r.id != null ? r.id : (Date.now() + Math.random())),
+            tipo: 'gasto',
+            categoria: r.categoria || '',
+            monto: _sbNum(r.monto, 0),
+            cuenta: r.cuenta || 'efectivo',
+            fecha: r.fecha || new Date().toISOString().split('T')[0],
+            hora: r.hora || new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+            gramos: _sbNum(r.gramos, 0),
+            nota: r.nota || '',
+            registrado_por: r.registradoPor || (sesionActual ? sesionActual.usuario : '?')
+        });
+    });
+    (estado.ingresosRegistros || []).forEach(function(r) {
+        transacciones.push({
+            id: String(r.id != null ? r.id : (Date.now() + Math.random())),
+            tipo: 'ingreso',
+            categoria: r.categoria || '',
+            monto: _sbNum(r.monto, 0),
+            cuenta: r.cuenta || 'efectivo',
+            fecha: r.fecha || new Date().toISOString().split('T')[0],
+            hora: r.hora || new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+            gramos: _sbNum(r.gramos, 0),
+            nota: r.nota || '',
+            registrado_por: r.registradoPor || (sesionActual ? sesionActual.usuario : '?')
+        });
+    });
+    var db = _sbReadDbDeudasLocal();
+    var deudas = (db.deudas || []).map(function(d) {
+        return {
+            id: String(d.id != null ? d.id : (Date.now() + Math.random())),
+            cliente_id: String(d.cliente_id || ''),
+            producto: d.producto || '',
+            cantidad: _sbNum(d.cantidad, 0),
+            dia_pago: _sbNum(d.dia_pago, 1),
+            fecha_creacion: d.fecha_creacion || new Date().toISOString().split('T')[0],
+            pagada: !!d.pagada,
+            historial_pagos: Array.isArray(d.historial_pagos) ? d.historial_pagos : []
+        };
+    });
+    var productos = (estado.productos || []).map(function(p) {
+        return {
+            id: String(p.id != null ? p.id : (Date.now() + Math.random())),
+            nombre: p.nombre || '',
+            precio_por_gramo: _sbNum(p.precio_por_gramo, 0),
+            stock_gramos: _sbNum(p.stock_gramos, 0),
+            stock_minimo: _sbNum(p.stock_minimo, 0),
+            activo: p.activo !== false,
+            created_at: p.created_at || new Date().toISOString().slice(0, 19).replace('T', ' ')
+        };
+    });
+    return { clientes: clientes, cuentas: cuentas, transacciones: transacciones, deudas: deudas, productos: productos };
+}
+async function _sbReplaceTableRows(table, key, rows) {
+    if (!_supabase) return false;
+    try {
+        var sel = await _supabase.from(table).select(key);
+        if (sel.error) throw sel.error;
+        var existing = (sel.data || []).map(function(r) { return r[key]; }).filter(function(v) { return v != null; });
+        if (existing.length) {
+            var delRes = await _supabase.from(table).delete().in(key, existing);
+            if (delRes.error) throw delRes.error;
+        }
+        if (rows && rows.length) {
+            var insRes = await _supabase.from(table).insert(rows);
+            if (insRes.error) throw insRes.error;
+        }
+        return true;
+    } catch (e) {
+        silberWarn('[CORE_SYNC] replace ' + table + ' falló:', e);
+        return false;
+    }
+}
+async function _syncCoreTablesFromEstado() {
+    if (!_supabase) return false;
+    if (_silberCorePushInFlight) return false;
+    _silberCorePushInFlight = true;
+    try {
+        var rows = _sbBuildCoreRowsFromEstado();
+        var ok1 = await _sbReplaceTableRows('clientes', 'id', rows.clientes);
+        var ok2 = await _sbReplaceTableRows('cuentas', 'id', rows.cuentas);
+        var ok3 = await _sbReplaceTableRows('transacciones', 'id', rows.transacciones);
+        var ok4 = await _sbReplaceTableRows('deudas', 'id', rows.deudas);
+        var ok5 = await _sbReplaceTableRows('productos', 'id', rows.productos);
+        var ok = !!(ok1 && ok2 && ok3 && ok4 && ok5);
+        if (ok) _silberLastCorePushAt = Date.now();
+        return ok;
+    } catch (e) {
+        silberWarn('[CORE_SYNC] syncCoreTablesFromEstado excepción:', e);
+        return false;
+    } finally {
+        _silberCorePushInFlight = false;
+    }
+}
+function _sbApplyCoreBundleToEstado(bundle) {
+    if (!bundle) return false;
+    var changed = false;
+    var remoteClientes = bundle.clientes || [];
+    var remoteCuentas = bundle.cuentas || [];
+    var remoteTx = bundle.transacciones || [];
+    var remoteDeudas = bundle.deudas || [];
+    var remoteProductos = bundle.productos || [];
+
+    if (remoteClientes.length) {
+        estado.clientes = remoteClientes.map(function(c) {
+            return {
+                id: c.id != null ? c.id : String(Date.now() + Math.random()),
+                nombre: c.nombre || '',
+                telefono: c.telefono || c.whatsapp || '',
+                whatsapp: c.whatsapp || c.telefono || '',
+                limite: _sbNum(c.limite != null ? c.limite : c.limite_credito, 0),
+                diaPago: _sbNum(c.dia_pago, 1),
+                producto: c.producto || '',
+                deuda: _sbNum(c.deuda, 0),
+                historial: [],
+                lat: c.lat != null ? _sbNum(c.lat, null) : undefined,
+                lng: c.lng != null ? _sbNum(c.lng, null) : undefined
+            };
+        });
+        changed = true;
+    }
+
+    var cuentasMapped = _sbMapCuentasRowsToEstado(remoteCuentas);
+    if (cuentasMapped) {
+        estado.cuentas = cuentasMapped;
+        changed = true;
+    }
+
+    if (remoteTx.length) {
+        estado.gastosRegistros = [];
+        estado.ingresosRegistros = [];
+        remoteTx.forEach(function(t) {
+            var base = {
+                id: t.id != null ? t.id : (Date.now() + Math.random()),
+                fecha: t.fecha || new Date().toISOString().split('T')[0],
+                hora: t.hora || new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+                categoria: t.categoria || '',
+                monto: _sbNum(t.monto, 0),
+                cuenta: t.cuenta || 'efectivo',
+                nota: t.nota || '',
+                gramos: _sbNum(t.gramos, 0),
+                registradoPor: t.registrado_por || '?'
+            };
+            if (String(t.tipo || '').toLowerCase() === 'gasto') estado.gastosRegistros.push(base);
+            else estado.ingresosRegistros.push(base);
+        });
+        if (typeof _silberRebuildRegistrosFromLedgers === 'function') _silberRebuildRegistrosFromLedgers();
+        changed = true;
+    }
+
+    if (remoteProductos.length) {
+        estado.productos = remoteProductos.map(function(p) {
+            return {
+                id: p.id != null ? p.id : String(Date.now() + Math.random()),
+                nombre: p.nombre || '',
+                precio_por_gramo: _sbNum(p.precio_por_gramo, 0),
+                stock_gramos: _sbNum(p.stock_gramos, 0),
+                stock_minimo: _sbNum(p.stock_minimo, 0),
+                activo: p.activo !== false,
+                created_at: p.created_at || new Date().toISOString().slice(0, 19).replace('T', ' ')
+            };
+        });
+        changed = true;
+    }
+
+    if (remoteDeudas.length) {
+        var db = _sbReadDbDeudasLocal();
+        db.deudas = remoteDeudas.map(function(d) {
+            return {
+                id: d.id != null ? d.id : String(Date.now() + Math.random()),
+                cliente_id: d.cliente_id != null ? d.cliente_id : '',
+                producto: d.producto || '',
+                cantidad: _sbNum(d.cantidad, 0),
+                dia_pago: _sbNum(d.dia_pago, 1),
+                fecha_creacion: d.fecha_creacion || new Date().toISOString().split('T')[0],
+                pagada: !!d.pagada,
+                historial_pagos: Array.isArray(d.historial_pagos) ? d.historial_pagos : []
+            };
+        });
+        if (!Array.isArray(db.clientes)) db.clientes = [];
+        db.clientes = (estado.clientes || []).map(function(c) {
+            return {
+                id: c.id,
+                nombre: c.nombre || '',
+                producto: c.producto || '',
+                limite_credito: _sbNum(c.limite, 0),
+                telefono: c.telefono || c.whatsapp || '',
+                dia_pago: _sbNum(c.diaPago, 1)
+            };
+        });
+        _sbWriteDbDeudasLocal(db);
+        (estado.clientes || []).forEach(function(c) {
+            var deudaPend = (db.deudas || [])
+                .filter(function(d) { return String(d.cliente_id) === String(c.id) && !d.pagada; })
+                .reduce(function(s, d) { return s + _sbNum(d.cantidad, 0); }, 0);
+            c.deuda = deudaPend;
+        });
+        changed = true;
+    }
+
+    return changed;
+}
+async function _loadCoreTablesToEstado() {
+    if (!_supabase) return false;
+    var bundle = {
+        clientes: await _sbFetchTable('clientes'),
+        cuentas: await _sbFetchTable('cuentas'),
+        transacciones: await _sbFetchTable('transacciones'),
+        deudas: await _sbFetchTable('deudas'),
+        productos: await _sbFetchTable('productos')
+    };
+    if (!bundle.clientes && !bundle.cuentas && !bundle.transacciones && !bundle.deudas && !bundle.productos) return false;
+    bundle.clientes = bundle.clientes || [];
+    bundle.cuentas = bundle.cuentas || [];
+    bundle.transacciones = bundle.transacciones || [];
+    bundle.deudas = bundle.deudas || [];
+    bundle.productos = bundle.productos || [];
+    if (_sbIsCoreBundleEmpty(bundle)) return false;
+    _isRemoteUpdate = true;
+    var changed = _sbApplyCoreBundleToEstado(bundle);
+    try { guardarEstado(); } catch (_) {}
+    _isRemoteUpdate = false;
+    return changed;
+}
+function _scheduleCorePullFromRealtime() {
+    if (_silberCorePullTimer) clearTimeout(_silberCorePullTimer);
+    _silberCorePullTimer = setTimeout(function() {
+        // Evita eco inmediato de nuestra propia escritura
+        if (Date.now() - _silberLastCorePushAt < 1200) return;
+        cargarEstadoFromCloud().then(function(wasUpdated) {
+            if (wasUpdated) _reRenderAll();
+        });
+    }, 350);
 }
 
 // =============================================================
@@ -273,6 +589,13 @@ function _showSyncToast(msg, type) {
 async function syncEstadoToCloud() {
     if (!_supabase)      return;
     if (_isRemoteUpdate) return;  // never echo a remote update back up
+    if (_silberTableSyncEnabled) {
+        // Modo primario por tablas core (clientes/cuentas/transacciones/deudas/productos).
+        // localStorage ya quedó persistido por guardarEstado(); aquí sólo empujamos a cloud.
+        var okCore = await _syncCoreTablesFromEstado();
+        if (!okCore) silberWarn('[CORE_SYNC] push falló, fallback local activo');
+        return okCore;
+    }
 
     try {
         // ── Pre-flight: fetch only updated_at (very cheap) ──────
@@ -372,6 +695,17 @@ function _triggerCloudSync() {
 // ── 2. READ: load cloud state (startup + manual refresh) ──────
 async function cargarEstadoFromCloud() {
     if (!_supabase) return false;
+    if (_silberTableSyncEnabled) {
+        try {
+            var changedCore = await _loadCoreTablesToEstado();
+            if (changedCore) silberLog('[CORE_SYNC] PULL OK (tablas)');
+            else silberLog('[CORE_SYNC] sin cambios remotos, usando estado local');
+            return changedCore;
+        } catch (eCore) {
+            silberWarn('[CORE_SYNC] pull falló, fallback local:', eCore);
+            return false;
+        }
+    }
     try {
         var res = await _supabase
             .from('app_state')
@@ -417,9 +751,335 @@ async function cargarEstadoFromCloud() {
     }
 }
 
+// ====== TABLE-BASED SYNC (clientes, cuentas, transacciones, deudas, productos) ======
+function _silberDateKey(d) {
+    try {
+        var dt = d ? new Date(d) : new Date();
+        return dt.toISOString().split('T')[0];
+    } catch (e) {
+        return new Date().toISOString().split('T')[0];
+    }
+}
+
+function _silberApplyRowsToEstado(rows) {
+    if (!rows) return false;
+    var changed = false;
+
+    // cuentas -> estado.cuentas
+    if (Array.isArray(rows.cuentas) && rows.cuentas.length) {
+        var nextCuentas = Object.assign({}, estado.cuentas || {});
+        rows.cuentas.forEach(function(r) {
+            var key = String(r.nombre || r.id || '').toLowerCase();
+            if (!key) return;
+            var saldo = Number(r.saldo);
+            if (!Number.isFinite(saldo)) return;
+            nextCuentas[key] = saldo;
+        });
+        estado.cuentas = nextCuentas;
+        changed = true;
+    }
+
+    // clientes -> estado.clientes
+    if (Array.isArray(rows.clientes) && rows.clientes.length) {
+        var byId = {};
+        (estado.clientes || []).forEach(function(c) { byId[String(c.id)] = c; });
+        rows.clientes.forEach(function(r) {
+            var id = String(r.id);
+            if (!id) return;
+            var prev = byId[id] || {};
+            byId[id] = {
+                id: r.id,
+                nombre: r.nombre || prev.nombre || '',
+                telefono: r.telefono || r.whatsapp || prev.telefono || prev.whatsapp || '',
+                whatsapp: r.telefono || r.whatsapp || prev.telefono || prev.whatsapp || '',
+                limite: Number(r.limite || r.limite_credito || prev.limite) || 0,
+                diaPago: Number(r.dia_pago || prev.diaPago) || 1,
+                producto: r.producto || prev.producto || '',
+                deuda: Number(r.deuda || prev.deuda) || 0,
+                historial: Array.isArray(prev.historial) ? prev.historial : []
+            };
+            if (r.lat != null) byId[id].lat = Number(r.lat);
+            if (r.lng != null) byId[id].lng = Number(r.lng);
+        });
+        estado.clientes = Object.keys(byId).map(function(k) { return byId[k]; });
+        changed = true;
+    }
+
+    // deudas -> db_deudas + deuda acumulada en clientes
+    if (Array.isArray(rows.deudas)) {
+        var db = cargarDbDeudas();
+        if (!Array.isArray(db.clientes)) db.clientes = [];
+        if (!Array.isArray(db.deudas)) db.deudas = [];
+        if (!Array.isArray(db.historial)) db.historial = [];
+        db.deudas = rows.deudas.map(function(d) {
+            return {
+                id: d.id,
+                cliente_id: d.cliente_id,
+                producto: d.producto || '',
+                cantidad: Number(d.cantidad || 0),
+                dia_pago: Number(d.dia_pago || 1),
+                fecha_creacion: _silberDateKey(d.fecha_creacion || d.created_at),
+                pagada: !!d.pagada,
+                historial_pagos: Array.isArray(d.historial_pagos) ? d.historial_pagos : []
+            };
+        });
+        // Recalcular deuda por cliente con base en deudas no pagadas
+        var deudaByCliente = {};
+        db.deudas.forEach(function(d) {
+            if (!d.pagada) {
+                var cid = String(d.cliente_id);
+                deudaByCliente[cid] = (deudaByCliente[cid] || 0) + (Number(d.cantidad) || 0);
+            }
+        });
+        (estado.clientes || []).forEach(function(c) {
+            c.deuda = Number(deudaByCliente[String(c.id)] || 0);
+        });
+        guardarDbDeudas(db);
+        changed = true;
+    }
+
+    // productos -> estado.productos
+    if (Array.isArray(rows.productos) && rows.productos.length) {
+        estado.productos = rows.productos.map(function(p) {
+            return {
+                id: p.id,
+                nombre: p.nombre || '',
+                precio_por_gramo: Number(p.precio_por_gramo || 0),
+                stock_gramos: Number(p.stock_gramos || 0),
+                stock_minimo: Number(p.stock_minimo || 0),
+                activo: p.activo !== false,
+                created_at: p.created_at || new Date().toISOString().slice(0, 19).replace('T', ' ')
+            };
+        });
+        changed = true;
+    }
+
+    // transacciones -> ledgers locales + registrosDiarios
+    if (Array.isArray(rows.transacciones) && rows.transacciones.length) {
+        var gastos = [];
+        var ingresos = [];
+        var cuentasDelta = { efectivo: 0, bbva: 0, caja: 0, monedero: 0 };
+        var registros = {};
+        rows.transacciones.forEach(function(t) {
+            var tipo = String(t.tipo || '').toLowerCase();
+            var fecha = _silberDateKey(t.fecha || t.created_at);
+            var monto = Number(t.monto || 0);
+            var cuenta = t.cuenta || 'efectivo';
+            var row = {
+                id: t.id,
+                fecha: fecha,
+                hora: t.hora || (t.created_at ? new Date(t.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : ''),
+                categoria: t.categoria || '',
+                monto: monto,
+                cuenta: cuenta,
+                nota: t.nota || '',
+                gramos: Number(t.gramos || 0),
+                registradoPor: t.registrado_por || '?',
+                esRecarga: t.es_recarga || null
+            };
+            if (!registros[fecha]) registros[fecha] = { gastos: 0, ingresos: 0 };
+            if (tipo === 'gasto') {
+                gastos.push(row);
+                registros[fecha].gastos += monto;
+                cuentasDelta[cuenta] = (cuentasDelta[cuenta] || 0) - monto;
+            } else if (tipo === 'ingreso') {
+                ingresos.push(row);
+                registros[fecha].ingresos += monto;
+                cuentasDelta[cuenta] = (cuentasDelta[cuenta] || 0) + monto;
+            }
+        });
+        estado.gastosRegistros = gastos;
+        estado.ingresosRegistros = ingresos;
+        estado.registrosDiarios = registros;
+        // Si cuentas no vinieron desde tabla, derivarlas del delta (base cero) para consistencia
+        if (!Array.isArray(rows.cuentas) || !rows.cuentas.length) {
+            ['efectivo', 'bbva', 'caja', 'monedero'].forEach(function(k) {
+                estado.cuentas[k] = Number(cuentasDelta[k] || 0);
+            });
+        }
+        changed = true;
+    }
+
+    return changed;
+}
+
+async function _silberLoadTablesFromSupabase() {
+    if (!_supabase) return false;
+    try {
+        var tableMap = {
+            clientes: 'clientes',
+            cuentas: 'cuentas',
+            transacciones: 'transacciones',
+            deudas: 'deudas',
+            productos: 'productos'
+        };
+        var requested = Object.keys(tableMap);
+        var out = {};
+        for (var i = 0; i < requested.length; i++) {
+            var logical = requested[i];
+            var table = tableMap[logical];
+            var res = await _supabase.from(table).select('*');
+            if (res && !res.error && Array.isArray(res.data)) {
+                out[logical] = res.data;
+            } else if (res && res.error) {
+                silberWarn('[SYNC] tabla ' + table + ' no disponible:', res.error.message || res.error);
+            }
+        }
+        // If all empty/unavailable, keep local data
+        var hasAny = requested.some(function(k) { return Array.isArray(out[k]) && out[k].length > 0; });
+        if (!hasAny) return false;
+        return _silberApplyRowsToEstado(out);
+    } catch (e) {
+        silberWarn('[SYNC] _silberLoadTablesFromSupabase excepción:', e);
+        return false;
+    }
+}
+
+async function _silberSaveAllTablesToSupabase() {
+    if (!_supabase || typeof estado === 'undefined' || !estado) return false;
+    try {
+        // 1) clientes
+        var clientesRows = (estado.clientes || []).map(function(c) {
+            return {
+                id: String(c.id),
+                nombre: c.nombre || '',
+                telefono: c.telefono || c.whatsapp || '',
+                whatsapp: c.telefono || c.whatsapp || '',
+                limite: Number(c.limite || 0),
+                dia_pago: Number(c.diaPago || 1),
+                producto: c.producto || '',
+                deuda: Number(c.deuda || 0),
+                lat: c.lat != null ? Number(c.lat) : null,
+                lng: c.lng != null ? Number(c.lng) : null,
+                updated_at: new Date().toISOString()
+            };
+        });
+        if (clientesRows.length) {
+            await _supabase.from('clientes').upsert(clientesRows, { onConflict: 'id' });
+        }
+
+        // 2) cuentas
+        var cuentasRows = Object.keys(estado.cuentas || {}).map(function(k) {
+            return {
+                id: String(k),
+                nombre: String(k),
+                saldo: Number(estado.cuentas[k] || 0),
+                updated_at: new Date().toISOString()
+            };
+        });
+        if (cuentasRows.length) {
+            await _supabase.from('cuentas').upsert(cuentasRows, { onConflict: 'id' });
+        }
+
+        // 3) transacciones (ledger local completo)
+        var txRows = [];
+        (estado.gastosRegistros || []).forEach(function(g) {
+            txRows.push({
+                id: String(g.id || (Date.now() + Math.random())),
+                tipo: 'gasto',
+                categoria: g.categoria || '',
+                monto: Number(g.monto || 0),
+                cuenta: g.cuenta || 'efectivo',
+                gramos: Number(g.gramos || 0),
+                nota: g.nota || '',
+                registrado_por: g.registradoPor || '?',
+                fecha: g.fecha || _silberDateKey(),
+                hora: g.hora || '',
+                es_recarga: g.esRecarga || null,
+                updated_at: new Date().toISOString()
+            });
+        });
+        (estado.ingresosRegistros || []).forEach(function(i) {
+            txRows.push({
+                id: String(i.id || (Date.now() + Math.random())),
+                tipo: 'ingreso',
+                categoria: i.categoria || '',
+                monto: Number(i.monto || 0),
+                cuenta: i.cuenta || 'efectivo',
+                gramos: Number(i.gramos || 0),
+                nota: i.nota || '',
+                registrado_por: i.registradoPor || '?',
+                fecha: i.fecha || _silberDateKey(),
+                hora: i.hora || '',
+                es_recarga: i.esRecarga || null,
+                updated_at: new Date().toISOString()
+            });
+        });
+        if (txRows.length) {
+            await _supabase.from('transacciones').upsert(txRows, { onConflict: 'id' });
+        }
+
+        // 4) deudas (desde db_deudas)
+        var db = (typeof cargarDbDeudas === 'function') ? cargarDbDeudas() : { deudas: [] };
+        var deudaRows = (db.deudas || []).map(function(d) {
+            return {
+                id: String(d.id),
+                cliente_id: String(d.cliente_id),
+                producto: d.producto || '',
+                cantidad: Number(d.cantidad || 0),
+                dia_pago: Number(d.dia_pago || 1),
+                fecha_creacion: d.fecha_creacion || _silberDateKey(),
+                pagada: !!d.pagada,
+                historial_pagos: Array.isArray(d.historial_pagos) ? d.historial_pagos : [],
+                updated_at: new Date().toISOString()
+            };
+        });
+        if (deudaRows.length) {
+            await _supabase.from('deudas').upsert(deudaRows, { onConflict: 'id' });
+        }
+
+        // 5) productos
+        var productoRows = (estado.productos || []).map(function(p) {
+            return {
+                id: String(p.id),
+                nombre: p.nombre || '',
+                precio_por_gramo: Number(p.precio_por_gramo || 0),
+                stock_gramos: Number(p.stock_gramos || 0),
+                stock_minimo: Number(p.stock_minimo || 0),
+                activo: p.activo !== false,
+                created_at: p.created_at || new Date().toISOString().slice(0, 19).replace('T', ' '),
+                updated_at: new Date().toISOString()
+            };
+        });
+        if (productoRows.length) {
+            await _supabase.from('productos').upsert(productoRows, { onConflict: 'id' });
+        }
+        return true;
+    } catch (e) {
+        silberWarn('[SYNC] _silberSaveAllTablesToSupabase excepción:', e);
+        return false;
+    }
+}
+
+function _silberSetupTableRealtimeSync() {
+    if (!_supabase) return;
+    var watched = ['clientes', 'cuentas', 'transacciones', 'deudas', 'productos'];
+    watched.forEach(function(table) {
+        try {
+            _supabase
+                .channel('silber_table_' + table)
+                .on('postgres_changes', { event: '*', schema: 'public', table: table }, function() {
+                    cargarEstadoFromCloud().then(function(updated) {
+                        if (updated) {
+                            _reRenderAll();
+                            if (typeof validateEstado === 'function') validateEstado();
+                        }
+                    });
+                })
+                .subscribe();
+        } catch (e) {
+            silberWarn('[SYNC] realtime tabla ' + table + ' falló:', e);
+        }
+    });
+}
+
 // ── 3. REALTIME SUBSCRIPTION ──────────────────────────────────
 function _setupRealtimeSync() {
     if (!_supabase) return;
+    if (_silberTableSyncEnabled) {
+        _silberSetupTableRealtimeSync();
+        return;
+    }
     try {
         _supabase
             .channel('app_state_changes')

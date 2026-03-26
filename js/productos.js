@@ -39,7 +39,7 @@ function addProducto(nombre, precio_por_gramo, stock_inicial, stock_minimo) {
     estado.productos.push(p);
     guardarEstado();
     if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'PRODUCT_CREATED', details: 'Producto creado: ' + nombre });
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         try { _supabase.from('productos').insert(p).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] productos insert:', err); }); } catch (e) {}
     }
     return p;
@@ -53,7 +53,7 @@ function updateProducto(id, data) {
     if (data.stock_gramos != null && !isNaN(parseFloat(data.stock_gramos))) p.stock_gramos = parseFloat(data.stock_gramos);
     if (data.stock_minimo != null) p.stock_minimo = parseFloat(data.stock_minimo);
     guardarEstado();
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         try { _supabase.from('productos').upsert(p, { onConflict: 'id' }).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] productos upsert:', err); }); } catch (e) {}
     }
 }
@@ -67,7 +67,7 @@ function ajustarStock(productoId, cantidad_gramos, tipo) {
     recordStockMovement(p.id, tipo || 'ajuste', cantidad_gramos, typeof sesionActual !== 'undefined' && sesionActual ? sesionActual.usuario : '?');
     guardarEstado();
     if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'STOCK_ADJUSTMENT', details: 'Ajuste ' + (cantidad_gramos >= 0 ? '+' : '') + cantidad_gramos + 'g en ' + p.nombre });
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         try { _supabase.from('productos').update({ stock_gramos: p.stock_gramos }).eq('id', p.id).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] productos update:', err); }); } catch (e) {}
     }
     return true;
@@ -119,7 +119,7 @@ function registrarVentaPorGramos(productoId, cantidad_gramos) {
     if (pred.dias_restantes >= 0 && pred.dias_restantes < 5) {
         if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'STOCK_DEPLETION_WARNING', details: 'El stock de ' + p.nombre + ' podría agotarse en menos de 5 días' });
     }
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         try {
             _supabase.from('productos').update({ stock_gramos: p.stock_gramos }).eq('id', p.id).then(function() {}).catch(function() {});
             _supabase.from('stock_movements').insert({ producto: p.id, tipo: 'venta', cantidad_gramos: -cantidad_gramos, usuario: sesionActual ? sesionActual.usuario : '?', timestamp: new Date().toISOString().slice(0, 19) }).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] stock_movements:', err); });
