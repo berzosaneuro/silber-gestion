@@ -3306,3 +3306,44 @@ button:active {
     transform: none !important;
   }
 }
+
+/* ============================================================
+   TEXT RENDER STABILITY — crisp labels and headings
+   ============================================================ */
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent text blur from transformed parent containers */
+#screen-oficina .content-section,
+#screen-oficina .section-card,
+#screen-oficina .menu-item,
+#screen-oficina .section-title,
+#screen-oficina .menu-item-text,
+#modalCierreDia .modal-content,
+#modalCierreDia .modal-header,
+#modalCierreDia .modal-body,
+#modalCierreDia .stat-row,
+#modalCierreDia .stat-label,
+#modalCierreDia .stat-value {
+  transform: none !important;
+}
+
+/* Keep text render clean in critical labels/titles */
+#screen-oficina .section-title,
+#screen-oficina .menu-item-text,
+#modalCierreDia .modal-title,
+#modalCierreDia .stat-label,
+#modalCierreDia .stat-value {
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+/* Whole-pixel sizing for affected UI texts */
+#screen-oficina .section-title { font-size: 12px; }
+#screen-oficina .menu-item-text { font-size: 14px; }
+#modalCierreDia .modal-title { font-size: 17px; }
+#modalCierreDia .stat-label { font-size: 13px; }
+#modalCierreDia .stat-value { font-size: 16px; }
