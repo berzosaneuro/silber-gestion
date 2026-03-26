@@ -306,6 +306,59 @@ async function fetchClientes() {
         .eq('user_id', currentUser.usuario);
 }
 if (typeof window !== 'undefined') window.fetchClientes = fetchClientes;
+async function bootstrapClientes() {
+    try {
+        var currentUser = null;
+        try { currentUser = JSON.parse(localStorage.getItem('silber_sesion_activa') || 'null'); } catch (_) {}
+        if (!currentUser || !currentUser.usuario) return;
+        if (!_supabase) return;
+
+        var res = await _supabase
+            .from('clientes')
+            .select('*')
+            .eq('user_id', currentUser.usuario);
+
+        if (res.error) {
+            console.error('[BOOTSTRAP ERROR]', res.error);
+            return;
+        }
+        var data = res.data;
+        if (!Array.isArray(data)) return;
+
+        try { localStorage.setItem('clientes', JSON.stringify(data)); } catch (_) {}
+
+        // Mantiene flujo local existente, pero hidrata estado en dispositivo nuevo.
+        if (typeof estado !== 'undefined' && estado && data.length) {
+            estado.clientes = data.map(function(c) {
+                return {
+                    id: c.id,
+                    nombre: c.nombre || '',
+                    telefono: c.telefono || c.whatsapp || '',
+                    whatsapp: c.whatsapp || c.telefono || '',
+                    limite: Number(c.limite || c.limite_credito || 0),
+                    diaPago: Number(c.dia_pago || 1),
+                    producto: c.producto || '',
+                    deuda: Number(c.deuda || 0),
+                    historial: [],
+                    lat: c.lat != null ? Number(c.lat) : undefined,
+                    lng: c.lng != null ? Number(c.lng) : undefined
+                };
+            });
+            try { guardarEstado(); } catch (_) {}
+            try {
+                if (typeof renderizarClientes === 'function') renderizarClientes();
+                if (typeof renderizarOficina === 'function') renderizarOficina();
+                if (typeof actualizarSaldos === 'function') actualizarSaldos();
+                if (typeof dibujarDonut === 'function') dibujarDonut();
+            } catch (_) {}
+        }
+
+        console.log('[BOOTSTRAP OK]', data.length);
+    } catch (e) {
+        console.error('[BOOTSTRAP EXCEPTION]', e);
+    }
+}
+if (typeof window !== 'undefined') window.bootstrapClientes = bootstrapClientes;
 async function _syncCoreTablesFromEstado(opts) {
     if (!_supabase) return false;
     if (_silberCorePushInFlight) return false;

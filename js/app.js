@@ -109,6 +109,11 @@ function entrarApp() {
             saveWorkerLocation(sesionActual.usuario, sesionActual.rol, pos.coords.latitude, pos.coords.longitude);
         }, function() {});
     }
+    if (typeof bootstrapClientes === 'function') {
+        bootstrapClientes().catch(function(e) {
+            if (typeof console !== 'undefined' && console.error) console.error('[BOOTSTRAP EXCEPTION]', e);
+        });
+    }
     if (typeof syncClientsToSupabase === 'function') syncClientsToSupabase();
     if (navigator.vibrate) navigator.vibrate([30,50,30]);
     if (typeof showDailyLoveMessage === 'function') showDailyLoveMessage();
