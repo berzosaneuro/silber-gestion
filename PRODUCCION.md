@@ -12,7 +12,7 @@
 | Usuario  | Contraseña | Rol     |
 |----------|------------|---------|
 | Jefazo   | 15031980   | JEFAZO  |
-| Jefaza   | 03021987   | JEFAZA  |
+| Jefaza   | 15031980   | JEFAZA  |
 | Workers  | (gorriones)| WORKER  |
 
 **Seguridad:** No subas contraseñas reales al repositorio. Cambia las por defecto antes de producción, o inyecta usuarios con `window.SILBER_USUARIOS` en `index.html` (antes de los scripts) para no commitear credenciales.

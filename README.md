@@ -44,7 +44,7 @@ O define antes de cargar la app (en `index.html`):
 | Usuario | Contraseña | Rol    |
 |---------|------------|--------|
 | Jefazo  | 15031980   | JEFAZO |
-| Jefaza  | 03021987   | JEFAZA |
+| Jefaza  | 15031980   | JEFAZA |
 
 Workers (gorriones) se dan de alta desde la app.
 

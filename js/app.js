@@ -5,6 +5,7 @@ function intentarLogin() {
     function showErr(msg) {
         if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; errEl.style.visibility = 'visible'; }
         try { alert(msg); } catch (_) {}
+        try { console.warn('[LOGIN] Error:', msg); } catch (_) {}
     }
     try {
         if (typeof USUARIOS === 'undefined') {
@@ -16,6 +17,7 @@ function intentarLogin() {
         var uRaw = (uEl && uEl.value) ? String(uEl.value).trim() : '';
         var p = (pEl && pEl.value) ? String(pEl.value).trim() : '';
         if (errEl) errEl.style.display = 'none';
+        try { console.log('[LOGIN] Intento', { usuario: uRaw || '(vacío)' }); } catch (_) {}
 
         if (!uRaw || !p) {
             showErr('Introduce usuario y contraseña');
@@ -27,6 +29,12 @@ function intentarLogin() {
         if (user) {
             sesionActual = { usuario: user.username, rol: user.role };
             if (typeof window._silberDebug === 'function') window._silberDebug('login-success', user.username);
+            try {
+                localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual));
+                console.log('[LOGIN] OK', { usuario: user.username, rol: user.role, origen: 'USUARIOS' });
+            } catch (storageErr) {
+                console.warn('[LOGIN] No se pudo guardar sesión en localStorage:', storageErr);
+            }
             entrarApp();
             return;
         }
@@ -36,6 +44,12 @@ function intentarLogin() {
         if (gIdx !== -1) {
             var g = gorriones[gIdx];
             sesionActual = { usuario: g.usuario, rol: 'WORKER', gorrionIdx: gIdx, nombre: g.nombre, numero: g.numero };
+            try {
+                localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual));
+                console.log('[LOGIN] OK', { usuario: g.usuario, rol: 'WORKER', origen: 'GORRION' });
+            } catch (storageErr2) {
+                console.warn('[LOGIN] No se pudo guardar sesión en localStorage:', storageErr2);
+            }
             entrarApp();
             return;
         }

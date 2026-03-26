@@ -2462,40 +2462,12 @@
     /* ──────────────────────────────────────────────────────────── */
 
     (function() {
-      function loginFallback() {
-        if (typeof window.intentarLogin === 'function') { window.intentarLogin(); return; }
-        var u = (document.getElementById('login-usuario') && document.getElementById('login-usuario').value) ? String(document.getElementById('login-usuario').value).trim() : '';
-        var p = (document.getElementById('login-password') && document.getElementById('login-password').value) ? String(document.getElementById('login-password').value).trim() : '';
-        if (!u || !p) { alert('Introduce usuario y contraseña'); return; }
-        if (typeof USUARIOS === 'undefined') { alert('Error: recarga la página (F5)'); return; }
-        for (var i = 0; i < USUARIOS.length; i++) {
-          var x = USUARIOS[i];
-          if (x.username.toLowerCase() === u.toLowerCase() && (x.password || '').toLowerCase() === p.toLowerCase()) {
-            sesionActual = { usuario: x.username, rol: x.role };
-            try { document.body.classList.remove('login-visible'); } catch(e) {}
-            var loginEl = document.getElementById('screen-login');
-            if (loginEl) { loginEl.classList.remove('active'); loginEl.style.display = 'none'; loginEl.style.visibility = 'hidden'; }
-            var menuOv = document.getElementById('menuOverlay');
-            if (menuOv) { menuOv.classList.remove('active'); menuOv.style.display = 'none'; }
-            var nav = document.getElementById('bottom-nav');
-            if (nav) nav.style.display = 'flex';
-            try { localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual)); } catch(e) {}
-            if (typeof aplicarModoSesion === 'function') { try { aplicarModoSesion(); } catch(e) {} }
-            if (typeof cambiarPantalla === 'function') cambiarPantalla('dashboard');
-            return;
-          }
-        }
-        alert('Usuario o contraseña incorrectos');
-      }
-      window.silberLogin = loginFallback;
-      setTimeout(function() {
-        var form = document.querySelector('.login-form');
-        var btn = form && form.querySelector('button[type="submit"]');
-        if (form && btn) {
-          form.onsubmit = function() { loginFallback(); return false; };
-          btn.onclick = function() { loginFallback(); return false; };
-        }
-      }, 100);
+      // Evita sobrescribir la lógica principal de login en app.js.
+      // Solo expone un alias de compatibilidad para integraciones antiguas.
+      window.silberLogin = function() {
+        if (typeof window.intentarLogin === 'function') return window.intentarLogin();
+        alert('Sistema de login no disponible. Recarga la página (F5).');
+      };
     })();
 
     /* ══════════════════════════════════════════════════════════
@@ -3163,7 +3135,7 @@
         try {
             window.SILBER_DEMO_ACCESS = window.SILBER_DEMO_ACCESS || {
                 jefazo: { username: 'Eljefazo', password: '15031980' },
-                jefaza: { username: 'Lajefaza', password: '03021987' }
+                jefaza: { username: 'Lajefaza', password: '15031980' }
             };
         } catch (e) {}
     })();
