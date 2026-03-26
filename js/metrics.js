@@ -3,7 +3,6 @@
 function getBusinessMetrics() {
     var gastos = estado.gastosRegistros || [];
     var ingresos = estado.ingresosRegistros || [];
-    var hoy = new Date().toISOString().split('T')[0];
     var now = new Date();
 
     function dateKey(d) { return d.toISOString().split('T')[0]; }

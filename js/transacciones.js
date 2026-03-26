@@ -35,16 +35,22 @@ function guardarTransaccion() {
 
     // ── 1. ESTADO LOCAL (siempre; localStorage es la fuente de verdad si Supabase falla) ──
     if (tipo === 'gasto') {
+        var gastoId = Date.now() + Math.random();
         estado.cuentas[cuenta] = (estado.cuentas[cuenta] || 0) - monto;
         estado.registrosDiarios[fechaHoy].gastos += monto;
 
         // Registrar desglose de gastos
         if (!estado.gastosRegistros) estado.gastosRegistros = [];
+        var stockEntryId = null;
+        if (categoria.esRecarga && gramos > 0) stockEntryId = Date.now() + Math.random();
         estado.gastosRegistros.push({
-            id: Date.now() + Math.random(),
+            id: gastoId,
             fecha: fechaHoy, hora: horaActual,
             registradoPor, categoria: categoria.nombre,
-            monto, cuenta, nota
+            monto, cuenta, nota,
+            gramos: gramos > 0 ? gramos : 0,
+            esRecarga: categoria.esRecarga || null,
+            stockEntryId: stockEntryId
         });
 
         if (esGorrion()) {
@@ -65,17 +71,18 @@ function guardarTransaccion() {
                 else if (categoria.esRecarga === 'recargaV') estado.stockTotalV += gramos;
                 const numStock = estado.listaStock.length + 1;
                 const fechaCorta = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                estado.listaStock.push({ id: Date.now() + Math.random(), nombre: `Stock ${numStock} ${fechaCorta}`, fecha: fechaHoy, gramos, tipo: categoria.esRecarga, monto });
+                estado.listaStock.push({ id: stockEntryId, nombre: `Stock ${numStock} ${fechaCorta}`, fecha: fechaHoy, gramos, tipo: categoria.esRecarga, monto });
             }
             estado.stock[categoria.esRecarga] = (estado.stock[categoria.esRecarga] || 0) + monto;
         }
     } else {
+        var ingresoId = Date.now() + Math.random();
         estado.cuentas[cuenta] = (estado.cuentas[cuenta] || 0) + monto;
         estado.registrosDiarios[fechaHoy].ingresos += monto;
 
         if (!estado.ingresosRegistros) estado.ingresosRegistros = [];
         estado.ingresosRegistros.push({
-            id: Date.now() + Math.random(),
+            id: ingresoId,
             fecha: fechaHoy, hora: horaActual,
             registradoPor, categoria: categoria.nombre,
             monto, cuenta, nota
@@ -104,6 +111,8 @@ function guardarTransaccion() {
         }
     }
 
+    if (typeof _silberSyncDayFromLedgers === 'function') _silberSyncDayFromLedgers(fechaHoy);
+
     // ── 2. FINALIZAR ──
     actualizarSaldos();
     if (typeof dibujarDonut === 'function') dibujarDonut();
@@ -130,11 +139,134 @@ function guardarTransaccion() {
 
 let _filtroDeudas = 'todos';
 
+function _silberTodayKey() {
+    return (typeof fechaConOffset === 'function') ? fechaConOffset(0) : new Date().toISOString().split('T')[0];
+}
+
+function _silberEnsureDay(fecha) {
+    if (!estado.registrosDiarios) estado.registrosDiarios = {};
+    if (!estado.registrosDiarios[fecha]) estado.registrosDiarios[fecha] = { gastos: 0, ingresos: 0 };
+}
+
+function _silberSyncDayFromLedgers(fecha) {
+    if (!fecha) return;
+    _silberEnsureDay(fecha);
+    var totalG = (estado.gastosRegistros || []).filter(function(r) { return r.fecha === fecha; }).reduce(function(s, r) { return s + (r.monto || 0); }, 0);
+    var totalI = (estado.ingresosRegistros || []).filter(function(r) { return r.fecha === fecha; }).reduce(function(s, r) { return s + (r.monto || 0); }, 0);
+    estado.registrosDiarios[fecha].gastos = totalG;
+    estado.registrosDiarios[fecha].ingresos = totalI;
+}
+
+function _silberEsCatV(cat) {
+    return cat === 'Verde' || (cat || '').indexOf('Brócoli') !== -1;
+}
+
+function _silberApplyIngresoStock(reg, dir) {
+    if (!reg || !dir) return;
+    var cat = reg.categoria;
+    var monto = Number(reg.monto) || 0;
+    var sp = estado.stockProductos || {};
+    if (sp[cat] && Number(sp[cat].precio) > 0 && Number(sp[cat].gramaje) > 0) {
+        var gramosVendidos = (monto / Number(sp[cat].precio)) * Number(sp[cat].gramaje);
+        var deltaProd = -dir * gramosVendidos;
+        sp[cat].stock = Math.max(0, (Number(sp[cat].stock) || 0) + deltaProd);
+        if (_silberEsCatV(cat)) estado.stockTotalV = Math.max(0, (Number(estado.stockTotalV) || 0) + deltaProd);
+        else estado.stockTotalB = Math.max(0, (Number(estado.stockTotalB) || 0) + deltaProd);
+    }
+    if (reg.esRecarga && Number(reg.gramos) > 0) {
+        var delta = -dir * Number(reg.gramos);
+        if (reg.esRecarga === 'recargaB') estado.stockTotalB = Math.max(0, (Number(estado.stockTotalB) || 0) + delta);
+        if (reg.esRecarga === 'recargaV') estado.stockTotalV = Math.max(0, (Number(estado.stockTotalV) || 0) + delta);
+    }
+}
+
+function _silberApplyGastoStock(reg, dir) {
+    if (!reg || !dir || !reg.esRecarga) return;
+    var gramos = Number(reg.gramos) || 0;
+    var monto = Number(reg.monto) || 0;
+    if (gramos > 0) {
+        var delta = dir * gramos;
+        if (reg.esRecarga === 'recargaB') estado.stockTotalB = Math.max(0, (Number(estado.stockTotalB) || 0) + delta);
+        if (reg.esRecarga === 'recargaV') estado.stockTotalV = Math.max(0, (Number(estado.stockTotalV) || 0) + delta);
+        if (dir > 0) {
+            if (!estado.listaStock) estado.listaStock = [];
+            var fechaCorta = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+            var sid = reg.stockEntryId || (Date.now() + Math.random());
+            reg.stockEntryId = sid;
+            estado.listaStock.push({
+                id: sid,
+                nombre: 'Stock ' + (estado.listaStock.length + 1) + ' ' + fechaCorta,
+                fecha: reg.fecha || _silberTodayKey(),
+                gramos: gramos,
+                tipo: reg.esRecarga,
+                monto: monto
+            });
+        } else if (reg.stockEntryId && Array.isArray(estado.listaStock)) {
+            var idx = estado.listaStock.findIndex(function(x) { return x.id === reg.stockEntryId; });
+            if (idx !== -1) estado.listaStock.splice(idx, 1);
+        }
+    }
+    estado.stock[reg.esRecarga] = Math.max(0, (Number(estado.stock[reg.esRecarga]) || 0) + (dir * monto));
+}
+
+function _silberRegistrarIngresoDeuda(opts) {
+    opts = opts || {};
+    var monto = Number(opts.monto) || 0;
+    if (monto <= 0) return false;
+    var cuenta = opts.cuenta || 'efectivo';
+    var fecha = opts.fecha || _silberTodayKey();
+    var categoria = (opts.categoria || 'Deuda');
+    _silberEnsureDay(fecha);
+    estado.cuentas[cuenta] = (estado.cuentas[cuenta] || 0) + monto;
+    if (!estado.ingresosRegistros) estado.ingresosRegistros = [];
+    estado.ingresosRegistros.push({
+        id: Date.now() + Math.random(),
+        fecha: fecha,
+        hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+        registradoPor: sesionActual ? sesionActual.usuario : '?',
+        categoria: categoria,
+        monto: monto,
+        cuenta: cuenta,
+        nota: opts.nota || 'Pago de deuda'
+    });
+    _silberSyncDayFromLedgers(fecha);
+    if (typeof _supabase !== 'undefined' && _supabase) {
+        _supabase.from('transacciones').insert([{
+            tipo: 'ingreso',
+            categoria: categoria,
+            monto: monto,
+            cuenta: cuenta,
+            gramos: 0,
+            nota: opts.nota || 'Pago de deuda',
+            registrado_por: sesionActual ? sesionActual.usuario : '?'
+        }]).then(function() {}).catch(function(err) { console.warn('Supabase pago deuda:', err); });
+    }
+    return true;
+}
+
+function _silberRebuildRegistrosFromLedgers() {
+    if (!estado) return;
+    var fechas = {};
+    (estado.gastosRegistros || []).forEach(function(r) { if (r && r.fecha) fechas[r.fecha] = true; });
+    (estado.ingresosRegistros || []).forEach(function(r) { if (r && r.fecha) fechas[r.fecha] = true; });
+    Object.keys(fechas).forEach(function(f) { _silberSyncDayFromLedgers(f); });
+}
+
+if (typeof window !== 'undefined') {
+    window._silberSyncDayFromLedgers = _silberSyncDayFromLedgers;
+    window._silberApplyIngresoStock = _silberApplyIngresoStock;
+    window._silberApplyGastoStock = _silberApplyGastoStock;
+    window._silberRegistrarIngresoDeuda = _silberRegistrarIngresoDeuda;
+    window._silberRebuildRegistrosFromLedgers = _silberRebuildRegistrosFromLedgers;
+}
+
+_silberRebuildRegistrosFromLedgers();
+
 // ===== DESGLOSE DIARIO =====
 function renderizarDesgloseGastos() {
     const container = document.getElementById('desglose-gastos');
     if (!container) return;
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = fechaConOffset(0);
     const registros = (estado.gastosRegistros || []).filter(r => r.fecha === hoy);
     if (registros.length === 0) {
         container.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;text-align:center;padding:12px 0;">Sin gastos registrados hoy</div>';
@@ -168,7 +300,7 @@ function renderizarDesgloseGastos() {
 function renderizarDesgloseIngresos() {
     const container = document.getElementById('desglose-ingresos');
     if (!container) return;
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = fechaConOffset(0);
     const registros = (estado.ingresosRegistros || []).filter(r => r.fecha === hoy);
     if (registros.length === 0) {
         container.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;text-align:center;padding:12px 0;">Sin ingresos registrados hoy</div>';
@@ -251,6 +383,10 @@ function editarReglasConsumo() { cambiarPantalla('tabla-precios'); }
 let _editIdx = null;
 
 function abrirEditGasto(idx) {
+    if (typeof esMaster === 'function' && !esMaster()) {
+        alert('Solo Jefazo / Jefaza pueden editar transacciones.');
+        return;
+    }
     const r = (estado.gastosRegistros || [])[idx];
     if (!r) return;
     _editIdx = idx;
@@ -260,6 +396,10 @@ function abrirEditGasto(idx) {
 }
 
 function guardarEditGasto() {
+    if (typeof esMaster === 'function' && !esMaster()) {
+        alert('Solo Jefazo / Jefaza pueden editar transacciones.');
+        return;
+    }
     const r = (estado.gastosRegistros || [])[_editIdx];
     if (!r) return;
     const cuentaVieja = r.cuenta;
@@ -270,13 +410,11 @@ function guardarEditGasto() {
     // Revertir saldo viejo y aplicar nuevo
     estado.cuentas[cuentaVieja] = (estado.cuentas[cuentaVieja] || 0) + montoViejo;
     estado.cuentas[cuentaNueva] = (estado.cuentas[cuentaNueva] || 0) - montoNuevo;
-    // Revertir registrosDiarios
-    const diaKey = r.fecha;
-    if (estado.registrosDiarios[diaKey]) {
-        estado.registrosDiarios[diaKey].gastos = Math.max(0, estado.registrosDiarios[diaKey].gastos - montoViejo + montoNuevo);
-    }
+    _silberApplyGastoStock(r, -1);
     r.cuenta = cuentaNueva;
     r.monto  = montoNuevo;
+    _silberApplyGastoStock(r, 1);
+    _silberSyncDayFromLedgers(r.fecha);
     guardarEstado();
     actualizarSaldos();
     document.getElementById('modalEditGasto').classList.remove('active');
@@ -298,10 +436,9 @@ function eliminarGasto(idx, btnEl) {
         if (typeof recordTransactionDeleted === 'function') recordTransactionDeleted(r.monto, r.categoria, ts, sesionActual ? sesionActual.usuario : '?', 'gasto');
         if (typeof recordTransactionEditOrDelete === 'function' && sesionActual) recordTransactionEditOrDelete(sesionActual.usuario, sesionActual.rol, 'delete', r.id);
         estado.cuentas[r.cuenta] = (estado.cuentas[r.cuenta] || 0) + r.monto;
-        if (estado.registrosDiarios[r.fecha]) {
-            estado.registrosDiarios[r.fecha].gastos = Math.max(0, estado.registrosDiarios[r.fecha].gastos - r.monto);
-        }
+        _silberApplyGastoStock(r, -1);
         estado.gastosRegistros.splice(idx, 1);
+        _silberSyncDayFromLedgers(r.fecha);
         guardarEstado();
         actualizarSaldos();
         renderizarDesgloseGastos();
@@ -312,6 +449,10 @@ function eliminarGasto(idx, btnEl) {
 }
 
 function abrirEditIngreso(idx) {
+    if (typeof esMaster === 'function' && !esMaster()) {
+        alert('Solo Jefazo / Jefaza pueden editar transacciones.');
+        return;
+    }
     const r = (estado.ingresosRegistros || [])[idx];
     if (!r) return;
     _editIdx = idx;
@@ -329,6 +470,10 @@ function abrirEditIngreso(idx) {
 }
 
 function guardarEditIngreso() {
+    if (typeof esMaster === 'function' && !esMaster()) {
+        alert('Solo Jefazo / Jefaza pueden editar transacciones.');
+        return;
+    }
     const r = (estado.ingresosRegistros || [])[_editIdx];
     if (!r) return;
     const cuentaVieja   = r.cuenta;
@@ -338,11 +483,14 @@ function guardarEditIngreso() {
     if (!montoNuevo || montoNuevo <= 0) { alert('Monto inválido'); return; }
     // Revertir saldo y aplicar nuevo (misma cuenta)
     estado.cuentas[cuentaVieja] = (estado.cuentas[cuentaVieja] || 0) - montoViejo + montoNuevo;
-    if (estado.registrosDiarios[r.fecha]) {
-        estado.registrosDiarios[r.fecha].ingresos = Math.max(0, estado.registrosDiarios[r.fecha].ingresos - montoViejo + montoNuevo);
-    }
+    _silberApplyIngresoStock(r, -1);
+    var catObj = (estado.categoriasIngresos || []).find(function(c) { return c.nombre === catNueva; }) || {};
     r.categoria = catNueva;
     r.monto     = montoNuevo;
+    r.esRecarga = catObj.esRecarga || null;
+    if (!r.esRecarga) r.gramos = Number(r.gramos) || 0;
+    _silberApplyIngresoStock(r, 1);
+    _silberSyncDayFromLedgers(r.fecha);
     guardarEstado();
     actualizarSaldos();
     document.getElementById('modalEditIngreso').classList.remove('active');
@@ -364,10 +512,9 @@ function eliminarIngreso(idx, btnEl) {
         if (typeof recordTransactionDeleted === 'function') recordTransactionDeleted(r.monto, r.categoria, ts, sesionActual ? sesionActual.usuario : '?', 'ingreso');
         if (typeof recordTransactionEditOrDelete === 'function' && sesionActual) recordTransactionEditOrDelete(sesionActual.usuario, sesionActual.rol, 'delete', r.id);
         estado.cuentas[r.cuenta] = (estado.cuentas[r.cuenta] || 0) - r.monto;
-        if (estado.registrosDiarios[r.fecha]) {
-            estado.registrosDiarios[r.fecha].ingresos = Math.max(0, estado.registrosDiarios[r.fecha].ingresos - r.monto);
-        }
+        _silberApplyIngresoStock(r, -1);
         estado.ingresosRegistros.splice(idx, 1);
+        _silberSyncDayFromLedgers(r.fecha);
         guardarEstado();
         actualizarSaldos();
         renderizarDesgloseIngresos();

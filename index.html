@@ -1082,6 +1082,31 @@
                     </div>
                 </div>
 
+                <!-- APP -->
+                <div class="settings-section-label">App</div>
+                <div class="settings-group">
+                    <div class="settings-row" onclick="silberInstallApp()" id="settings-install-app-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(16,185,129,0.15);">📲</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Instalar app</div>
+                                <div class="settings-row-sub">Añadir a pantalla de inicio (PWA)</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                    <div class="settings-row" onclick="silberShareAppWhatsApp()">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(37,211,102,0.15);">💬</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Compartir app por WhatsApp</div>
+                                <div class="settings-row-sub">Enviar enlace de instalación</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                </div>
+
                 <!-- ZONA ADMIN — solo visible para jefazo/jefaza -->
                 <div id="admin-zona-reset" style="display:none;">
                     <div class="settings-section-label" style="color:rgba(239,68,68,0.7);">⚠️ Zona Admin</div>
@@ -1893,9 +1918,10 @@
      */
     function sendWhatsAppReminder(client) {
         if (!client || !client.whatsapp) return;
-        var num = String(client.whatsapp).replace(/[^0-9+]/g, '');
+        var num = String(client.whatsapp).replace(/[^0-9]/g, '');
+        if (!num || num.length < 8) { alert('Número de WhatsApp inválido'); return; }
         var msg = '¡Hola ' + (client.nombre || '') + '! Te recordamos que tienes un pago pendiente de ' + (client.deuda || 0).toFixed(2) + '€. Gracias 🙏';
-        var url = 'https://wa.me/' + num.replace('+','') + '?text=' + encodeURIComponent(msg);
+        var url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(msg);
         window.open(url, '_blank');
         if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'WHATSAPP_REMINDER_SENT', details: 'Recordatorio enviado a ' + (client.nombre || '') });
         createNotification('whatsapp_sent', { cliente: client.nombre, monto: client.deuda });
@@ -2517,7 +2543,9 @@
                 '</div>' +
                 (limite > 0 ? '<div class="dcp-limit-track"><div class="dcp-limit-fill" style="width:' + uso + '%;background:' + usoCol + ';"></div></div>' : '') +
                 '<div class="dcp-actions">' +
-                    '<button class="dcp-btn dcp-btn-primary" onclick="pagoTotal();setTimeout(function(){_renderClientDetailPanel(estado.clienteActual)},200)">✅ Cobrar todo</button>' +
+                    '<button class="dcp-btn dcp-btn-primary" onclick="pagoTotal();setTimeout(function(){if(estado && estado.clienteActual){_renderClientDetailPanel(estado.clienteActual);}},200)">✅ Cobrar todo</button>' +
+                    '<button class="dcp-btn dcp-btn-secondary" onclick="abrirEditarCliente()">✏️ Editar</button>' +
+                    '<button class="dcp-btn dcp-btn-danger" onclick="eliminarClienteActual()">🗑️ Eliminar</button>' +
                     '<button class="dcp-btn dcp-btn-secondary" onclick="var m=document.getElementById(\'modalDetalleCliente\');if(m)m.classList.add(\'active\')">💸 Pago parcial</button>' +
                     (cliente.whatsapp ? '<button class="dcp-btn dcp-btn-wa" onclick="enviarWhatsAppCliente()">💬 WhatsApp</button>' : '') +
                     '<button class="dcp-btn dcp-btn-gps" onclick="registrarLlegada()">📍 Llegada</button>' +
@@ -2530,7 +2558,7 @@
         };
 
         /* ── Intercept client list clicks (capture phase) ─── */
-        var _selectedNombre = null;
+        var _selectedClientId = null;
         var listEl = document.getElementById('clientes-list');
         if (listEl) {
             listEl.addEventListener('click', function(e) {
@@ -2539,13 +2567,13 @@
                 var card = e.target.closest('.cliente-card');
                 if (!card) return;
                 e.stopPropagation(); /* prevent abrirDetalleCliente from opening modal */
-                var nombre  = card.dataset.nombre || '';
-                var cliente = (estado.clientes || []).find(function(c) { return c.nombre === nombre; });
+                var idStr = card.dataset.clientId || '';
+                var cliente = (estado.clientes || []).find(function(c) { return String(c.id) === String(idStr); });
                 if (!cliente) return;
                 /* Highlight row */
                 listEl.querySelectorAll('.cliente-card').forEach(function(c) { c.classList.remove('dsb-row-selected'); });
                 card.classList.add('dsb-row-selected');
-                _selectedNombre = nombre;
+                _selectedClientId = String(cliente.id);
                 /* Set clienteActual + populate modal DOM (payment functions need it) */
                 estado.clienteActual = cliente;
                 if (typeof abrirDetalleCliente === 'function') abrirDetalleCliente(cliente);
@@ -2565,9 +2593,9 @@
                 _orig.apply(this, arguments);
                 _patchDesktopRows();
                 /* Restore selected highlight */
-                if (_selectedNombre) {
+                if (_selectedClientId) {
                     var cards = listEl ? listEl.querySelectorAll('.cliente-card') : [];
-                    cards.forEach(function(c) { if (c.dataset.nombre === _selectedNombre) c.classList.add('dsb-row-selected'); });
+                    cards.forEach(function(c) { if (String(c.dataset.clientId || '') === _selectedClientId) c.classList.add('dsb-row-selected'); });
                 }
             };
         }
@@ -2581,21 +2609,22 @@
                 /* Store nombre for lookup */
                 var nombreEl = card.querySelector('.cliente-nombre');
                 var nombre   = nombreEl ? nombreEl.textContent.replace(/HOY/gi, '').trim() : '';
-                card.dataset.nombre = nombre;
-                var cli = (estado.clientes || []).find(function(c) { return c.nombre === nombre; });
+                var idStr = card.dataset.clientId || '';
+                var cli = (estado.clientes || []).find(function(c) { return String(c.id) === String(idStr); }) || (estado.clientes || []).find(function(c) { return c.nombre === nombre; });
+                if (cli) card.dataset.clientId = String(cli.id);
                 /* Hover quick-action buttons */
                 var acts = document.createElement('div');
                 acts.className = 'dsb-row-actions';
                 acts.innerHTML =
-                    '<button class="dsb-row-btn" title="Registrar llegada" onclick="event.stopPropagation();_dsbQuickLlegada(\'' + nombre.replace(/'/g,"\\'") + '\')">📍</button>' +
+                    '<button class="dsb-row-btn" title="Registrar llegada" onclick="event.stopPropagation();_dsbQuickLlegada(\'' + String((cli && cli.id) || '').replace(/'/g,"\\'") + '\')">📍</button>' +
                     (cli && cli.whatsapp ? '<button class="dsb-row-btn dsb-row-btn-wa" title="WhatsApp" onclick="event.stopPropagation();_dsbQuickWA(\'' + (cli.whatsapp||'').replace(/['"]/g,'') + '\',\'' + nombre.replace(/'/g,"\\'") + '\')">💬</button>' : '');
                 card.appendChild(acts);
             });
         }
 
         /* ── Quick row action helpers ─────────────────────── */
-        window._dsbQuickLlegada = function(nombre) {
-            var cli = (estado.clientes || []).find(function(c) { return c.nombre === nombre; });
+        window._dsbQuickLlegada = function(clientId) {
+            var cli = (estado.clientes || []).find(function(c) { return String(c.id) === String(clientId); });
             if (!cli) return;
             estado.clienteActual = cli;
             if (typeof registrarLlegada === 'function') registrarLlegada();
@@ -2985,6 +3014,7 @@
     <script>
     (function() {
         'use strict';
+        window._silberDeferredPrompt = null;
 
         /* ── Detect standalone mode (already installed) ─────── */
         var _standalone =
@@ -3011,6 +3041,7 @@
             window.addEventListener('beforeinstallprompt', function(e) {
                 e.preventDefault();
                 _deferredPrompt = e;
+                window._silberDeferredPrompt = e;
 
                 /* Show banner only if user hasn't dismissed it before */
                 if (!localStorage.getItem('silber_pwa_android_dismissed')) {
@@ -3023,7 +3054,10 @@
             var installBtn = document.getElementById('pwa-install-btn');
             if (installBtn) {
                 installBtn.addEventListener('click', function() {
-                    if (!_deferredPrompt) return;
+                    if (!_deferredPrompt) {
+                        silberInstallApp();
+                        return;
+                    }
                     _deferredPrompt.prompt();
                     _deferredPrompt.userChoice.then(function(result) {
                         if (result.outcome === 'accepted') {
@@ -3031,6 +3065,7 @@
                             if (banner) banner.style.display = 'none';
                         }
                         _deferredPrompt = null;
+                        window._silberDeferredPrompt = null;
                     });
                 });
             }
@@ -3049,6 +3084,7 @@
             window.addEventListener('appinstalled', function() {
                 var banner = document.getElementById('pwa-android-banner');
                 if (banner) banner.style.display = 'none';
+                window._silberDeferredPrompt = null;
             });
         }
 
@@ -3078,6 +3114,43 @@
             }
         })();
 
+    })();
+
+    function silberInstallApp() {
+        var dp = window._silberDeferredPrompt;
+        if (dp && typeof dp.prompt === 'function') {
+            dp.prompt();
+            dp.userChoice.then(function() {
+                window._silberDeferredPrompt = null;
+                var row = document.getElementById('settings-install-app-row');
+                if (row) row.style.display = 'none';
+            }).catch(function() {});
+            return;
+        }
+        var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent || '');
+        if (isIos) {
+            var guide = document.getElementById('pwa-ios-guide');
+            if (guide) {
+                guide.style.display = 'flex';
+                return;
+            }
+        }
+        alert('La instalación no está disponible en este navegador. Usa Chrome/Edge en Android o Safari en iPhone.');
+    }
+
+    function silberShareAppWhatsApp() {
+        var url = window.location.origin + '/';
+        var msg = 'Instala Silber Gestión en tu móvil: ' + url;
+        window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    }
+
+    (function exposeDemoAccess() {
+        try {
+            window.SILBER_DEMO_ACCESS = window.SILBER_DEMO_ACCESS || {
+                jefazo: { username: 'Eljefazo', password: '15031980' },
+                jefaza: { username: 'Lajefaza', password: '03021987' }
+            };
+        } catch (e) {}
     })();
     </script>
 </body>

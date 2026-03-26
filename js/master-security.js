@@ -10,7 +10,7 @@ const ACTIVITY_LOG_MAX = 500;
 const AUDIT_SHORT_TERM_MAX = 500;
 const DAILY_SUMMARY_MAX_DAYS = 90;
 // El jefe (Jefazo) recibe más avisos: cuando la otra master o un ADMIN hace algo sensible.
-const MAIN_MASTER_USER = 'Jefazo';
+const MAIN_MASTER_USER = 'Eljefazo';
 
 function _activityLogPayload(entry) {
     return (entry.timestamp || '') + '|' + (entry.user || '') + '|' + (entry.role || '') + '|' + (entry.action || '') + '|' + (entry.details || '');

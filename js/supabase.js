@@ -13,44 +13,9 @@ try {
 
 // ===== DASHBOARD DESDE SUPABASE =====
 async function cargarDatosDashboard() {
-    if (!_supabase) return;
-    try {
-        const hoy = new Date().toISOString().split('T')[0]; // "2026-02-23"
-
-        // Usamos gte/lt sobre created_at (timestamp) para filtrar el día completo
-        const { data, error } = await _supabase
-            .from('transacciones')
-            .select('monto, tipo')
-            .gte('created_at', hoy + 'T00:00:00Z')
-            .lt('created_at',  hoy + 'T23:59:59Z');
-
-        if (error) { console.warn('Supabase dashboard error:', error.message); return; }
-        if (!data || data.length === 0) return;
-
-        const ingresosNube = data
-            .filter(t => t.tipo === 'ingreso')
-            .reduce((s, t) => s + Number(t.monto), 0);
-        const gastosNube = data
-            .filter(t => t.tipo === 'gasto')
-            .reduce((s, t) => s + Number(t.monto), 0);
-
-        // Sincronizar con registrosDiarios local para que máquina del tiempo también cuadre
-        const fechaHoy = new Date().toISOString().split('T')[0];
-        if (!estado.registrosDiarios[fechaHoy])
-            estado.registrosDiarios[fechaHoy] = { gastos: 0, ingresos: 0 };
-        estado.registrosDiarios[fechaHoy].ingresos = ingresosNube;
-        estado.registrosDiarios[fechaHoy].gastos   = gastosNube;
-
-        // Actualizar UI del dashboard
-        const elI = document.getElementById('dash-ingresos');
-        const elG = document.getElementById('dash-gastos');
-        if (elI) elI.textContent = ingresosNube.toFixed(0) + '€';
-        if (elG) elG.textContent = gastosNube.toFixed(0) + '€';
-
-        // Redibujar donut con datos reales de la nube
-        dibujarDonut();
-
-    } catch (e) { console.warn('cargarDatosDashboard excepción:', e); }
+    // Deshabilitado: la fuente de verdad es el ledger local (estado.*Registros).
+    // Este método antes sobreescribía totales diarios y creaba inconsistencias UI.
+    return;
 }
 
 // ——— Worker location (persist to Supabase, fallback silent)
@@ -120,7 +85,8 @@ function _applyCloudData(cloudData, sessionFields) {
 function _mergeEstados(localSnap, cloudSnap) {
     var ARRAY_FIELDS = [
         'gastosRegistros', 'ingresosRegistros', 'listaStock',
-        'historialTransferencias', 'llegadas', 'stock_movements', 'productos'
+        'historialTransferencias', 'llegadas', 'stock_movements', 'productos',
+        'clientes'
     ];
 
     // Start with cloud as base (cloud holds the newer scalar state)
@@ -237,12 +203,17 @@ function _mergeEstados(localSnap, cloudSnap) {
 /** Re-render all key UI areas after a state merge */
 function _reRenderAll() {
     try {
+        if (typeof _silberRebuildRegistrosFromLedgers === 'function') _silberRebuildRegistrosFromLedgers();
         if (typeof actualizarSaldos      === 'function') actualizarSaldos();
         if (typeof renderizarClientes    === 'function') renderizarClientes();
         if (typeof renderizarRanking     === 'function') renderizarRanking();
         if (typeof dibujarDonut          === 'function') dibujarDonut();
         if (typeof actualizarTimeMachine === 'function') actualizarTimeMachine();
         if (typeof renderizarOficina     === 'function') renderizarOficina();
+        if (typeof renderizarDesgloseGastos === 'function') renderizarDesgloseGastos();
+        if (typeof renderizarDesgloseIngresos === 'function') renderizarDesgloseIngresos();
+        if (typeof renderProductos === 'function') renderProductos();
+        if (typeof renderDashboardProductosAlerta === 'function') renderDashboardProductosAlerta();
     } catch (e) {
         silberWarn('_reRenderAll — excepción:', e);
     }

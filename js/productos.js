@@ -50,6 +50,7 @@ function updateProducto(id, data) {
     if (!p) return;
     if (data.nombre != null) p.nombre = data.nombre;
     if (data.precio_por_gramo != null) p.precio_por_gramo = parseFloat(data.precio_por_gramo);
+    if (data.stock_gramos != null && !isNaN(parseFloat(data.stock_gramos))) p.stock_gramos = parseFloat(data.stock_gramos);
     if (data.stock_minimo != null) p.stock_minimo = parseFloat(data.stock_minimo);
     guardarEstado();
     if (typeof _supabase !== 'undefined' && _supabase) {
@@ -99,6 +100,15 @@ function registrarVentaPorGramos(productoId, cantidad_gramos) {
     if (p.stock_gramos < cantidad_gramos) return { ok: false, msg: 'Stock insuficiente' };
     var precio_total = cantidad_gramos * p.precio_por_gramo;
     p.stock_gramos -= cantidad_gramos;
+    // Registrar venta también como ingreso financiero para mantener fuente única.
+    if (typeof _silberRegistrarIngresoDeuda === 'function') {
+        _silberRegistrarIngresoDeuda({
+            monto: precio_total,
+            cuenta: 'efectivo',
+            nota: 'Venta gramos: ' + p.nombre,
+            categoria: p.nombre
+        });
+    }
     recordStockMovement(p.id, 'venta', -cantidad_gramos, typeof sesionActual !== 'undefined' && sesionActual ? sesionActual.usuario : '?');
     guardarEstado();
     if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'PRODUCT_SOLD', user: sesionActual ? sesionActual.usuario : '?', details: 'Venta ' + cantidad_gramos + 'g de ' + p.nombre + ' — ' + precio_total.toFixed(2) + '€' });
