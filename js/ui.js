@@ -255,7 +255,7 @@ function abrirOficinaView(viewId) {
         for (var i = 0; i < views.length; i++) views[i].style.display = 'none';
     }
     var target = document.getElementById(viewId || 'oficina-main');
-    if (target) target.style.display = 'block';
+    if (target) target.style.display = (viewId === 'oficina-guia') ? 'flex' : 'block';
 
     var fab = document.getElementById('oficina-fab-add-cliente');
     if (fab) fab.style.display = (viewId === 'oficina-guia') ? 'none' : '';
