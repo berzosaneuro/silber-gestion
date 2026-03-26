@@ -10,6 +10,15 @@
     --text-primary:  #DFF0FF;
     --text-secondary:#4A6A8A;
     --border:        rgba(0,229,255,0.15);
+    /* Stable app viewport height on mobile browsers */
+    --app-height:    100vh;
+}
+
+@supports (height: 100dvh) {
+    :root { --app-height: 100dvh; }
+}
+@supports (height: 100svh) {
+    :root { --app-height: 100svh; }
 }
 
 @keyframes fadeIn  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
@@ -20,10 +29,11 @@
 
 html {
     background:#04050F;
-    height:100%;
+    height:var(--app-height);
+    min-height:var(--app-height);
     width:100%;
     max-width:100vw;
-    overflow-x:hidden;
+    overflow:hidden;
     -webkit-text-size-adjust:100%;
     -webkit-tap-highlight-color:transparent;
 }
@@ -32,19 +42,20 @@ html, body {
     font-family:'Inter',-apple-system,sans-serif;
     background:#04050F;
     color:var(--text-primary);
+    height:var(--app-height);
+    min-height:var(--app-height);
+    overflow:hidden;
     overscroll-behavior:none;
 }
 body {
     width:100%;
     max-width:100vw;
-    min-height:100vh;
-    min-height:100dvh;
-    height:100%;
-    overflow-x:hidden;
+    min-height:var(--app-height);
+    height:var(--app-height);
+    overflow:hidden;
     position:fixed;
     top:0; left:0; right:0; bottom:0;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:none;
     box-sizing:border-box;
 }
 
@@ -66,11 +77,9 @@ body::after {
 .app-container {
     width:100%; max-width:100vw; margin:0; background:transparent;
     position:relative; z-index:10;
-    height:100%;
-    min-height:100vh;
-    min-height:100dvh;
-    overflow-x:hidden;
-    overflow-y:auto;
+    height:var(--app-height);
+    min-height:var(--app-height);
+    overflow:hidden;
     padding:0;
     box-sizing:border-box;
 }
@@ -84,8 +93,8 @@ body::after {
 .screen {
     display:none; animation:fadeIn .3s ease-out;
     width:100%;
-    min-height:100vh;
-    min-height:100dvh;
+    min-height:100%;
+    height:100%;
     overflow-y:auto;
     overflow-x:hidden;
     -webkit-overflow-scrolling:touch;
@@ -100,7 +109,7 @@ body::after {
 }
 .screen.active { display:block !important; visibility:visible !important; opacity:1 !important; z-index:1; overflow-y:auto; overflow-x:hidden; }
 .screen:not(.active) { z-index:0; }
-#screen-dashboard.active { min-height:100vh; }
+#screen-dashboard.active { min-height:100%; }
 #screen-dashboard.active .dashboard-content { opacity:1; visibility:visible; min-height:400px; display:flex; flex-direction:column; }
 .screen.active .dashboard-content,
 .screen.active .content-section,
@@ -507,7 +516,8 @@ select option { background:var(--bg-card); color:var(--text-primary); }
 
 /* ========== LOGIN — portada al abrir la app (sin recortes) ========== */
 #screen-login {
-    min-height:100vh; min-height:100dvh;
+    min-height:var(--app-height);
+    height:var(--app-height);
     width:100%; max-width:100vw;
     overflow-x:hidden; overflow-y:auto;
     box-sizing:border-box;
@@ -519,7 +529,8 @@ select option { background:var(--bg-card); color:var(--text-primary); }
     flex-direction:column; align-items:center; justify-content:center;
     width:100%; max-width:100vw;
     padding:16px; overflow-x:hidden; overflow-y:auto; background:#04050F;
-    min-height:100vh; min-height:100dvh;
+    min-height:var(--app-height);
+    height:var(--app-height);
     padding-top:env(safe-area-inset-top, 0) !important;
     padding-bottom:env(safe-area-inset-bottom, 0) !important;
     padding-left:max(16px, env(safe-area-inset-left, 0)) !important;
