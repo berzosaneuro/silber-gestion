@@ -22,7 +22,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <title>SILBER GESTIÓN</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/cyberpunk.css?v=4">
+    <link rel="stylesheet" href="css/cyberpunk.css?v=5">
 
 </head>
 <body>
@@ -223,11 +223,39 @@
                         <div class="time-label" id="time-label">HOY</div>
                         <button class="time-btn" onclick="cambiarDia(1)" id="time-next">&#8250;</button>
                     </div>
-                    <div class="donut-container">
+                    <div class="donut-container" onclick="toggleDonutBreakdown()" style="cursor:pointer;" title="Toca para ver desglose">
                         <canvas id="donutCanvas"></canvas>
-                        <div class="donut-center">
-                            <div class="donut-center-brand" style="font-size:13px;letter-spacing:1px;">SILBER</div>
-                            <div class="donut-center-label">GESTIÓN</div>
+                        <div class="donut-center" id="donut-center-smart">
+                            <div class="donut-net-value" id="donut-net-value">—</div>
+                            <div class="donut-net-sub"   id="donut-net-sub">hoy</div>
+                            <div class="donut-pct-label" id="donut-pct-label"></div>
+                        </div>
+                    </div>
+                    <div class="donut-smart-msg" id="donut-smart-msg">
+                        <span id="dsm-text">—</span>
+                    </div>
+                    <div class="donut-breakdown" id="donut-breakdown">
+                        <div class="dbd-row">
+                            <span class="dbd-label">Ingresos</span>
+                            <span class="dbd-val dbd-green" id="dbd-ing">—</span>
+                        </div>
+                        <div class="dbd-row">
+                            <span class="dbd-label">Gastos</span>
+                            <span class="dbd-val dbd-red" id="dbd-gas">—</span>
+                        </div>
+                        <div class="dbd-sep"></div>
+                        <div class="dbd-row">
+                            <span class="dbd-label">Top ingreso</span>
+                            <span class="dbd-val" id="dbd-top-ing">—</span>
+                        </div>
+                        <div class="dbd-row">
+                            <span class="dbd-label">Top gasto</span>
+                            <span class="dbd-val" id="dbd-top-gas">—</span>
+                        </div>
+                        <div class="dbd-sep"></div>
+                        <div class="dbd-row">
+                            <span class="dbd-label">Objetivo</span>
+                            <span class="dbd-val" id="dbd-target">—</span>
                         </div>
                     </div>
                     <div class="period-selector">
@@ -2646,43 +2674,185 @@
         }
     })();
 
-    /* ── Donut chart cyberpunk colors ───────────────────────── */
+    /* ── Smart Donut — decision tool ────────────────────────── */
     (function _patchDonut() {
-        function _drawCyberpunk() {
+
+        /* --- colour palette per state --- */
+        var COLORS = {
+            great: { arc0:'#00ff88', arc1:'#00cc66', arc2:'#00aa44', glow:'rgba(0,255,136,.85)', track:'rgba(0,255,136,.06)' },
+            ok:    { arc0:'#ffe000', arc1:'#ffa500', arc2:'#cc7700', glow:'rgba(255,200,0,.8)',   track:'rgba(255,200,0,.06)'  },
+            warn:  { arc0:'#ff8800', arc1:'#ff4400', arc2:'#cc2200', glow:'rgba(255,100,0,.8)',   track:'rgba(255,100,0,.06)'  },
+            loss:  { arc0:'#ff2060', arc1:'#aa00ff', arc2:'#7700cc', glow:'rgba(255,0,100,.8)',   track:'rgba(255,0,100,.06)'  },
+            empty: { arc0:'rgba(0,229,255,.25)', arc1:'rgba(0,229,255,.12)', arc2:'rgba(0,229,255,.06)', glow:'rgba(0,229,255,.2)', track:'rgba(0,229,255,.05)' }
+        };
+
+        /* --- read ingresosRegistros & gastosRegistros for today --- */
+        function _getDonutData() {
+            if (typeof estado === 'undefined' || !estado) return { ingresos:0, gastos:0, neto:0, pct:0, topIng:null, topGas:null, periodo:'day' };
+            var periodo  = estado.periodo || 'day';
+            var offset   = estado.diaOffset || 0;
+
+            /* Build date filter */
+            var now = new Date();
+            now.setDate(now.getDate() + offset);
+            var fechaStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+            var mesStr   = fechaStr.slice(0,7);
+
+            var regsI = (estado.ingresosRegistros || []);
+            var regsG = (estado.gastosRegistros   || []);
+
+            function matchDate(r) {
+                if (!r.fecha) return false;
+                if (periodo === 'day')   return r.fecha === fechaStr;
+                if (periodo === 'month') return r.fecha.slice(0,7) === mesStr;
+                return true; // 'all'
+            }
+
+            var ing = regsI.filter(matchDate);
+            var gas = regsG.filter(matchDate);
+
+            var totalIng = ing.reduce(function(s,r){ return s+(r.monto||0); }, 0);
+            var totalGas = gas.reduce(function(s,r){ return s+(r.monto||0); }, 0);
+            var neto     = totalIng - totalGas;
+
+            var objetivo = estado.objetivoDiario || 500;
+            if (periodo === 'month') objetivo *= 30;
+
+            /* Top categories */
+            function topCat(list) {
+                var cats = {};
+                list.forEach(function(r){ var c = r.categoria || r.tipo || '?'; cats[c]=(cats[c]||0)+(r.monto||0); });
+                var best = null, bestV = 0;
+                Object.keys(cats).forEach(function(c){ if(cats[c]>bestV){bestV=cats[c];best=c;} });
+                return best ? { nombre: best, monto: bestV } : null;
+            }
+
+            return {
+                ingresos: totalIng,
+                gastos:   totalGas,
+                neto:     neto,
+                pct:      objetivo > 0 ? Math.min((totalIng / objetivo) * 100, 100) : 0,
+                topIng:   topCat(ing),
+                topGas:   topCat(gas),
+                objetivo: objetivo,
+                periodo:  periodo
+            };
+        }
+
+        function _getDonutState(data) {
+            if (data.ingresos === 0 && data.gastos === 0) return 'empty';
+            if (data.neto < 0)     return 'loss';
+            if (data.pct >= 80)    return 'great';
+            if (data.pct >= 40)    return 'ok';
+            return 'warn';
+        }
+
+        function _getDonutMessage(data, state) {
+            var pct = Math.round(data.pct);
+            if (state === 'empty') return '— sin movimientos —';
+            if (state === 'loss')  return '⚠ GASTOS SUPERAN INGRESOS';
+            if (state === 'great') return '✦ OBJETIVO ALCANZADO · ' + pct + '%';
+            if (state === 'ok')    return pct + '% del objetivo · sigue así';
+            return 'SOLO ' + pct + '% · activa las ventas';
+        }
+
+        function _fmt(n) {
+            if (Math.abs(n) >= 1000) return (n/1000).toFixed(1) + 'k€';
+            return (n >= 0 ? '+' : '') + n.toFixed(0) + '€';
+        }
+        function _fmtAbs(n) { return Math.abs(n).toFixed(0) + '€'; }
+
+        /* --- main draw --- */
+        function _drawSmartDonut() {
             var canvas = document.getElementById('donutCanvas');
             if (!canvas || !canvas.getContext) return;
             var ctx = canvas.getContext('2d');
             var w = canvas.width || 220, h = canvas.height || 220;
             if (w <= 0 || h <= 0) return;
-            if (typeof estado === 'undefined' || !estado) return;
-            var diaData = typeof getDiaData === 'function' ? getDiaData(estado.diaOffset) : { ingresos: 0 };
-            var pct    = Math.min(((diaData.ingresos || 0) / 500) * 100, 100);
-            var angulo = (pct / 100) * 360;
+
+            var data  = _getDonutData();
+            var state = _getDonutState(data);
+            var pal   = COLORS[state];
+            var angulo = (data.pct / 100) * 360;
+
+            /* -- canvas ring -- */
             var cx = w/2, cy = h/2, radius = Math.min(w,h)/2 - 14, lw = 24;
             ctx.clearRect(0, 0, w, h);
+
+            /* track */
             ctx.beginPath();
             ctx.arc(cx, cy, radius, 0, 2*Math.PI);
-            ctx.strokeStyle = 'rgba(0,229,255,0.07)';
+            ctx.strokeStyle = pal.track;
             ctx.lineWidth = lw;
             ctx.stroke();
+
+            /* progress arc */
             if (angulo > 0) {
                 var g = ctx.createLinearGradient(0, 0, w, h);
-                g.addColorStop(0,   '#00e5ff');
-                g.addColorStop(0.5, '#aa00ff');
-                g.addColorStop(1,   '#ff00aa');
+                g.addColorStop(0,   pal.arc0);
+                g.addColorStop(0.5, pal.arc1);
+                g.addColorStop(1,   pal.arc2);
                 ctx.beginPath();
                 ctx.arc(cx, cy, radius, -Math.PI/2, -Math.PI/2 + (angulo*Math.PI/180));
                 ctx.strokeStyle = g;
                 ctx.lineWidth = lw;
                 ctx.lineCap = 'round';
-                ctx.shadowBlur = 22;
-                ctx.shadowColor = 'rgba(0,229,255,0.8)';
+                ctx.shadowBlur = 24;
+                ctx.shadowColor = pal.glow;
                 ctx.stroke();
+                ctx.shadowBlur = 0;
             }
+
+            /* -- DOM labels -- */
+            var container = document.getElementById('donut-center-smart');
+            if (container) container.style.display = 'block';
+
+            var elVal = document.getElementById('donut-net-value');
+            var elSub = document.getElementById('donut-net-sub');
+            var elPct = document.getElementById('donut-pct-label');
+            if (elVal) elVal.textContent = state === 'empty' ? '—' : _fmt(data.neto);
+            if (elSub) {
+                var labels = { day:'hoy', month:'este mes', all:'total' };
+                elSub.textContent = labels[data.periodo] || 'hoy';
+            }
+            if (elPct) elPct.textContent = state === 'empty' ? '' : Math.round(data.pct) + '% objetivo';
+
+            /* state attr for CSS colour overrides */
+            var dc = document.getElementById('donutCanvas') && document.getElementById('donutCanvas').closest
+                ? document.getElementById('donutCanvas').closest('.donut-container')
+                : null;
+            if (!dc) {
+                dc = canvas.parentElement;
+                while (dc && !dc.classList.contains('donut-container')) dc = dc.parentElement;
+            }
+            if (dc) dc.setAttribute('data-state', state);
+
+            /* smart message */
+            var msgEl = document.getElementById('donut-smart-msg');
+            var msgTx = document.getElementById('dsm-text');
+            if (msgTx) msgTx.textContent = _getDonutMessage(data, state);
+            if (msgEl) msgEl.setAttribute('data-state', state);
+
+            /* breakdown values (update even if closed) */
+            function setText(id, v) { var e=document.getElementById(id); if(e) e.textContent=v; }
+            setText('dbd-ing',     _fmtAbs(data.ingresos));
+            setText('dbd-gas',     _fmtAbs(data.gastos));
+            setText('dbd-top-ing', data.topIng ? data.topIng.nombre + ' ' + _fmtAbs(data.topIng.monto) : '—');
+            setText('dbd-top-gas', data.topGas ? data.topGas.nombre + ' ' + _fmtAbs(data.topGas.monto) : '—');
+            setText('dbd-target',  _fmtAbs(data.objetivo));
         }
-        window.dibujarDonut = _drawCyberpunk;
+
+        /* tap to expand/collapse breakdown */
+        window.toggleDonutBreakdown = function() {
+            var panel = document.getElementById('donut-breakdown');
+            if (!panel) return;
+            panel.classList.toggle('open');
+            if (navigator.vibrate) navigator.vibrate(15);
+        };
+
+        window.dibujarDonut = _drawSmartDonut;
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(_drawCyberpunk, 300);
+            setTimeout(_drawSmartDonut, 350);
         });
     })();
 

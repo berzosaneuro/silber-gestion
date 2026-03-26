@@ -474,3 +474,135 @@ body::before {
   display: block !important;
   box-shadow: 0 0 12px rgba(0,229,255,.5);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   27. SMART DONUT — decision-tool overlay elements
+   ═══════════════════════════════════════════════════════════ */
+
+/* Donut center overlay */
+.donut-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  width: 70%;
+}
+.donut-net-value {
+  font-family: 'Orbitron', 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: #00e5ff;
+  letter-spacing: 1px;
+  line-height: 1.1;
+  text-shadow: 0 0 14px rgba(0,229,255,.8), 0 0 30px rgba(0,229,255,.4);
+  transition: color .4s, text-shadow .4s;
+}
+.donut-net-sub {
+  font-size: 9px;
+  color: rgba(0,229,255,.55);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.donut-pct-label {
+  font-family: 'Orbitron', 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(0,229,255,.6);
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
+/* State color overrides */
+.donut-container[data-state="great"] .donut-net-value {
+  color: #00ff88;
+  text-shadow: 0 0 14px rgba(0,255,136,.8), 0 0 30px rgba(0,255,136,.4);
+}
+.donut-container[data-state="great"] .donut-pct-label { color: rgba(0,255,136,.7); }
+.donut-container[data-state="ok"] .donut-net-value {
+  color: #ffe000;
+  text-shadow: 0 0 14px rgba(255,224,0,.8), 0 0 30px rgba(255,224,0,.3);
+}
+.donut-container[data-state="ok"] .donut-pct-label { color: rgba(255,224,0,.7); }
+.donut-container[data-state="warn"] .donut-net-value {
+  color: #ff8800;
+  text-shadow: 0 0 14px rgba(255,136,0,.8), 0 0 30px rgba(255,136,0,.3);
+}
+.donut-container[data-state="warn"] .donut-pct-label { color: rgba(255,136,0,.7); }
+.donut-container[data-state="loss"] .donut-net-value {
+  color: #ff2060;
+  text-shadow: 0 0 14px rgba(255,32,96,.8), 0 0 30px rgba(255,32,96,.4);
+}
+.donut-container[data-state="loss"] .donut-pct-label { color: rgba(255,32,96,.7); }
+.donut-container[data-state="empty"] .donut-net-value {
+  color: rgba(0,229,255,.3);
+  text-shadow: none;
+}
+
+/* Smart message strip */
+.donut-smart-msg {
+  text-align: center;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-family: 'Orbitron', 'Inter', sans-serif;
+  letter-spacing: 1px;
+  color: rgba(0,229,255,.65);
+  min-height: 26px;
+  transition: color .4s;
+}
+.donut-smart-msg[data-state="great"] { color: rgba(0,255,136,.8); }
+.donut-smart-msg[data-state="ok"]    { color: rgba(255,224,0,.8); }
+.donut-smart-msg[data-state="warn"]  { color: rgba(255,136,0,.8); }
+.donut-smart-msg[data-state="loss"]  { color: rgba(255,32,96,.8); }
+
+/* Breakdown panel */
+@keyframes cp-breakdown-in {
+  from { opacity: 0; transform: scaleY(.85); }
+  to   { opacity: 1; transform: scaleY(1); }
+}
+.donut-breakdown {
+  display: none;
+  background: rgba(0,10,25,.88);
+  border: 1px solid rgba(0,229,255,.18);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 6px 0 0;
+  transform-origin: top;
+}
+.donut-breakdown.open {
+  display: block;
+  animation: cp-breakdown-in .2s ease both;
+}
+.dbd-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+.dbd-label {
+  font-size: 11px;
+  color: rgba(200,230,255,.5);
+  letter-spacing: .5px;
+}
+.dbd-val {
+  font-family: 'Orbitron', 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(0,229,255,.85);
+}
+.dbd-green { color: #00ff88 !important; }
+.dbd-red   { color: #ff2060 !important; }
+.dbd-sep {
+  height: 1px;
+  background: rgba(0,229,255,.1);
+  margin: 4px 0;
+}
+
+/* Donut container — relative so center overlay works */
+.donut-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
