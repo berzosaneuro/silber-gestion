@@ -3261,3 +3261,48 @@ select option { background:var(--bg-card); color:var(--text-primary); }
   border-color: rgba(56, 189, 248, 0.5);
   box-shadow: 0 4px 18px rgba(56, 189, 248, 0.18);
 }
+
+/* ============================================================
+   LAYOUT STABILITY PATCH — prevent tilt/shift on hover/tap
+   Only small interactive controls should scale.
+   ============================================================ */
+
+/* Keep subtle press feedback on buttons only */
+button {
+  transition: transform 0.12s ease;
+}
+button:active {
+  transform: scale(0.98);
+}
+
+/* Never move layout blocks/cards/sections on interaction */
+.menu-item:active,
+.summary-card:active,
+.cliente-card:active,
+.ranking-item:hover,
+.summary-card:hover {
+  transform: none !important;
+}
+
+/* Remove transform transitions from layout containers to avoid visual shift */
+.menu-item,
+.summary-card,
+.cliente-card,
+.ranking-item,
+.section-card,
+.content-section {
+  transition-property: background, border-color, box-shadow, color, opacity !important;
+}
+
+/* Disable hover transforms on touch devices */
+@media (hover: none), (pointer: coarse) {
+  .menu-item:hover,
+  .summary-card:hover,
+  .cliente-card:hover,
+  .ranking-item:hover,
+  .category-btn:hover,
+  .category-btn:hover .category-icon,
+  .dsb-row-btn:hover {
+    transform: none !important;
+  }
+}
