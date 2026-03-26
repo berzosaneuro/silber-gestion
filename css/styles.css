@@ -2978,3 +2978,134 @@ select option { background:var(--bg-card); color:var(--text-primary); }
 .kpi-value {
     transition: color 320ms ease;
 }
+
+/* ============================================================
+   UI POLISH LAYER — Vibrancy + micro-interactions (safe)
+   No layout changes; visual-only overrides.
+   ============================================================ */
+
+/* Primary actions: brighter orange + subtle glow */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.quick-amt-btn,
+.btn-whatsapp,
+.menu-item,
+.nav-item,
+.period-btn,
+.tab-btn,
+.fab {
+  transition:
+    transform 120ms ease,
+    box-shadow 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    opacity 150ms ease;
+}
+
+.btn-primary,
+.dcp-btn-primary {
+  background: linear-gradient(135deg, rgba(255, 122, 26, 0.24), rgba(255, 92, 22, 0.34));
+  border-color: rgba(255, 122, 26, 0.72);
+  color: #FFDCC4;
+  box-shadow:
+    0 0 0 1px rgba(255, 122, 26, 0.18),
+    0 4px 16px rgba(255, 102, 0, 0.22);
+  text-shadow: 0 0 8px rgba(255, 122, 26, 0.34);
+}
+
+.btn-primary:active,
+.dcp-btn-primary:active,
+.btn:active,
+.quick-amt-btn:active,
+.btn-whatsapp:active,
+.menu-item:active,
+.fab:active {
+  transform: scale(0.98);
+}
+
+/* Active UI elements: subtle cyberpunk glow */
+.nav-item.active,
+.period-btn.active,
+.tab-btn.active,
+.menu-item:active {
+  box-shadow: 0 0 14px rgba(255, 102, 0, 0.16);
+}
+
+/* Hierarchy: totals and key numbers stand out slightly more */
+#res-total,
+#of-res-total,
+#res-hoy,
+#of-res-hoy,
+#res-clientes,
+#of-res-clientes,
+.stat-value,
+.cliente-deuda,
+.historial-monto,
+.an-kpi-value,
+.kpi-value,
+.saldo-valor,
+.saldo-value {
+  filter: brightness(1.06);
+  text-shadow: 0 0 10px rgba(255, 122, 26, 0.18);
+}
+
+/* Secondary text a bit dimmer for clearer hierarchy */
+.stat-label,
+.cliente-info,
+.historial-fecha,
+.settings-row-sub,
+.an-tools-row-sub {
+  color: rgba(148, 163, 184, 0.78);
+}
+
+/* Lightweight view/list appearance */
+.screen {
+  animation-duration: 200ms;
+}
+.dashboard-card,
+.cliente-card,
+.transaction-item,
+.an-kpi-card,
+.ranking-item,
+.historial-item {
+  animation-duration: 190ms;
+}
+
+/* Toast feedback: success / error / info */
+.silber-sync-toast--ok .sst-pill {
+  border-color: rgba(34, 197, 94, 0.45);
+  background: rgba(7, 22, 13, 0.93);
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.18);
+}
+.silber-sync-toast--warn .sst-pill {
+  border-color: rgba(239, 68, 68, 0.48);
+  background: rgba(28, 8, 8, 0.94);
+  box-shadow: 0 4px 22px rgba(239, 68, 68, 0.2);
+}
+.silber-sync-toast--info .sst-pill {
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(7, 15, 30, 0.94);
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.16);
+}
+
+.silber-toast--success {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(8, 24, 12, 0.96);
+  color: #86EFAC;
+  box-shadow: 0 4px 22px rgba(34, 197, 94, 0.2);
+}
+.silber-toast--error {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(20, 5, 5, 0.97);
+  color: #FCA5A5;
+  box-shadow: 0 4px 24px rgba(239, 68, 68, 0.22);
+}
+.silber-toast--info {
+  border-color: rgba(56, 189, 248, 0.45);
+  background: rgba(7, 16, 28, 0.96);
+  color: #BAE6FD;
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.18);
+}
