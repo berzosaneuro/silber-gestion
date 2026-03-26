@@ -1479,7 +1479,7 @@
                 <div class="modal-header"><div class="modal-title">Nuevo Cliente</div></div>
                 <div class="modal-body">
                     <div class="input-group"><label class="input-label">Nombre</label><input type="text" class="input-field" id="cliente-nombre" placeholder="Nombre completo"></div>
-                    <div class="input-group"><label class="input-label">WhatsApp</label><input type="tel" class="input-field" id="cliente-whatsapp" placeholder="+34 600 000 000"></div>
+                    <div class="input-group"><label class="input-label">Teléfono</label><input type="tel" class="input-field" id="cliente-whatsapp" placeholder="+346XXXXXXXX"></div>
                     <div class="input-group"><label class="input-label">Límite de Crédito (€)</label><input type="number" class="input-field" id="cliente-limite" placeholder="0.00" step="0.01"></div>
                     <div class="input-group">
                         <label class="input-label">Día de Pago</label>
@@ -1917,10 +1917,12 @@
      * @param {object} client  — estado.clientes entry
      */
     function sendWhatsAppReminder(client) {
-        if (!client || !client.whatsapp) return;
-        var num = String(client.whatsapp).replace(/[^0-9]/g, '');
-        if (!num || num.length < 8) { alert('Número de WhatsApp inválido'); return; }
-        var msg = '¡Hola ' + (client.nombre || '') + '! Te recordamos que tienes un pago pendiente de ' + (client.deuda || 0).toFixed(2) + '€. Gracias 🙏';
+        if (!client) return;
+        var phoneRaw = (client.telefono || client.whatsapp || '');
+        var num = String(phoneRaw).replace(/[^0-9]/g, '');
+        if (!num || num.length < 8) { alert('Este cliente no tiene teléfono válido para WhatsApp'); return; }
+        var deuda = Number(client.deuda || 0).toFixed(2);
+        var msg = 'Hola ' + (client.nombre || 'cliente') + ', tienes una deuda pendiente de ' + deuda + '€. ¿Puedes revisarlo hoy?';
         var url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(msg);
         window.open(url, '_blank');
         if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'WHATSAPP_REMINDER_SENT', details: 'Recordatorio enviado a ' + (client.nombre || '') });
@@ -1943,7 +1945,11 @@
     function enviarWhatsAppCliente() {
         var c = (typeof estado !== 'undefined') ? estado.clienteActual : null;
         if (!c) { alert('No hay cliente activo'); return; }
-        if (!c.whatsapp) { alert('Este cliente no tiene WhatsApp registrado'); return; }
+        if (typeof _silberGetClientPhone === 'function') {
+            var normalized = _silberGetClientPhone(c);
+            c.telefono = normalized;
+            c.whatsapp = normalized; // compatibilidad
+        }
         sendWhatsAppReminder(c);
     }
 
@@ -1968,7 +1974,7 @@
     function _actualizarBotonesCliente() {
         var c = (typeof estado !== 'undefined') ? estado.clienteActual : null;
         var btn = document.getElementById('btn-whatsapp-cliente');
-        if (btn) btn.style.display = (c && c.whatsapp) ? 'flex' : 'none';
+        if (btn) btn.style.display = c ? 'flex' : 'none';
     }
 
     /* Hook into abrirDetalleCliente without modifying clientes.js
@@ -2547,7 +2553,7 @@
                     '<button class="dcp-btn dcp-btn-secondary" onclick="abrirEditarCliente()">✏️ Editar</button>' +
                     '<button class="dcp-btn dcp-btn-danger" onclick="eliminarClienteActual()">🗑️ Eliminar</button>' +
                     '<button class="dcp-btn dcp-btn-secondary" onclick="var m=document.getElementById(\'modalDetalleCliente\');if(m)m.classList.add(\'active\')">💸 Pago parcial</button>' +
-                    (cliente.whatsapp ? '<button class="dcp-btn dcp-btn-wa" onclick="enviarWhatsAppCliente()">💬 WhatsApp</button>' : '') +
+                    '<button class="dcp-btn dcp-btn-wa" onclick="enviarWhatsAppCliente()">💬 WhatsApp</button>' +
                     '<button class="dcp-btn dcp-btn-gps" onclick="registrarLlegada()">📍 Llegada</button>' +
                 '</div>' +
                 '<div class="dcp-section-label">Historial de movimientos</div>' +
@@ -2617,7 +2623,7 @@
                 acts.className = 'dsb-row-actions';
                 acts.innerHTML =
                     '<button class="dsb-row-btn" title="Registrar llegada" onclick="event.stopPropagation();_dsbQuickLlegada(\'' + String((cli && cli.id) || '').replace(/'/g,"\\'") + '\')">📍</button>' +
-                    (cli && cli.whatsapp ? '<button class="dsb-row-btn dsb-row-btn-wa" title="WhatsApp" onclick="event.stopPropagation();_dsbQuickWA(\'' + (cli.whatsapp||'').replace(/['"]/g,'') + '\',\'' + nombre.replace(/'/g,"\\'") + '\')">💬</button>' : '');
+                    '<button class="dsb-row-btn dsb-row-btn-wa" title="WhatsApp" onclick="event.stopPropagation();_dsbQuickWA(\'' + String((cli && cli.id) || '').replace(/'/g,"\\'") + '\')">💬</button>';
                 card.appendChild(acts);
             });
         }
@@ -2629,9 +2635,18 @@
             estado.clienteActual = cli;
             if (typeof registrarLlegada === 'function') registrarLlegada();
         };
-        window._dsbQuickWA = function(wa, nombre) {
-            var msg = encodeURIComponent('Hola ' + nombre + ', te contactamos para recordarte tu saldo pendiente.');
-            window.open('https://wa.me/' + wa.replace(/[\s+\-(). ]/g,'') + '?text=' + msg, '_blank');
+        window._dsbQuickWA = function(clientId) {
+            var cli = (estado.clientes || []).find(function(c) { return String(c.id) === String(clientId); });
+            if (!cli) return;
+            if (typeof enviarWhatsAppClientePorId === 'function') {
+                enviarWhatsAppClientePorId(clientId);
+                return;
+            }
+            var raw = String((cli.telefono || cli.whatsapp || '')).replace(/[^0-9]/g, '');
+            if (!raw || raw.length < 8) { alert('Este cliente no tiene teléfono válido para WhatsApp'); return; }
+            var deuda = Number(cli.deuda || 0).toFixed(2);
+            var msg = encodeURIComponent('Hola ' + (cli.nombre || 'cliente') + ', tienes una deuda pendiente de ' + deuda + '€. ¿Puedes revisarlo hoy?');
+            window.open('https://wa.me/' + raw + '?text=' + msg, '_blank');
         };
 
     })(); /* end _initDesktopCRM */

@@ -40,6 +40,7 @@ function renderizarOficina() {
     }
     container.innerHTML = '';
     lista.forEach(cliente => {
+        const telefono = _silberGetClientPhone(cliente);
         const cobrarHoyCliente = cliente.diaPago === diaHoy && cliente.deuda > 0;
         const div = document.createElement('div');
         div.className = 'cliente-card';
@@ -49,7 +50,8 @@ function renderizarOficina() {
                 <div class="cliente-nombre">${cliente.nombre}${cobrarHoyCliente ? ' <span style="font-size:10px;background:rgba(245,158,11,0.2);color:#F59E0B;border:1px solid rgba(245,158,11,0.4);border-radius:6px;padding:2px 6px;font-weight:700;">HOY</span>' : ''}</div>
                 <div class="cliente-deuda ${cliente.deuda > 0 ? 'negativa' : ''}">${(cliente.deuda || 0).toFixed(2)}€</div>
             </div>
-            <div class="cliente-info">${cliente.whatsapp || ''} • Límite: ${cliente.limite || 0}€ • Día ${cliente.diaPago || '-'}</div>
+            <div class="cliente-info">${telefono || 'Sin teléfono'} • Límite: ${cliente.limite || 0}€ • Día ${cliente.diaPago || '-'}</div>
+            <button class="btn btn-secondary" style="margin-top:8px;padding:6px 10px;font-size:11px;" onclick="event.stopPropagation();enviarWhatsAppClientePorId('${String(cliente.id).replace(/'/g, "\\'")}')">WhatsApp</button>
         `;
         container.appendChild(div);
     });
@@ -81,6 +83,7 @@ function renderizarClientes() {
     }
     container.innerHTML = '';
     lista.forEach(cliente => {
+        const telefono = _silberGetClientPhone(cliente);
         const cobrarHoyCliente = cliente.diaPago === diaHoy && cliente.deuda > 0;
         const div = document.createElement('div');
         div.className = 'cliente-card';
@@ -90,23 +93,55 @@ function renderizarClientes() {
                 <div class="cliente-nombre">${cliente.nombre}${cobrarHoyCliente ? ' <span style="font-size:10px;background:rgba(245,158,11,0.2);color:#F59E0B;border:1px solid rgba(245,158,11,0.4);border-radius:6px;padding:2px 6px;font-weight:700;">HOY</span>' : ''}</div>
                 <div class="cliente-deuda ${cliente.deuda > 0 ? 'negativa' : ''}">${(cliente.deuda || 0).toFixed(2)}€</div>
             </div>
-            <div class="cliente-info">${cliente.whatsapp || ''} • Límite: ${cliente.limite || 0}€ • Día ${cliente.diaPago || '-'}</div>
+            <div class="cliente-info">${telefono || 'Sin teléfono'} • Límite: ${cliente.limite || 0}€ • Día ${cliente.diaPago || '-'}</div>
+            <button class="btn btn-secondary" style="margin-top:8px;padding:6px 10px;font-size:11px;" onclick="event.stopPropagation();enviarWhatsAppClientePorId('${String(cliente.id).replace(/'/g, "\\'")}')">WhatsApp</button>
         `;
         container.appendChild(div);
     });
 }
 
 function _silberNormPhone(v) {
-    return String(v || '').replace(/[^\d+]/g, '').trim();
+    return String(v || '')
+        .trim()
+        .replace(/[^\d+]/g, '')
+        .replace(/(?!^)\+/g, '');
+}
+
+function _silberPhoneForWa(v) {
+    return _silberNormPhone(v).replace(/\D/g, '');
+}
+
+function _silberPhoneIsValid(v) {
+    var p = _silberNormPhone(v);
+    if (!p) return true; // opcional
+    return /^\+?\d{8,15}$/.test(p);
+}
+
+function _silberGetClientPhone(cliente) {
+    if (!cliente) return '';
+    return _silberNormPhone(cliente.telefono || cliente.whatsapp || '');
+}
+
+function _silberDebtForClient(cliente) {
+    return Number((cliente && cliente.deuda) || 0) || 0;
+}
+
+function _silberBuildWhatsAppDebtMessage(cliente) {
+    var nombre = (cliente && cliente.nombre) || 'cliente';
+    var deuda = _silberDebtForClient(cliente).toFixed(2);
+    return 'Hola ' + nombre + ', tienes una deuda pendiente de ' + deuda + '€. ¿Puedes revisarlo hoy?';
 }
 
 function _silberSyncClientDataEverywhere(cliente) {
     if (!cliente) return;
+    var telefono = _silberGetClientPhone(cliente);
+    cliente.telefono = telefono;
+    cliente.whatsapp = telefono; // compatibilidad con lógica existente
     var db = cargarDbDeudas();
     var dbCli = (db.clientes || []).find(function(c) { return String(c.id) === String(cliente.id); });
     if (dbCli) {
         dbCli.nombre = cliente.nombre || dbCli.nombre || '';
-        dbCli.telefono = cliente.whatsapp || dbCli.telefono || '';
+        dbCli.telefono = telefono;
         dbCli.limite_credito = Number(cliente.limite) || 0;
         dbCli.dia_pago = Number(cliente.diaPago) || 1;
         dbCli.producto = cliente.producto || dbCli.producto || '';
@@ -116,7 +151,7 @@ function _silberSyncClientDataEverywhere(cliente) {
             nombre: cliente.nombre || '',
             producto: cliente.producto || '',
             limite_credito: Number(cliente.limite) || 0,
-            telefono: cliente.whatsapp || '',
+            telefono: telefono,
             dia_pago: Number(cliente.diaPago) || 1
         });
     }
@@ -154,7 +189,7 @@ function guardarCliente() {
     var nombreEl = document.getElementById('cliente-nombre');
     var whatsappEl = document.getElementById('cliente-whatsapp');
     var nombre = nombreEl ? nombreEl.value.trim() : '';
-    var whatsapp = _silberNormPhone(whatsappEl ? whatsappEl.value : '');
+    var telefono = _silberNormPhone(whatsappEl ? whatsappEl.value : '');
     var limiteEl = document.getElementById('cliente-limite');
     var diaPagoEl = document.getElementById('cliente-dia-pago');
     var limite = limiteEl ? parseFloat(limiteEl.value) : 0;
@@ -165,22 +200,29 @@ function guardarCliente() {
     var prod2Group = document.getElementById('cliente-producto2-group');
     var prod2 = prod2el && prod2Group && prod2Group.style.display !== 'none' ? prod2el.value : '';
     var producto = prod2 ? prod1 + ' + ' + prod2 : prod1;
-    if (!nombre || !whatsapp) {
+    if (!nombre) {
         if (btn) { btn.disabled = false; btn.textContent = 'Crear Cliente'; }
-        alert('Por favor completa los campos obligatorios');
+        alert('El nombre es obligatorio');
         return;
     }
-    var dupTelefono = (estado.clientes || []).find(function(c) { return c.whatsapp && c.whatsapp === whatsapp; });
-    if (dupTelefono) {
+    if (!_silberPhoneIsValid(telefono)) {
         if (btn) { btn.disabled = false; btn.textContent = 'Crear Cliente'; }
-        alert('Ya existe un cliente con ese WhatsApp.');
+        alert('Teléfono inválido. Usa formato +346XXXXXXXX');
+        return;
+    }
+    var dupTelefono = telefono ? (estado.clientes || []).find(function(c) {
+        return _silberGetClientPhone(c) === telefono;
+    }) : null;
+    if (telefono && dupTelefono) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Crear Cliente'; }
+        alert('Ya existe un cliente con ese teléfono.');
         return;
     }
     var latEl = document.getElementById('cliente-lat');
     var lngEl = document.getElementById('cliente-lng');
     var lat = latEl && latEl.value ? parseFloat(latEl.value) : undefined;
     var lng = lngEl && lngEl.value ? parseFloat(lngEl.value) : undefined;
-    var obj = { id: Date.now(), nombre, whatsapp, limite: limite || 0, diaPago: diaPago || 1, producto, deuda: 0, historial: [] };
+    var obj = { id: Date.now(), nombre, telefono, whatsapp: telefono, limite: limite || 0, diaPago: diaPago || 1, producto, deuda: 0, historial: [] };
     if (lat != null && !isNaN(lat)) obj.lat = lat;
     if (lng != null && !isNaN(lng)) obj.lng = lng;
     estado.clientes.push(obj);
@@ -195,8 +237,9 @@ function guardarCliente() {
 
 function abrirDetalleCliente(cliente) {
     estado.clienteActual = cliente;
+    var telefono = _silberGetClientPhone(cliente);
     document.getElementById('detalle-cliente-nombre').textContent = cliente.nombre;
-    document.getElementById('detalle-cliente-info').textContent = `${cliente.whatsapp} • Día ${cliente.diaPago}`;
+    document.getElementById('detalle-cliente-info').textContent = `${telefono || 'Sin teléfono'} • Día ${cliente.diaPago}`;
     document.getElementById('detalle-cliente-deuda').textContent = cliente.deuda + '€';
     document.getElementById('detalle-cliente-limite').textContent = cliente.limite + '€';
     const historialContainer = document.getElementById('historial-cliente');
@@ -240,6 +283,9 @@ function abrirDetalleCliente(cliente) {
     }
     _renderizarLlegadasEnDetalle(cliente.id);
 
+    var btnWA = document.getElementById('btn-whatsapp-cliente');
+    if (btnWA) btnWA.style.display = 'flex';
+
     document.getElementById('modalDetalleCliente').classList.add('active');
     if (navigator.vibrate) navigator.vibrate(30);
 }
@@ -255,10 +301,10 @@ function abrirEditarCliente() {
     if (nombre === null) return;
     nombre = nombre.trim();
     if (!nombre) { alert('El nombre no puede estar vacío.'); return; }
-    var whatsapp = prompt('WhatsApp del cliente:', c.whatsapp || '');
-    if (whatsapp === null) return;
-    whatsapp = _silberNormPhone(whatsapp);
-    if (!whatsapp) { alert('El WhatsApp es obligatorio.'); return; }
+    var telefono = prompt('Teléfono del cliente (opcional):', _silberGetClientPhone(c));
+    if (telefono === null) return;
+    telefono = _silberNormPhone(telefono);
+    if (!_silberPhoneIsValid(telefono)) { alert('Teléfono inválido. Usa formato +346XXXXXXXX'); return; }
     var limiteTxt = prompt('Límite de crédito (€):', String(Number(c.limite) || 0));
     if (limiteTxt === null) return;
     var limite = Number(limiteTxt);
@@ -270,9 +316,10 @@ function abrirEditarCliente() {
     var producto = prompt('Producto (opcional):', c.producto || '');
     if (producto === null) return;
     c.nombre = nombre;
-    var dupPhone = (estado.clientes || []).find(function(x) { return x.id !== c.id && x.whatsapp === whatsapp; });
-    if (dupPhone) { alert('Ya existe otro cliente con ese WhatsApp.'); return; }
-    c.whatsapp = whatsapp;
+    var dupPhone = telefono ? (estado.clientes || []).find(function(x) { return x.id !== c.id && _silberGetClientPhone(x) === telefono; }) : null;
+    if (telefono && dupPhone) { alert('Ya existe otro cliente con ese teléfono.'); return; }
+    c.telefono = telefono;
+    c.whatsapp = telefono;
     c.limite = limite;
     c.diaPago = dia;
     c.producto = (producto || '').trim();
@@ -425,6 +472,7 @@ function altaClienteDeuda() {
     const telefono = _silberNormPhone(document.getElementById('alta-telefono').value);
     const diaPago  = parseInt(document.getElementById('alta-dia-pago').value) || 1;
     if (!nombre) { alert('El nombre es obligatorio'); return; }
+    if (!_silberPhoneIsValid(telefono)) { alert('Teléfono inválido. Usa formato +346XXXXXXXX'); return; }
     const db = cargarDbDeudas();
     const id = Date.now();
     db.clientes.push({ id, nombre, producto, limite_credito: limite, telefono, dia_pago: diaPago });
@@ -432,7 +480,7 @@ function altaClienteDeuda() {
     guardarDbDeudas(db);
     // Sincronizar con estado.clientes para que aparezca en pantalla Deuda
     if (!estado.clientes.find(c => c.nombre.toLowerCase() === nombre.toLowerCase())) {
-        var nuevoCli = { id, nombre, whatsapp: telefono, limite, diaPago, producto, deuda: 0, historial: [] };
+        var nuevoCli = { id, nombre, telefono: telefono, whatsapp: telefono, limite, diaPago, producto, deuda: 0, historial: [] };
         estado.clientes.push(nuevoCli);
         _silberSyncClientDataEverywhere(nuevoCli);
         guardarEstado();
@@ -837,6 +885,29 @@ function abrirRutaEnGoogleMaps() {
     window.open(url, '_blank');
     cerrarModalRutaClientes();
 }
+
+function enviarWhatsAppClientePorId(clienteId) {
+    var cliente = (estado.clientes || []).find(function(c) { return String(c.id) === String(clienteId); });
+    if (!cliente) { alert('Cliente no encontrado'); return; }
+    var phoneDigits = _silberPhoneForWa(cliente.telefono || cliente.whatsapp);
+    if (!phoneDigits || phoneDigits.length < 8) {
+        alert('Este cliente no tiene teléfono válido para WhatsApp');
+        return;
+    }
+    var msg = _silberBuildWhatsAppDebtMessage(cliente);
+    var url = 'https://wa.me/' + phoneDigits + '?text=' + encodeURIComponent(msg);
+    window.open(url, '_blank');
+}
+
+(function _silberMigrateTelefonosClientes() {
+    var changed = false;
+    (estado.clientes || []).forEach(function(c) {
+        var tel = _silberGetClientPhone(c);
+        if ((c.telefono || '') !== tel) { c.telefono = tel; changed = true; }
+        if ((c.whatsapp || '') !== tel) { c.whatsapp = tel; changed = true; }
+    });
+    if (changed) guardarEstado();
+})();
 
 // ===== GEOLOCALIZACIÓN, GPS CAPTURE, "HE LLEGADO" Y GEOFENCE =====
 
