@@ -15,7 +15,15 @@ var _silberTableSyncEnabled = !!_supabase;
 var _silberCorePushInFlight = false;
 var _silberCorePullTimer = null;
 var _silberLastCorePushAt = 0;
+var _silberCoreSyncRetryPending = false;
+var _silberCoreRetryTimer = null;
 if (typeof window !== 'undefined') window.__silberTableSyncEnabled = _silberTableSyncEnabled;
+
+function _sbInfo(msg, data) {
+    if (typeof console === 'undefined' || !console.info) return;
+    if (data !== undefined) console.info('[Silber]', msg, data);
+    else console.info('[Silber]', msg);
+}
 
 // ===== DASHBOARD DESDE SUPABASE =====
 async function cargarDatosDashboard() {
@@ -72,6 +80,64 @@ async function _sbFetchTable(table) {
     } catch (e) {
         silberWarn('[CORE_SYNC] fetch ' + table + ' falló:', e);
         return null;
+    }
+}
+function _sbUniqueIds(rows, key) {
+    var out = [];
+    var seen = {};
+    (rows || []).forEach(function(r) {
+        if (!r || r[key] == null) return;
+        var id = String(r[key]);
+        if (seen[id]) return;
+        seen[id] = true;
+        out.push(id);
+    });
+    return out;
+}
+function _sbChunk(arr, size) {
+    var out = [];
+    for (var i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+}
+async function _sbDeleteMissingRows(table, key, nextIds) {
+    if (!_supabase) return false;
+    try {
+        var sel = await _supabase.from(table).select(key);
+        if (sel.error) throw sel.error;
+        var keep = {};
+        (nextIds || []).forEach(function(id) { keep[String(id)] = true; });
+        var toDelete = (sel.data || [])
+            .map(function(r) { return r && r[key] != null ? String(r[key]) : null; })
+            .filter(function(id) { return id && !keep[id]; });
+        if (!toDelete.length) return true;
+        var chunks = _sbChunk(toDelete, 250);
+        for (var i = 0; i < chunks.length; i++) {
+            var delRes = await _supabase.from(table).delete().in(key, chunks[i]);
+            if (delRes.error) throw delRes.error;
+        }
+        return true;
+    } catch (e) {
+        silberWarn('[CORE_SYNC] prune ' + table + ' falló:', e);
+        return false;
+    }
+}
+async function _sbUpsertTableRows(table, key, rows, pruneMissing) {
+    if (!_supabase) return false;
+    try {
+        var safeRows = Array.isArray(rows) ? rows : [];
+        if (safeRows.length) {
+            var upRes = await _supabase.from(table).upsert(safeRows, { onConflict: key });
+            if (upRes.error) throw upRes.error;
+        }
+        if (pruneMissing) {
+            var ids = _sbUniqueIds(safeRows, key);
+            var okPrune = await _sbDeleteMissingRows(table, key, ids);
+            if (!okPrune) return false;
+        }
+        return true;
+    } catch (e) {
+        silberWarn('[CORE_SYNC] upsert ' + table + ' falló:', e);
+        return false;
     }
 }
 function _sbIsCoreBundleEmpty(b) {
@@ -173,39 +239,29 @@ function _sbBuildCoreRowsFromEstado() {
     });
     return { clientes: clientes, cuentas: cuentas, transacciones: transacciones, deudas: deudas, productos: productos };
 }
-async function _sbReplaceTableRows(table, key, rows) {
-    if (!_supabase) return false;
-    try {
-        var sel = await _supabase.from(table).select(key);
-        if (sel.error) throw sel.error;
-        var existing = (sel.data || []).map(function(r) { return r[key]; }).filter(function(v) { return v != null; });
-        if (existing.length) {
-            var delRes = await _supabase.from(table).delete().in(key, existing);
-            if (delRes.error) throw delRes.error;
-        }
-        if (rows && rows.length) {
-            var insRes = await _supabase.from(table).insert(rows);
-            if (insRes.error) throw insRes.error;
-        }
-        return true;
-    } catch (e) {
-        silberWarn('[CORE_SYNC] replace ' + table + ' falló:', e);
-        return false;
-    }
-}
-async function _syncCoreTablesFromEstado() {
+async function _syncCoreTablesFromEstado(opts) {
     if (!_supabase) return false;
     if (_silberCorePushInFlight) return false;
+    var options = opts || {};
+    var pruneMissing = options.pruneMissing !== false;
     _silberCorePushInFlight = true;
     try {
         var rows = _sbBuildCoreRowsFromEstado();
-        var ok1 = await _sbReplaceTableRows('clientes', 'id', rows.clientes);
-        var ok2 = await _sbReplaceTableRows('cuentas', 'id', rows.cuentas);
-        var ok3 = await _sbReplaceTableRows('transacciones', 'id', rows.transacciones);
-        var ok4 = await _sbReplaceTableRows('deudas', 'id', rows.deudas);
-        var ok5 = await _sbReplaceTableRows('productos', 'id', rows.productos);
+        var ok1 = await _sbUpsertTableRows('clientes', 'id', rows.clientes, pruneMissing);
+        var ok2 = await _sbUpsertTableRows('cuentas', 'id', rows.cuentas, pruneMissing);
+        var ok3 = await _sbUpsertTableRows('transacciones', 'id', rows.transacciones, pruneMissing);
+        var ok4 = await _sbUpsertTableRows('deudas', 'id', rows.deudas, pruneMissing);
+        var ok5 = await _sbUpsertTableRows('productos', 'id', rows.productos, pruneMissing);
         var ok = !!(ok1 && ok2 && ok3 && ok4 && ok5);
-        if (ok) _silberLastCorePushAt = Date.now();
+        if (ok) {
+            _silberLastCorePushAt = Date.now();
+            _silberCoreSyncRetryPending = false;
+            if (_silberCoreRetryTimer) {
+                clearTimeout(_silberCoreRetryTimer);
+                _silberCoreRetryTimer = null;
+            }
+            _sbInfo('[CORE_SYNC] SAVE OK (tablas)');
+        }
         return ok;
     } catch (e) {
         silberWarn('[CORE_SYNC] syncCoreTablesFromEstado excepción:', e);
@@ -213,6 +269,66 @@ async function _syncCoreTablesFromEstado() {
     } finally {
         _silberCorePushInFlight = false;
     }
+}
+function _sbNormalizeCoreBundle(bundle) {
+    return {
+        clientes: (bundle && Array.isArray(bundle.clientes)) ? bundle.clientes : [],
+        cuentas: (bundle && Array.isArray(bundle.cuentas)) ? bundle.cuentas : [],
+        transacciones: (bundle && Array.isArray(bundle.transacciones)) ? bundle.transacciones : [],
+        deudas: (bundle && Array.isArray(bundle.deudas)) ? bundle.deudas : [],
+        productos: (bundle && Array.isArray(bundle.productos)) ? bundle.productos : []
+    };
+}
+function _silberHasAnyRows(bundle) {
+    var b = _sbNormalizeCoreBundle(bundle);
+    return b.clientes.length || b.cuentas.length || b.transacciones.length || b.deudas.length || b.productos.length;
+}
+async function _sbFetchCoreBundle() {
+    if (!_supabase) return null;
+    var bundle = {
+        clientes: await _sbFetchTable('clientes'),
+        cuentas: await _sbFetchTable('cuentas'),
+        transacciones: await _sbFetchTable('transacciones'),
+        deudas: await _sbFetchTable('deudas'),
+        productos: await _sbFetchTable('productos')
+    };
+    if (!bundle.clientes && !bundle.cuentas && !bundle.transacciones && !bundle.deudas && !bundle.productos) return null;
+    return _sbNormalizeCoreBundle(bundle);
+}
+function _silberScheduleCoreRetry(reason) {
+    if (!_supabase || !_silberTableSyncEnabled) return;
+    _silberCoreSyncRetryPending = true;
+    if (_silberCoreRetryTimer) return;
+    silberWarn('[CORE_SYNC] modo fallback local; reintento en 5s (' + (reason || 'save error') + ')');
+    _silberCoreRetryTimer = setTimeout(function() {
+        _silberCoreRetryTimer = null;
+        if (!_silberCoreSyncRetryPending) return;
+        syncEstadoToCloud().then(function(ok) {
+            if (!ok) _silberScheduleCoreRetry('retry failed');
+        }).catch(function() {
+            _silberScheduleCoreRetry('retry exception');
+        });
+    }, 5000);
+}
+async function _silberBootstrapCoreTables() {
+    if (!_supabase) return false;
+    var bundle = await _sbFetchCoreBundle();
+    if (!bundle) return false;
+
+    // Migración inicial one-shot: cloud vacío -> subir estado local sin poda destructiva.
+    if (!_silberHasAnyRows(bundle)) {
+        _sbInfo('[CORE_SYNC] cloud vacío; iniciando migración local -> Supabase');
+        var migrated = await _syncCoreTablesFromEstado({ pruneMissing: false });
+        if (migrated) _sbInfo('[CORE_SYNC] migración inicial completada');
+        return false;
+    }
+
+    _isRemoteUpdate = true;
+    var changed = _sbApplyCoreBundleToEstado(bundle);
+    try { guardarEstado(); } catch (_) {}
+    _isRemoteUpdate = false;
+    if (changed) _sbInfo('[CORE_SYNC] LOAD OK (tablas)');
+    return changed;
 }
 function _sbApplyCoreBundleToEstado(bundle) {
     if (!bundle) return false;
@@ -323,26 +439,7 @@ function _sbApplyCoreBundleToEstado(bundle) {
     return changed;
 }
 async function _loadCoreTablesToEstado() {
-    if (!_supabase) return false;
-    var bundle = {
-        clientes: await _sbFetchTable('clientes'),
-        cuentas: await _sbFetchTable('cuentas'),
-        transacciones: await _sbFetchTable('transacciones'),
-        deudas: await _sbFetchTable('deudas'),
-        productos: await _sbFetchTable('productos')
-    };
-    if (!bundle.clientes && !bundle.cuentas && !bundle.transacciones && !bundle.deudas && !bundle.productos) return false;
-    bundle.clientes = bundle.clientes || [];
-    bundle.cuentas = bundle.cuentas || [];
-    bundle.transacciones = bundle.transacciones || [];
-    bundle.deudas = bundle.deudas || [];
-    bundle.productos = bundle.productos || [];
-    if (_sbIsCoreBundleEmpty(bundle)) return false;
-    _isRemoteUpdate = true;
-    var changed = _sbApplyCoreBundleToEstado(bundle);
-    try { guardarEstado(); } catch (_) {}
-    _isRemoteUpdate = false;
-    return changed;
+    return _silberBootstrapCoreTables();
 }
 function _scheduleCorePullFromRealtime() {
     if (_silberCorePullTimer) clearTimeout(_silberCorePullTimer);
@@ -593,7 +690,10 @@ async function syncEstadoToCloud() {
         // Modo primario por tablas core (clientes/cuentas/transacciones/deudas/productos).
         // localStorage ya quedó persistido por guardarEstado(); aquí sólo empujamos a cloud.
         var okCore = await _syncCoreTablesFromEstado();
-        if (!okCore) silberWarn('[CORE_SYNC] push falló, fallback local activo');
+        if (!okCore) {
+            silberWarn('[CORE_SYNC] push falló, fallback local activo');
+            _silberScheduleCoreRetry('push failed');
+        }
         return okCore;
     }
 
@@ -1285,5 +1385,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof validateEstado === 'function') validateEstado();
         }
         _setupRealtimeSync();
+    });
+
+    window.addEventListener('online', function() {
+        if (_silberCoreSyncRetryPending) {
+            _sbInfo('[CORE_SYNC] conexión restaurada; reintentando sincronización pendiente');
+            _silberScheduleCoreRetry('online');
+        }
     });
 });
