@@ -3,7 +3,7 @@
    Does NOT intercept Supabase API calls, CDN resources, or auth flows.
 */
 
-var CACHE = 'silber-v1';
+var CACHE = 'silber-v2';
 
 /* ── Install: cache the app shell ──────────────────────────── */
 self.addEventListener('install', function(e) {
@@ -78,8 +78,8 @@ self.addEventListener('push', function(event) {
     event.waitUntil(
         self.registration.showNotification(data.title || 'Silber Gestión', {
             body:    data.body    || '',
-            icon:    '/icon-192.png',
-            badge:   '/icon-192.png',
+            icon:    '/icons/icon-192.png',
+            badge:   '/icons/icon-192.png',
             data:    data.url    || '/',
             vibrate: [100, 50, 100]
         })
