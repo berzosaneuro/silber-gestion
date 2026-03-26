@@ -247,6 +247,21 @@ function cerrarMenu() {
     if (o) { o.classList.remove('active'); o.style.display = 'none'; }
 }
 
+function abrirOficinaView(viewId) {
+    var oficinaScreen = document.getElementById('screen-oficina');
+    if (!oficinaScreen) return;
+    var views = oficinaScreen.querySelectorAll('.oficina-view');
+    if (views && views.length) {
+        for (var i = 0; i < views.length; i++) views[i].style.display = 'none';
+    }
+    var target = document.getElementById(viewId || 'oficina-main');
+    if (target) target.style.display = 'block';
+
+    var fab = document.getElementById('oficina-fab-add-cliente');
+    if (fab) fab.style.display = (viewId === 'oficina-guia') ? 'none' : '';
+}
+if (typeof window !== 'undefined') window.abrirOficinaView = abrirOficinaView;
+
 // ===== GESTIÓN BIOMETRÍA EN OFICINA =====
 function actualizarEstadoBiometria() {
     const slots = [

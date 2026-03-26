@@ -896,6 +896,20 @@ select option { background:var(--bg-card); color:var(--text-primary); }
 .menu-item-text { font-size: 14px; font-weight: 600; letter-spacing: 0.2px; }
 .menu-item-icon { font-size: 20px; }
 
+.guia-container {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.guia-container h2 {
+  margin-bottom: 12px;
+}
+
+.guia-container h3 {
+  margin-top: 16px;
+  color: #ff6600;
+}
+
 /* ── FAB polish ───────────────────────────────────────────── */
 .fab { box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 12px rgba(0,229,255,0.2); }
 
