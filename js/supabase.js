@@ -2,6 +2,14 @@
    Sync opcional con Supabase. La fuente de verdad es localStorage (estado);
    si Supabase falla o no está configurado, la app sigue funcionando en local.
 */
+if (typeof window !== 'undefined') window.SILBER_DEBUG = true;
+function log() {
+    if (typeof window !== 'undefined' && window.SILBER_DEBUG && typeof console !== 'undefined' && console.log) {
+        console.log.apply(console, arguments);
+    }
+}
+if (typeof window !== 'undefined') window.log = log;
+
 // Supabase es opcional. Si no se inyecta URL/KEY, la app funciona 100% local sin ruido de red.
 var SUPABASE_URL = typeof window !== 'undefined' && window.SILBER_SUPABASE_URL ? window.SILBER_SUPABASE_URL : '';
 var SUPABASE_KEY = typeof window !== 'undefined' && window.SILBER_SUPABASE_KEY ? window.SILBER_SUPABASE_KEY : '';
@@ -11,6 +19,7 @@ try {
         _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
 } catch (e) { console.warn('Supabase no iniciado:', e); }
+if (typeof window !== 'undefined') window._supabase = _supabase;
 var _silberTableSyncEnabled = !!_supabase;
 var _silberCorePushInFlight = false;
 var _silberCorePullTimer = null;
@@ -23,6 +32,24 @@ function _sbInfo(msg, data) {
     if (typeof console === 'undefined' || !console.info) return;
     if (data !== undefined) console.info('[Silber]', msg, data);
     else console.info('[Silber]', msg);
+}
+function _sbGetCurrentUser(required) {
+    var currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('silber_sesion_activa') || 'null'); } catch (_) {}
+    if (!currentUser || !currentUser.usuario) {
+        console.error('No active user session');
+        if (required) throw new Error('User not logged in');
+        return null;
+    }
+    return currentUser;
+}
+function _sbNewId() {
+    try {
+        if (typeof crypto !== 'undefined' && crypto && typeof crypto.randomUUID === 'function') {
+            return crypto.randomUUID();
+        }
+    } catch (_) {}
+    return String(Date.now()) + '-' + Math.random().toString(16).slice(2);
 }
 
 // ===== DASHBOARD DESDE SUPABASE =====
@@ -74,7 +101,13 @@ function _sbWriteDbDeudasLocal(db) {
 async function _sbFetchTable(table) {
     if (!_supabase) return null;
     try {
-        var res = await _supabase.from(table).select('*');
+        var q = _supabase.from(table).select('*');
+        // Aislamiento por usuario para clientes (producción): cada user ve solo sus filas.
+        if (table === 'clientes') {
+            var cur = _sbGetCurrentUser(true);
+            q = q.eq('user_id', cur.usuario);
+        }
+        var res = await q;
         if (res.error) throw res.error;
         return Array.isArray(res.data) ? res.data : [];
     } catch (e) {
@@ -102,7 +135,13 @@ function _sbChunk(arr, size) {
 async function _sbDeleteMissingRows(table, key, nextIds) {
     if (!_supabase) return false;
     try {
-        var sel = await _supabase.from(table).select(key);
+        var selQ = _supabase.from(table).select(key);
+        var scopedUser = null;
+        if (table === 'clientes') {
+            scopedUser = _sbGetCurrentUser(true);
+            selQ = selQ.eq('user_id', scopedUser.usuario);
+        }
+        var sel = await selQ;
         if (sel.error) throw sel.error;
         var keep = {};
         (nextIds || []).forEach(function(id) { keep[String(id)] = true; });
@@ -112,7 +151,9 @@ async function _sbDeleteMissingRows(table, key, nextIds) {
         if (!toDelete.length) return true;
         var chunks = _sbChunk(toDelete, 250);
         for (var i = 0; i < chunks.length; i++) {
-            var delRes = await _supabase.from(table).delete().in(key, chunks[i]);
+            var delQ = _supabase.from(table).delete().in(key, chunks[i]);
+            if (table === 'clientes' && scopedUser) delQ = delQ.eq('user_id', scopedUser.usuario);
+            var delRes = await delQ;
             if (delRes.error) throw delRes.error;
         }
         return true;
@@ -125,6 +166,20 @@ async function _sbUpsertTableRows(table, key, rows, pruneMissing) {
     if (!_supabase) return false;
     try {
         var safeRows = Array.isArray(rows) ? rows : [];
+        if (safeRows.length) {
+            safeRows.forEach(function(r) {
+                if (!r) return;
+                if (!r[key]) r[key] = _sbNewId();
+            });
+        }
+        if (table === 'clientes' && safeRows.length) {
+            var cur = _sbGetCurrentUser(true);
+            safeRows = safeRows.map(function(r) {
+                var out = Object.assign({}, r);
+                out.user_id = cur.usuario;
+                return out;
+            });
+        }
         if (safeRows.length) {
             var upRes = await _supabase.from(table).upsert(safeRows, { onConflict: key });
             if (upRes.error) throw upRes.error;
@@ -167,9 +222,12 @@ function _sbMapCuentasRowsToEstado(rows) {
     return out;
 }
 function _sbBuildCoreRowsFromEstado() {
+    var curUser = null;
+    try { curUser = _sbGetCurrentUser(false); } catch (_) {}
     var clientes = (estado.clientes || []).map(function(c) {
         return {
-            id: String(c.id),
+            id: String(c.id || _sbNewId()),
+            user_id: curUser && curUser.usuario ? curUser.usuario : undefined,
             nombre: c.nombre || '',
             telefono: c.telefono || c.whatsapp || '',
             whatsapp: c.whatsapp || c.telefono || '',
@@ -187,7 +245,7 @@ function _sbBuildCoreRowsFromEstado() {
     var transacciones = [];
     (estado.gastosRegistros || []).forEach(function(r) {
         transacciones.push({
-            id: String(r.id != null ? r.id : (Date.now() + Math.random())),
+            id: String(r.id != null ? r.id : _sbNewId()),
             tipo: 'gasto',
             categoria: r.categoria || '',
             monto: _sbNum(r.monto, 0),
@@ -201,7 +259,7 @@ function _sbBuildCoreRowsFromEstado() {
     });
     (estado.ingresosRegistros || []).forEach(function(r) {
         transacciones.push({
-            id: String(r.id != null ? r.id : (Date.now() + Math.random())),
+            id: String(r.id != null ? r.id : _sbNewId()),
             tipo: 'ingreso',
             categoria: r.categoria || '',
             monto: _sbNum(r.monto, 0),
@@ -216,7 +274,7 @@ function _sbBuildCoreRowsFromEstado() {
     var db = _sbReadDbDeudasLocal();
     var deudas = (db.deudas || []).map(function(d) {
         return {
-            id: String(d.id != null ? d.id : (Date.now() + Math.random())),
+            id: String(d.id != null ? d.id : _sbNewId()),
             cliente_id: String(d.cliente_id || ''),
             producto: d.producto || '',
             cantidad: _sbNum(d.cantidad, 0),
@@ -228,7 +286,7 @@ function _sbBuildCoreRowsFromEstado() {
     });
     var productos = (estado.productos || []).map(function(p) {
         return {
-            id: String(p.id != null ? p.id : (Date.now() + Math.random())),
+            id: String(p.id != null ? p.id : _sbNewId()),
             nombre: p.nombre || '',
             precio_por_gramo: _sbNum(p.precio_por_gramo, 0),
             stock_gramos: _sbNum(p.stock_gramos, 0),
@@ -239,6 +297,15 @@ function _sbBuildCoreRowsFromEstado() {
     });
     return { clientes: clientes, cuentas: cuentas, transacciones: transacciones, deudas: deudas, productos: productos };
 }
+async function fetchClientes() {
+    if (!_supabase) return { data: [], error: null };
+    var currentUser = _sbGetCurrentUser(true);
+    return _supabase
+        .from('clientes')
+        .select('*')
+        .eq('user_id', currentUser.usuario);
+}
+if (typeof window !== 'undefined') window.fetchClientes = fetchClientes;
 async function _syncCoreTablesFromEstado(opts) {
     if (!_supabase) return false;
     if (_silberCorePushInFlight) return false;

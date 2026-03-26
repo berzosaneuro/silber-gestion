@@ -126,6 +126,98 @@ function _silberDebtForClient(cliente) {
     return Number((cliente && cliente.deuda) || 0) || 0;
 }
 
+function _silberSyncInfo(msg) {
+    try {
+        if (typeof _showSyncToast === 'function') _showSyncToast(msg || 'OK');
+    } catch (_) {}
+}
+function _silberSyncWarn(msg) {
+    try {
+        if (typeof _showSyncToast === 'function') _showSyncToast(msg || 'Error', 'warn');
+        else alert(msg || 'Error de sincronización');
+    } catch (_) {}
+}
+
+function _silberEnsureId(item) {
+    if (!item) return '';
+    if (item.id != null && String(item.id).trim() !== '') return String(item.id);
+    var id = '';
+    try {
+        if (typeof crypto !== 'undefined' && crypto && typeof crypto.randomUUID === 'function') {
+            id = crypto.randomUUID();
+        }
+    } catch (_) {}
+    if (!id) id = 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+    item.id = id;
+    return id;
+}
+
+function _silberCurrentUserOrThrow() {
+    var raw = null;
+    var currentUser = null;
+    try { raw = localStorage.getItem('silber_sesion_activa'); } catch (_) {}
+    try { currentUser = raw ? JSON.parse(raw) : null; } catch (_) { currentUser = null; }
+    if (!currentUser || !currentUser.usuario) {
+        console.error('No active user session');
+        throw new Error('User not logged in');
+    }
+    return currentUser;
+}
+
+async function _silberSyncClienteToSupabase(cliente) {
+    if (typeof window === 'undefined' || !window.__silberTableSyncEnabled || !_supabase) return;
+    var row = Object.assign({}, cliente || {});
+    log('[SYNC] START', row);
+    _silberEnsureId(row);
+    try {
+        var currentUser = _silberCurrentUserOrThrow();
+        row.user_id = String(currentUser.usuario);
+        row.id = String(row.id);
+        row.nombre = row.nombre || '';
+        row.telefono = row.telefono || row.whatsapp || '';
+        row.whatsapp = row.whatsapp || row.telefono || '';
+        row.limite = Number(row.limite || 0);
+        row.dia_pago = Number(row.diaPago || row.dia_pago || 1);
+        row.producto = row.producto || '';
+        row.deuda = Number(row.deuda || 0);
+        row.lat = row.lat != null ? Number(row.lat) : null;
+        row.lng = row.lng != null ? Number(row.lng) : null;
+        delete row.diaPago;
+        delete row.historial;
+    } catch (sessErr) {
+        console.error('[SYNC] EXCEPTION', sessErr);
+        _silberSyncWarn('Error sync ❌');
+        return;
+    }
+    try {
+        var up = await _supabase.from('clientes').upsert(row, { onConflict: 'id' }).select();
+        if (up.error) {
+            console.error('[SYNC] SUPABASE ERROR', up.error);
+            _silberSyncWarn('Error nube ❌');
+            return;
+        }
+        log('[SYNC] UPSERT OK', up.data);
+        var verify = await _supabase.from('clientes').select('*').eq('id', row.id).eq('user_id', row.user_id).single();
+        if (verify.error || !verify.data) {
+            console.error('[SYNC] VERIFY FAIL', verify.error);
+            _silberSyncWarn('No persistido ❌');
+            return;
+        }
+        log('[SYNC] VERIFY OK', verify.data);
+        _silberSyncInfo('Guardado nube ✅');
+        try {
+            window.__silberLastSyncCliente = {
+                id: row.id,
+                user_id: row.user_id,
+                ts: new Date().toISOString()
+            };
+        } catch (_) {}
+    } catch (e) {
+        console.error('[SYNC] EXCEPTION', e);
+        _silberSyncWarn('Error sync ❌');
+    }
+}
+
 function _silberBuildWhatsAppDebtMessage(cliente) {
     var nombre = (cliente && cliente.nombre) || 'cliente';
     var deuda = _silberDebtForClient(cliente).toFixed(2);
@@ -222,7 +314,8 @@ function guardarCliente() {
     var lngEl = document.getElementById('cliente-lng');
     var lat = latEl && latEl.value ? parseFloat(latEl.value) : undefined;
     var lng = lngEl && lngEl.value ? parseFloat(lngEl.value) : undefined;
-    var obj = { id: Date.now(), nombre, telefono, whatsapp: telefono, limite: limite || 0, diaPago: diaPago || 1, producto, deuda: 0, historial: [] };
+    var obj = { id: null, nombre, telefono, whatsapp: telefono, limite: limite || 0, diaPago: diaPago || 1, producto, deuda: 0, historial: [] };
+    _silberEnsureId(obj);
     if (lat != null && !isNaN(lat)) obj.lat = lat;
     if (lng != null && !isNaN(lng)) obj.lng = lng;
     estado.clientes.push(obj);
@@ -231,6 +324,7 @@ function guardarCliente() {
     cerrarModalNuevoCliente();
     guardarEstado();
     _silberSyncClientDataEverywhere(obj);
+    _silberSyncClienteToSupabase(obj);
     if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
     if (btn) { btn.disabled = false; btn.textContent = 'Crear Cliente'; }
 }
@@ -474,7 +568,8 @@ function altaClienteDeuda() {
     if (!nombre) { alert('El nombre es obligatorio'); return; }
     if (!_silberPhoneIsValid(telefono)) { alert('Teléfono inválido. Usa formato +346XXXXXXXX'); return; }
     const db = cargarDbDeudas();
-    const id = Date.now();
+    const tmp = { id: null };
+    const id = _silberEnsureId(tmp);
     db.clientes.push({ id, nombre, producto, limite_credito: limite, telefono, dia_pago: diaPago });
     db.historial.push({ fecha: new Date().toISOString().split('T')[0], accion: 'alta cliente', detalles: { id, nombre } });
     guardarDbDeudas(db);
@@ -483,6 +578,7 @@ function altaClienteDeuda() {
         var nuevoCli = { id, nombre, telefono: telefono, whatsapp: telefono, limite, diaPago, producto, deuda: 0, historial: [] };
         estado.clientes.push(nuevoCli);
         _silberSyncClientDataEverywhere(nuevoCli);
+        _silberSyncClienteToSupabase(nuevoCli);
         guardarEstado();
         renderizarClientes();
     }
