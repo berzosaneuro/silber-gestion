@@ -3109,3 +3109,155 @@ select option { background:var(--bg-card); color:var(--text-primary); }
   color: #BAE6FD;
   box-shadow: 0 4px 20px rgba(56, 189, 248, 0.18);
 }
+
+/* ============================================================
+   PREMIUM CONSISTENCY LAYER — controlled cyberpunk polish
+   Visual-only: no layout structure or logic changes.
+   ============================================================ */
+
+:root {
+  --ui-space-1: 8px;
+  --ui-space-2: 16px;
+  --ui-space-3: 24px;
+  --ui-radius-sm: 10px;
+  --ui-radius-md: 14px;
+  --ui-radius-lg: 18px;
+  --accent-blue: #38BDF8; /* secondary accent */
+}
+
+/* Consistency: radius + subtle depth */
+.btn,
+.menu-item,
+.cliente-card,
+.historial-item,
+.section-card,
+.summary-card,
+.settings-group {
+  border-radius: var(--ui-radius-md);
+}
+
+.section-card,
+.summary-card,
+.an-kpi-card,
+.ranking-item,
+.settings-group {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.28);
+}
+
+/* Controlled vibrancy on primary actions only */
+.btn-primary,
+.dcp-btn-primary,
+.btn.btn-primary {
+  background: linear-gradient(135deg, rgba(255, 126, 28, 0.32), rgba(255, 102, 0, 0.42));
+  border-color: rgba(255, 126, 28, 0.78);
+  color: #FFE7D2;
+  box-shadow:
+    0 0 0 1px rgba(255, 126, 28, 0.2),
+    0 5px 18px rgba(255, 102, 0, 0.24);
+}
+
+/* Secondary accent reserved for active controls */
+.period-btn.active,
+.tab-btn.active,
+.nav-item.active {
+  border-color: rgba(56, 189, 248, 0.52);
+  color: #BEEAFF;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.16);
+}
+
+/* Cyberpunk glow but subtle */
+.btn-primary:hover,
+.dcp-btn-primary:hover,
+.btn-primary:focus-visible,
+.dcp-btn-primary:focus-visible {
+  box-shadow:
+    0 0 0 1px rgba(255, 126, 28, 0.28),
+    0 0 14px rgba(255, 102, 0, 0.22),
+    0 6px 20px rgba(0, 0, 0, 0.28);
+}
+
+/* Micro-interactions + touch feedback */
+.btn,
+.menu-item,
+.cliente-card,
+.quick-amt-btn,
+.btn-whatsapp,
+.fab,
+.period-btn,
+.tab-btn,
+.nav-item {
+  transition:
+    transform 130ms ease-out,
+    box-shadow 150ms ease-out,
+    background 150ms ease-out,
+    border-color 150ms ease-out,
+    color 150ms ease-out,
+    opacity 130ms ease-out;
+}
+
+.btn:active,
+.menu-item:active,
+.quick-amt-btn:active,
+.btn-whatsapp:active,
+.fab:active,
+.period-btn:active,
+.tab-btn:active,
+.nav-item:active {
+  transform: scale(0.97);
+}
+
+/* Keep lists and screen transitions smooth/light */
+.screen { animation-duration: 180ms; }
+.cliente-card,
+.historial-item,
+.ranking-item,
+.an-kpi-card,
+.dashboard-card {
+  animation-duration: 200ms;
+}
+
+/* Hierarchy tuning */
+#res-total,
+#of-res-total,
+#res-hoy,
+#of-res-hoy,
+#res-clientes,
+#of-res-clientes,
+.stat-value,
+.cliente-deuda,
+.historial-monto,
+.kpi-value,
+.saldo-value,
+.saldo-valor {
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  text-shadow: 0 0 10px rgba(255, 126, 28, 0.2);
+}
+
+.section-title,
+.stat-label,
+.cliente-info,
+.historial-fecha,
+.settings-row-sub,
+.an-tools-row-sub {
+  color: rgba(148, 163, 184, 0.74);
+}
+
+/* Toast polish (clean and noticeable) */
+.silber-sync-toast .sst-pill {
+  border-radius: 999px;
+  padding: 8px 14px 8px 11px;
+}
+.silber-sync-toast--ok .sst-pill {
+  border-color: rgba(34, 197, 94, 0.5);
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.2);
+}
+.silber-sync-toast--warn .sst-pill {
+  border-color: rgba(239, 68, 68, 0.52);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.2);
+}
+.silber-sync-toast--info .sst-pill {
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 4px 18px rgba(56, 189, 248, 0.18);
+}
