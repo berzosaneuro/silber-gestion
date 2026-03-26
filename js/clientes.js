@@ -426,32 +426,66 @@ function abrirEditarCliente() {
     alert('✅ Cliente actualizado');
 }
 
-function eliminarClienteActual() {
+function eliminarCliente(id) {
     if (typeof esMaster === 'function' && !esMaster()) {
         alert('Solo Jefazo / Jefaza pueden eliminar clientes.');
-        return;
+        return false;
     }
-    var c = _silberGetClienteByCurrent();
-    if (!c) return;
-    if (!confirm('¿Eliminar cliente "' + c.nombre + '"? Esta acción no se puede deshacer.')) return;
+    if (id == null || id === '') return false;
+
+    console.log('[DELETE CLIENT]', id);
+
+    var current = (estado && estado.clientes ? estado.clientes : []).find(function(c) {
+        return String(c.id) === String(id);
+    }) || null;
+    var nombre = current && current.nombre ? current.nombre : '';
+    if (!confirm(nombre ? ('¿Eliminar cliente "' + nombre + '"?') : '¿Eliminar cliente?')) return false;
+
+    // 1) Persistencia directa solicitada: localStorage['clientes']
+    var clientesLS = [];
+    try {
+        var raw = localStorage.getItem('clientes');
+        var parsed = raw ? JSON.parse(raw) : null;
+        if (Array.isArray(parsed)) clientesLS = parsed;
+    } catch (_) {}
+    if (!clientesLS.length) clientesLS = (estado && Array.isArray(estado.clientes)) ? estado.clientes.slice() : [];
+    clientesLS = clientesLS.filter(function(c) { return String(c.id) !== String(id); });
+    try { localStorage.setItem('clientes', JSON.stringify(clientesLS)); } catch (_) {}
+
+    // 2) Estado principal
+    estado.clientes = (estado.clientes || []).filter(function(c) { return String(c.id) !== String(id); });
+
+    // 3) db_deudas relacionado
     var db = cargarDbDeudas();
-    db.clientes = (db.clientes || []).filter(function(x) { return String(x.id) !== String(c.id); });
-    db.deudas = (db.deudas || []).filter(function(x) { return String(x.cliente_id) !== String(c.id); });
+    db.clientes = (db.clientes || []).filter(function(x) { return String(x.id) !== String(id); });
+    db.deudas = (db.deudas || []).filter(function(x) { return String(x.cliente_id) !== String(id); });
     db.historial = (db.historial || []);
     db.historial.push({
         fecha: new Date().toISOString().split('T')[0],
         accion: 'cliente eliminado',
-        detalles: { id: c.id, nombre: c.nombre }
+        detalles: { id: id, nombre: nombre || '(sin nombre)' }
     });
     guardarDbDeudas(db);
-    estado.clientes = (estado.clientes || []).filter(function(x) { return String(x.id) !== String(c.id); });
+
     guardarEstado();
     if (typeof syncClientsToSupabase === 'function') syncClientsToSupabase();
-    cerrarModalDetalleCliente();
+
+    if (estado.clienteActual && String(estado.clienteActual.id) === String(id)) {
+        cerrarModalDetalleCliente();
+    }
+
     renderizarClientes();
     if (typeof renderizarOficina === 'function') renderizarOficina();
     if (typeof actualizarSaldos === 'function') actualizarSaldos();
-    alert('✅ Cliente eliminado');
+    if (typeof dibujarDonut === 'function') dibujarDonut();
+    return true;
+}
+
+function eliminarClienteActual() {
+    var c = _silberGetClienteByCurrent();
+    if (!c) return;
+    var ok = eliminarCliente(c.id);
+    if (ok) alert('✅ Cliente eliminado');
 }
 
 function cerrarModalDetalleCliente() {
