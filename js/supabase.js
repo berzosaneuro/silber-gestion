@@ -2,8 +2,9 @@
    Sync opcional con Supabase. La fuente de verdad es localStorage (estado);
    si Supabase falla o no está configurado, la app sigue funcionando en local.
 */
-var SUPABASE_URL = typeof window !== 'undefined' && window.SILBER_SUPABASE_URL ? window.SILBER_SUPABASE_URL : 'https://fhpcqsefxorncfzdkgkp.supabase.co';
-var SUPABASE_KEY = typeof window !== 'undefined' && window.SILBER_SUPABASE_KEY ? window.SILBER_SUPABASE_KEY : 'sb_publishable_rQCkGM1V4Yzc41J0QJ_hlg_HGO3ekmy';
+// Supabase es opcional. Si no se inyecta URL/KEY, la app funciona 100% local sin ruido de red.
+var SUPABASE_URL = typeof window !== 'undefined' && window.SILBER_SUPABASE_URL ? window.SILBER_SUPABASE_URL : '';
+var SUPABASE_KEY = typeof window !== 'undefined' && window.SILBER_SUPABASE_KEY ? window.SILBER_SUPABASE_KEY : '';
 var _supabase = null;
 try {
     if (typeof supabase !== 'undefined' && SUPABASE_URL && SUPABASE_KEY && SUPABASE_URL !== 'TU_URL_DE_SUPABASE') {

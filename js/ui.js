@@ -146,6 +146,13 @@ function cambiarPantalla(pantalla) {
         if (estado.historialPantallas[estado.historialPantallas.length - 1] !== pantalla) {
             estado.historialPantallas.push(pantalla);
         }
+        // Evita overlays "fantasma" que bloquean taps al navegar entre pantallas.
+        var activeModals = document.querySelectorAll('.modal-overlay.active');
+        if (activeModals && activeModals.length) {
+            for (var m = 0; m < activeModals.length; m++) activeModals[m].classList.remove('active');
+        }
+        var resetModal = document.getElementById('modal-reset-confirm');
+        if (resetModal && resetModal.style.display && resetModal.style.display !== 'none') resetModal.style.display = 'none';
         var screens = document.querySelectorAll('.screen');
         if (screens && screens.length) { for (var i = 0; i < screens.length; i++) { screens[i].classList.remove('active'); screens[i].style.display = 'none'; screens[i].style.visibility = 'hidden'; } }
         var target = document.getElementById('screen-' + pantalla);
