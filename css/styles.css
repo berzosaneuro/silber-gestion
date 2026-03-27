@@ -3347,3 +3347,198 @@ body {
 #modalCierreDia .modal-title { font-size: 17px; }
 #modalCierreDia .stat-label { font-size: 13px; }
 #modalCierreDia .stat-value { font-size: 16px; }
+
+/* ============================================================
+   LOGIN NATIVE-FULLSCREEN + FUTURISTIC BOOST (stable)
+   ============================================================ */
+
+#screen-login,
+#screen-login.active {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  min-height: var(--app-height) !important;
+  height: var(--app-height) !important;
+  max-height: var(--app-height) !important;
+  overflow: hidden !important;
+}
+
+.login-screen {
+  min-height: var(--app-height) !important;
+  height: var(--app-height) !important;
+  overflow: hidden !important;
+  padding-top: max(8px, env(safe-area-inset-top, 0px)) !important;
+  padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)) !important;
+}
+
+.login-wrap {
+  width: 100%;
+  max-width: min(430px, calc(100vw - 18px));
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-phone {
+  width: min(410px, calc(100vw - 14px));
+  max-width: 100%;
+  border-radius: 28px;
+  border: 2px solid rgba(0, 229, 255, 0.42);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.08),
+    inset 0 0 120px rgba(0,229,255,0.05),
+    0 20px 56px rgba(0,0,0,0.62),
+    0 0 58px rgba(0,229,255,0.20),
+    0 0 110px rgba(255,0,170,0.12);
+}
+
+.login-phone-inner {
+  gap: 22px;
+  padding: 18px 24px 24px;
+}
+
+.login-logo-box {
+  width: min(268px, 72vw);
+  height: min(268px, 72vw);
+  border: 2px solid rgba(0,229,255,0.48);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.08),
+    0 0 26px rgba(0,229,255,0.28),
+    0 0 80px rgba(0,229,255,0.15);
+}
+
+.login-logo-text {
+  text-shadow:
+    0 0 14px rgba(0,229,255,0.95),
+    0 0 40px rgba(0,229,255,0.35),
+    0 0 72px rgba(255,0,170,0.22);
+}
+
+.login-badge {
+  color: rgba(0,229,255,0.78);
+  letter-spacing: 3.5px;
+}
+
+.login-btn-primary {
+  background: linear-gradient(135deg, rgba(0, 250, 255, 0.36), rgba(0, 132, 255, 0.38)) !important;
+  border: 1px solid rgba(0, 250, 255, 0.7) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.24),
+    0 0 24px rgba(0,229,255,0.34),
+    0 8px 24px rgba(0,0,0,0.36) !important;
+}
+
+.login-btn-face {
+  border: 1px solid rgba(0,229,255,0.32) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 0 14px rgba(0,229,255,0.13),
+    0 4px 12px rgba(0,0,0,0.28) !important;
+}
+
+/* ============================================================
+   PASS 2 ULTRA FINO — Tipografía + ritmo visual
+   (solo ajuste de lectura y espaciado, sin lógica)
+   ============================================================ */
+
+:root {
+  --read-title: clamp(18px, 2.2vw, 22px);
+  --read-subtitle: clamp(15px, 1.9vw, 18px);
+  --read-body: clamp(13px, 1.55vw, 15px);
+  --read-meta: clamp(11px, 1.3vw, 12px);
+  --read-leading: 1.45;
+}
+
+body {
+  line-height: var(--read-leading);
+}
+
+.header-title,
+.app-header #headerTitle {
+  font-size: var(--read-subtitle);
+  letter-spacing: 1.1px;
+  line-height: 1.2;
+}
+
+.section-title,
+.settings-section-label {
+  font-size: var(--read-meta);
+  line-height: 1.35;
+}
+
+.modal-title {
+  font-size: var(--read-subtitle);
+  line-height: 1.25;
+}
+
+.input-label,
+.settings-row-sub,
+.cliente-info,
+.historial-fecha,
+.nav-label {
+  font-size: var(--read-meta);
+  line-height: 1.45;
+}
+
+.btn,
+.menu-item-text,
+.settings-row-text,
+.dash-quick-text,
+.input-field,
+.select-field,
+.textarea-field {
+  font-size: var(--read-body);
+  line-height: 1.35;
+}
+
+/* Ritmo visual */
+#screen-dashboard .dashboard-content {
+  gap: 18px;
+}
+
+#screen-dashboard .summary-grid {
+  gap: 12px;
+}
+
+#screen-dashboard .dash-quick-actions {
+  gap: 12px;
+}
+
+#screen-dashboard .dash-quick-btn {
+  min-height: 90px;
+  padding: 12px 10px;
+}
+
+#screen-dashboard .dashboard-content,
+#screen-oficina .content-section,
+#screen-config .content-section {
+  padding-left: 22px !important;
+  padding-right: 22px !important;
+}
+
+#screen-oficina .section-card,
+#screen-config .settings-group,
+#screen-config .section-card {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 380px) {
+  .btn,
+  .menu-item-text,
+  .settings-row-text,
+  .dash-quick-text,
+  .input-field,
+  .select-field,
+  .textarea-field {
+    font-size: 13px;
+  }
+}
+
+@media (min-width: 1024px) {
+  #screen-dashboard .dashboard-content,
+  #screen-oficina .content-section,
+  #screen-config .content-section {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+}

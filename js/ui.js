@@ -105,11 +105,8 @@ function guardarEditarProducto() {
         if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'PRICE_TABLE_EDIT', details: 'Editó producto: ' + cat + ' (precio/gramaje/stock)' });
         if (typeof notifyOtherMaster === 'function') notifyOtherMaster('Cambió la tabla de precios');
     };
-    if (typeof requireMasterBiometric === 'function') {
-        requireMasterBiometric(function(ok) { if (ok) doSave(); else alert('Verificación cancelada.'); });
-    } else {
-        doSave();
-    }
+    // Sin bloqueo biométrico aquí: evita frenar ajustes rápidos de stock en operación diaria.
+    doSave();
 }
 
 // Stubs legacy: no-op. La edición/borrado de precios se hace con abrirEditarProducto (modal).
@@ -141,7 +138,33 @@ function renderizarListaStock() {
 
 function cambiarPantalla(pantalla) {
     try {
+        var SCREEN_TO_NAV = {
+            dashboard: 'dashboard',
+            gastos: 'gastos',
+            ingresos: 'ingresos',
+            deuda: 'oficina',
+            oficina: 'oficina',
+            cuentas: 'oficina',
+            transferencias: 'oficina',
+            gorriones: 'oficina',
+            timeline: 'oficina',
+            metricas: 'oficina',
+            stock: 'oficina',
+            productos: 'oficina',
+            'tabla-precios': 'oficina',
+            analytics: 'oficina',
+            config: 'oficina',
+            llegadas: 'oficina'
+        };
         if (typeof estado === 'undefined') { estado = (typeof window !== 'undefined' && window.estado) ? window.estado : { historialPantallas: ['dashboard'] }; }
+        // Blindaje de permisos: gorriones no pueden abrir módulo stock ni subpantallas asociadas.
+        if (typeof esGorrion === 'function' && esGorrion()) {
+            var stockBlocked = pantalla === 'stock' || pantalla === 'productos' || pantalla === 'tabla-precios';
+            if (stockBlocked) {
+                if (typeof mostrarToast === 'function') mostrarToast('Acceso solo para admins', 'error');
+                pantalla = 'oficina';
+            }
+        }
         if (!estado.historialPantallas || !estado.historialPantallas.length) estado.historialPantallas = ['dashboard'];
         if (estado.historialPantallas[estado.historialPantallas.length - 1] !== pantalla) {
             estado.historialPantallas.push(pantalla);
@@ -166,14 +189,60 @@ function cambiarPantalla(pantalla) {
         }
         var navItems = document.querySelectorAll('.nav-item');
         if (navItems && navItems.length) { for (var j = 0; j < navItems.length; j++) { navItems[j].classList.remove('active'); } }
-        var navItem = document.querySelector('.nav-item[data-screen="' + pantalla + '"]');
+        var navTarget = SCREEN_TO_NAV[pantalla] || pantalla;
+        var navItem = document.querySelector('.nav-item[data-screen="' + navTarget + '"]');
         if (navItem) navItem.classList.add('active');
+        var dsbItems = document.querySelectorAll('.dsb-item');
+        if (dsbItems && dsbItems.length) {
+            for (var d = 0; d < dsbItems.length; d++) dsbItems[d].classList.remove('active');
+        }
+        var dsbItem = document.querySelector('.dsb-item[data-screen="' + (pantalla === 'deuda' ? 'deuda' : (pantalla === 'stock' || pantalla === 'productos' || pantalla === 'tabla-precios' ? 'stock' : (pantalla === 'config' ? 'config' : (pantalla === 'dashboard' ? 'dashboard' : (pantalla === 'gastos' ? 'gastos' : (pantalla === 'ingresos' ? 'ingresos' : (pantalla === 'llegadas' ? 'llegadas' : (pantalla === 'analytics' ? 'analytics' : 'oficina')))))))) + '"]');
+        if (dsbItem) dsbItem.classList.add('active');
         var backBtn = document.getElementById('backBtn');
         if (backBtn) backBtn.classList.toggle('visible', pantalla !== 'dashboard');
+        var titleMap = {
+            dashboard: 'Inicio · Silber Gestión',
+            gastos: 'Gastos · Nuevo registro',
+            ingresos: 'Ingresos · Nuevo registro',
+            deuda: 'Clientes · Deudas',
+            oficina: 'Oficina · Operaciones',
+            stock: 'STOCK',
+            config: 'Herramientas',
+            analytics: 'Analíticas',
+            llegadas: 'Llegadas',
+            cuentas: 'Cuentas',
+            transferencias: 'Transferencias',
+            productos: 'Productos',
+            gorriones: 'Trabajadores',
+            'tabla-precios': 'Tabla de precios'
+        };
+        var headerTitle = document.getElementById('headerTitle');
+        if (headerTitle) headerTitle.textContent = titleMap[pantalla] || 'SILBER GESTIÓN';
         var menuOverlay = document.getElementById('menuOverlay');
         if (menuOverlay) { menuOverlay.classList.remove('active'); menuOverlay.style.display = 'none'; }
         cerrarMenu();
-        if (pantalla === 'oficina' && typeof actualizarEstadoBiometria === 'function') { try { actualizarEstadoBiometria(); } catch (e) {} }
+        if (pantalla === 'oficina') {
+            if (typeof actualizarEstadoBiometria === 'function') { try { actualizarEstadoBiometria(); } catch (e) {} }
+            if (typeof abrirOficinaView === 'function') { try { abrirOficinaView('oficina-main'); } catch (e) {} }
+            var guia = document.querySelector('#oficina-guia .guia-container');
+            if (guia) {
+                var txt = (guia.textContent || '').replace(/\s+/g, '').trim();
+                if (!txt || txt.length < 20) {
+                    guia.innerHTML = ''
+                        + '<button class="btn btn-secondary" onclick="abrirOficinaView(\'oficina-main\')" style="margin-bottom:12px;">← Volver</button>'
+                        + '<h2>🏢 Oficina - Guía</h2>'
+                        + '<h3>💰 Caja</h3><p>Registrar ingresos y gastos, y ver tu balance al instante.</p>'
+                        + '<h3>👥 Clientes</h3><p>Crear, editar y gestionar clientes de forma rápida.</p>'
+                        + '<h3>💳 Deudas</h3><p>Controlar deudas, abonos y pagos parciales.</p>'
+                        + '<h3>🏦 Cuentas</h3><p>Gestión de dinero por origen.</p>'
+                        + '<h3>📦 Stock</h3><p>Control de productos e inventario.</p>'
+                        + '<h3>👷 Trabajadores</h3><p>Usuarios operativos de la app.</p>'
+                        + '<h3>📊 Dashboard</h3><p>Resumen general del negocio.</p>'
+                        + '<h3>🔄 Sync</h3><p>Guardado automático y multi-dispositivo.</p>'
+                        + '<h3>📱 App</h3><p>Instalable como app móvil para usarla como nativa.</p>';
+                }
+            }
+        }
         if (pantalla === 'gastos' && typeof renderizarDesgloseGastos === 'function') { try { renderizarDesgloseGastos(); } catch (e) {} }
         if (pantalla === 'ingresos' && typeof renderizarDesgloseIngresos === 'function') { try { renderizarDesgloseIngresos(); } catch (e) {} }
         if (pantalla === 'transferencias' && typeof renderizarHistorialTransferencias === 'function') { try { renderizarHistorialTransferencias(); } catch (e) {} }
@@ -215,6 +284,24 @@ function cambiarPantalla(pantalla) {
 
 function volverAtras() {
     try {
+        var SCREEN_TO_NAV = {
+            dashboard: 'dashboard',
+            gastos: 'gastos',
+            ingresos: 'ingresos',
+            deuda: 'oficina',
+            oficina: 'oficina',
+            cuentas: 'oficina',
+            transferencias: 'oficina',
+            gorriones: 'oficina',
+            timeline: 'oficina',
+            metricas: 'oficina',
+            stock: 'oficina',
+            productos: 'oficina',
+            'tabla-precios': 'oficina',
+            analytics: 'oficina',
+            config: 'oficina',
+            llegadas: 'oficina'
+        };
         var loginEl = document.getElementById('screen-login');
         if (loginEl && loginEl.classList.contains('active')) return;
         if (typeof estado === 'undefined' || !estado.historialPantallas || estado.historialPantallas.length <= 1) return;
@@ -226,8 +313,15 @@ function volverAtras() {
         if (prevScreen) { prevScreen.classList.add('active'); prevScreen.style.display = 'block'; prevScreen.style.visibility = 'visible'; }
         var navItems = document.querySelectorAll('.nav-item');
         if (navItems && navItems.length) { for (var j = 0; j < navItems.length; j++) { navItems[j].classList.remove('active'); } }
-        var navItem = document.querySelector('.nav-item[data-screen="' + anterior + '"]');
+        var navTarget = SCREEN_TO_NAV[anterior] || anterior;
+        var navItem = document.querySelector('.nav-item[data-screen="' + navTarget + '"]');
         if (navItem) navItem.classList.add('active');
+        var dsbItems = document.querySelectorAll('.dsb-item');
+        if (dsbItems && dsbItems.length) {
+            for (var d = 0; d < dsbItems.length; d++) dsbItems[d].classList.remove('active');
+        }
+        var dsbItem = document.querySelector('.dsb-item[data-screen="' + (anterior === 'deuda' ? 'deuda' : (anterior === 'stock' || anterior === 'productos' || anterior === 'tabla-precios' ? 'stock' : (anterior === 'config' ? 'config' : (anterior === 'dashboard' ? 'dashboard' : (anterior === 'gastos' ? 'gastos' : (anterior === 'ingresos' ? 'ingresos' : (anterior === 'llegadas' ? 'llegadas' : (anterior === 'analytics' ? 'analytics' : 'oficina')))))))) + '"]');
+        if (dsbItem) dsbItem.classList.add('active');
         var backBtn = document.getElementById('backBtn');
         if (backBtn) backBtn.classList.toggle('visible', anterior !== 'dashboard');
         cerrarMenu();
@@ -250,15 +344,37 @@ function cerrarMenu() {
 function abrirOficinaView(viewId) {
     var oficinaScreen = document.getElementById('screen-oficina');
     if (!oficinaScreen) return;
+    var targetView = viewId || 'oficina-main';
     var views = oficinaScreen.querySelectorAll('.oficina-view');
     if (views && views.length) {
         for (var i = 0; i < views.length; i++) views[i].style.display = 'none';
     }
-    var target = document.getElementById(viewId || 'oficina-main');
-    if (target) target.style.display = (viewId === 'oficina-guia') ? 'flex' : 'block';
+    var target = document.getElementById(targetView);
+    if (target) target.style.display = (targetView === 'oficina-guia') ? 'flex' : 'block';
 
     var fab = document.getElementById('oficina-fab-add-cliente');
-    if (fab) fab.style.display = (viewId === 'oficina-guia') ? 'none' : '';
+    if (fab) fab.style.display = (targetView === 'oficina-guia') ? 'none' : '';
+
+    if (targetView === 'oficina-guia') {
+        var guia = document.querySelector('#oficina-guia .guia-container');
+        if (guia) {
+            var txt = (guia.textContent || '').replace(/\s+/g, '').trim();
+            if (!txt || txt.length < 20) {
+                guia.innerHTML = ''
+                    + '<button class="btn btn-secondary" onclick="abrirOficinaView(\'oficina-main\')" style="margin-bottom:12px;">← Volver</button>'
+                    + '<h2>🏢 Oficina - Guía</h2>'
+                    + '<h3>💰 Caja</h3><p>Registrar ingresos, gastos y ver balance.</p>'
+                    + '<h3>👥 Clientes</h3><p>Crear, editar y gestionar clientes.</p>'
+                    + '<h3>💳 Deudas</h3><p>Control de créditos y pagos parciales.</p>'
+                    + '<h3>🏦 Cuentas</h3><p>Gestión de dinero por origen.</p>'
+                    + '<h3>📦 Stock</h3><p>Control de productos e inventario.</p>'
+                    + '<h3>👷 Trabajadores</h3><p>Usuarios operativos de la app.</p>'
+                    + '<h3>📊 Dashboard</h3><p>Resumen general del negocio.</p>'
+                    + '<h3>🔄 Sync</h3><p>Guardado automático y multi-dispositivo.</p>'
+                    + '<h3>📱 App</h3><p>Instalable como aplicación móvil.</p>';
+            }
+        }
+    }
 }
 if (typeof window !== 'undefined') window.abrirOficinaView = abrirOficinaView;
 
@@ -375,6 +491,30 @@ function cerrarModalBiometria() {
     const msgEl = document.getElementById('bio-modal-msg');
     if (msgEl) msgEl.style.color = 'var(--text-secondary)';
 }
+
+function desactivarBiometriaSesionActual() {
+    try {
+        localStorage.removeItem('silber_biometric_creds');
+        localStorage.removeItem('silber_webauthn_id');
+        localStorage.removeItem('silber_webauthn_id_2');
+        localStorage.setItem('silber_biometric_enabled', '0');
+        if (typeof mostrarToast === 'function') mostrarToast('✅ PIN/biometría desactivado para esta sesión', 'info');
+        else alert('PIN/biometría desactivado');
+        if (typeof actualizarEstadoBiometria === 'function') actualizarEstadoBiometria();
+        console.log('[BIO] desactivada manualmente por usuario');
+    } catch (e) {
+        console.warn('[BIO] no se pudo desactivar:', e);
+    }
+}
+if (typeof window !== 'undefined') window.desactivarBiometriaSesionActual = desactivarBiometriaSesionActual;
+document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('btn-disable-bio');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+        if (!confirm('¿Desactivar PIN/biometría para esta cuenta en este dispositivo?')) return;
+        desactivarBiometriaSesionActual();
+    });
+});
 
 let _gestorTipo = 'gasto'; // 'gasto' | 'ingreso'
 let _editCatIdx = null;
@@ -535,9 +675,15 @@ async function _ejecutarDelete() {
     }
 
     const credGuardadas = localStorage.getItem('silber_biometric_creds');
+    var sesionActiva = null;
+    var sesionBio = null;
+    try { sesionActiva = JSON.parse(localStorage.getItem('silber_sesion_activa') || 'null'); } catch (_) {}
+    try { sesionBio = credGuardadas ? JSON.parse(credGuardadas) : null; } catch (_) {}
+    var sameUser = !!(sesionActiva && sesionBio && sesionActiva.usuario && sesionBio.usuario && String(sesionActiva.usuario) === String(sesionBio.usuario));
 
-    // Si hay sesión guardada, pedir biometría. Si no, ejecutar directo.
-    if (credGuardadas && window.PublicKeyCredential) {
+    // Solo pedir biometría si corresponde al usuario activo.
+    var biometricEnabled = localStorage.getItem('silber_biometric_enabled') === '1';
+    if (biometricEnabled && credGuardadas && sameUser && window.PublicKeyCredential) {
         const ok = await autenticarBiometria();
         if (!ok) {
             // Biometría fallida o cancelada — NO borrar

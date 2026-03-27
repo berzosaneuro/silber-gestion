@@ -220,9 +220,8 @@ function getDiaData(offset) {
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ── No restaurar sesión al cargar: siempre mostrar login primero (evita pantalla en blanco) ──
-    // Si quieres "recordar sesión" en el futuro, descomenta el bloque restaurarSesion y elimina el clear:
-    try { localStorage.removeItem('silber_sesion_activa'); } catch(e) {}
+    // Mantener sesión activa entre recargas (no limpiar silber_sesion_activa aquí).
+    // Se evita pedir re-login innecesario y permite que el estado/sync sea estable.
     try { document.body.classList.add('login-visible'); } catch(e) {}
 
     function initCanvas() {

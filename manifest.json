@@ -1,6 +1,6 @@
 {
-  "name": "Silber App",
-  "short_name": "Silber",
+  "name": "Silber Gestion",
+  "short_name": "Silber Gestion",
   "description": "Gestión financiera y de stock",
   "start_url": "/",
   "display": "standalone",
