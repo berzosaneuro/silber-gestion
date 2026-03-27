@@ -295,13 +295,37 @@ function resetSuave() {
 
     /* 4 — Refrescar UI */
     try {
+        // Limpiar contenedores del dashboard para evitar que quede HTML stale visible.
+        var dg = document.getElementById('desglose-gastos');
+        if (dg) dg.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;text-align:center;padding:12px 0;">Sin gastos registrados hoy</div>';
+        var di = document.getElementById('desglose-ingresos');
+        if (di) di.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;text-align:center;padding:12px 0;">Sin ingresos registrados hoy</div>';
+        var rl = document.getElementById('ranking-list');
+        if (rl) rl.innerHTML = '';
+
         if (typeof actualizarSaldos === 'function')          actualizarSaldos();
         if (typeof dibujarDonut === 'function')              dibujarDonut();
+        if (typeof renderizarDesgloseGastos === 'function')  renderizarDesgloseGastos();
+        if (typeof renderizarDesgloseIngresos === 'function') renderizarDesgloseIngresos();
+        if (typeof renderizarRanking === 'function')         renderizarRanking();
         if (typeof renderizarClientes === 'function')        renderizarClientes();
         if (typeof renderizarTablaPrecios === 'function')    renderizarTablaPrecios();
+        if (typeof renderProductos === 'function')           renderProductos();
+        if (typeof renderDashboardProductosAlerta === 'function') renderDashboardProductosAlerta();
         if (typeof actualizarTimeMachine === 'function')     actualizarTimeMachine();
         if (typeof renderizarCategoriasGastos === 'function')    renderizarCategoriasGastos();
         if (typeof renderizarCategoriasIngresos === 'function') renderizarCategoriasIngresos();
+
+        // Refresco extra tras microtask para neutralizar renders asíncronos pendientes.
+        setTimeout(function() {
+            try {
+                if (typeof actualizarSaldos === 'function') actualizarSaldos();
+                if (typeof dibujarDonut === 'function') dibujarDonut();
+                if (typeof renderizarDesgloseGastos === 'function') renderizarDesgloseGastos();
+                if (typeof renderizarDesgloseIngresos === 'function') renderizarDesgloseIngresos();
+                if (typeof renderizarRanking === 'function') renderizarRanking();
+            } catch (e2) { console.warn('[RESET] Error en refresco diferido:', e2); }
+        }, 80);
     } catch (e) { console.warn('[RESET] Error re-renderizando UI:', e); }
 
     /* 5 — Cerrar modal y mostrar confirmación */
