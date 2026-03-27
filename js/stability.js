@@ -302,3 +302,144 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 0);
 
 });
+
+// ─────────────────────────────────────────────
+// 8. VIEWPORT + SCROLL ROOT DIAGNOSTICS (PROD)
+// ─────────────────────────────────────────────
+(function initViewportAndScrollDiagnostics() {
+    function _setAppHeightVar() {
+        try {
+            var h = window.innerHeight || document.documentElement.clientHeight || 0;
+            if (h > 0) document.documentElement.style.setProperty('--app-height', h + 'px');
+        } catch (e) {
+            silberWarn('viewport --app-height update error:', e);
+        }
+    }
+
+    function _lockRootLayout() {
+        var nodes = [document.documentElement, document.body, document.querySelector('.app-container')];
+        nodes.forEach(function(node) {
+            if (!node) return;
+            node.style.overflow = 'hidden';
+            node.style.overscrollBehavior = 'none';
+            node.style.height = 'var(--app-height)';
+            node.style.minHeight = 'var(--app-height)';
+            node.style.maxHeight = 'var(--app-height)';
+        });
+        if (document.body) {
+            document.body.style.position = 'fixed';
+            document.body.style.top = '0';
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.bottom = '0';
+            document.body.style.width = '100%';
+        }
+    }
+
+    function _getActiveScreen() {
+        return document.querySelector('.screen.active');
+    }
+
+    function _installSingleScrollContainer() {
+        var screens = document.querySelectorAll('.screen');
+        screens.forEach(function(screen) {
+            if (!screen) return;
+            var isActive = screen.classList.contains('active');
+            screen.style.overflowY = isActive ? 'auto' : 'hidden';
+            screen.style.overscrollBehavior = 'contain';
+            screen.style.webkitOverflowScrolling = 'touch';
+        });
+    }
+
+    function _collectScrollableElements() {
+        var all = Array.prototype.slice.call(document.querySelectorAll('*'));
+        var rows = [];
+        all.forEach(function(el) {
+            try {
+                var cs = window.getComputedStyle(el);
+                var oy = cs.overflowY;
+                var canScrollByStyle = oy === 'auto' || oy === 'scroll';
+                var canScrollBySize = el.scrollHeight > (el.clientHeight + 1);
+                if (canScrollByStyle && canScrollBySize) {
+                    rows.push({
+                        el: el,
+                        id: el.id || '',
+                        cls: (el.className && typeof el.className === 'string') ? el.className : '',
+                        oy: oy,
+                        h: el.clientHeight,
+                        sh: el.scrollHeight
+                    });
+                }
+            } catch (_) {}
+        });
+        return rows;
+    }
+
+    function _isModalNode(el) {
+        if (!el) return false;
+        if (el.classList && el.classList.contains('modal-overlay')) return true;
+        if (el.closest && el.closest('.modal-overlay')) return true;
+        return false;
+    }
+
+    function _logScrollDiagnostics() {
+        try {
+            var active = _getActiveScreen();
+            var list = _collectScrollableElements();
+            var layoutScrollables = list.filter(function(r) {
+                if (_isModalNode(r.el)) return false; // modals are allowed temporary scroll zones
+                if (r.el === document.body || r.el === document.documentElement) return true;
+                return true;
+            });
+            var activeInList = active
+                ? layoutScrollables.filter(function(r) { return r.el === active; }).length > 0
+                : false;
+            var extras = layoutScrollables.filter(function(r) { return !active || r.el !== active; });
+
+            console.log('[SCROLL_DIAG] activeScreen=', active ? ('#' + active.id) : '(none)');
+            console.log('[SCROLL_DIAG] scrollables(layout)=', layoutScrollables.map(function(r) {
+                return {
+                    id: r.id,
+                    className: r.cls,
+                    overflowY: r.oy,
+                    clientHeight: r.h,
+                    scrollHeight: r.sh
+                };
+            }));
+            console.log('[HEIGHT_DIAG]', {
+                innerHeight: window.innerHeight,
+                bodyClientHeight: document.body ? document.body.clientHeight : null,
+                appHeightVar: getComputedStyle(document.documentElement).getPropertyValue('--app-height').trim()
+            });
+
+            if (!activeInList || extras.length > 0) {
+                silberWarn('Scroll root mismatch detected — enforcing single active screen scroll container.');
+                _installSingleScrollContainer();
+            }
+        } catch (e) {
+            silberWarn('scroll diagnostics error:', e);
+        }
+    }
+
+    function _run() {
+        _setAppHeightVar();
+        _lockRootLayout();
+        _installSingleScrollContainer();
+        _logScrollDiagnostics();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        _run();
+        setTimeout(_run, 120);
+    });
+    window.addEventListener('resize', _run, { passive: true });
+    window.addEventListener('orientationchange', function() {
+        setTimeout(_run, 60);
+        setTimeout(_run, 220);
+    });
+
+    // Re-check after screen navigation changes classes/styles
+    setInterval(function() {
+        _installSingleScrollContainer();
+    }, 1200);
+})();

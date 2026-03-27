@@ -31,6 +31,11 @@ body {
   background-size: 32px 32px !important;
 }
 
+/* Keep root layout native-like: never transform primary layout containers. */
+html, body, .app-container {
+  transform: none !important;
+}
+
 /* ── 2. Typography — Orbitron on titles ─────────────────── */
 .section-title,
 .modal-title,
@@ -376,7 +381,7 @@ body::before {
 /* ── 21. 3D card tilt (CSS base — JS enhances on desktop) ── */
 .section-card {
   transform-style: preserve-3d;
-  transition: transform .35s cubic-bezier(.17,.67,.35,1.1), border-color .25s, box-shadow .25s !important;
+  transition: border-color .25s, box-shadow .25s !important;
   will-change: transform;
 }
 /* .cp-tilt class added by JS on mousemove */
@@ -389,7 +394,7 @@ body::before {
 /* Static tilt hint on hover (mobile-safe fallback) */
 @media (hover: hover) {
   .section-card:hover {
-    transform: perspective(700px) rotateX(-2deg) rotateY(1.5deg) translateZ(6px) !important;
+    transform: none !important;
   }
 }
 
@@ -397,7 +402,7 @@ body::before {
 
 /* FAB 3D */
 .fab {
-  transform: translateY(-3px) !important;
+  transform: none !important;
   box-shadow:
     0 5px 0 rgba(0,70,110,.8),
     0 8px 0 rgba(0,50,80,.5),
@@ -406,7 +411,7 @@ body::before {
   animation: none !important;
 }
 .fab:active {
-  transform: translateY(2px) !important;
+  transform: scale(0.98) !important;
   box-shadow: 0 2px 0 rgba(0,70,110,.8), 0 4px 10px rgba(0,229,255,.15) !important;
 }
 
@@ -460,7 +465,7 @@ body::before {
 
 /* ── 25. 3D nav active lift ──────────────────────────────── */
 .nav-item.active {
-  transform: translateY(-1px);
+  transform: none;
 }
 
 /* ── 26. Depth shadow on section-card header bar ─────────── */
