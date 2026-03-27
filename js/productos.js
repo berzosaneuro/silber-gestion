@@ -5,7 +5,9 @@ function getProductos() {
 }
 
 function getProductoById(id) {
-    return (estado.productos || []).find(function(p) { return p.id === id; });
+    return (estado.productos || []).find(function(p) {
+        return String(p.id) === String(id);
+    });
 }
 
 function recordStockMovement(productoIdOrName, tipo, cantidad_gramos, usuario) {
@@ -183,7 +185,7 @@ function abrirNuevoProductoModal() {
 function abrirEditarProductoModal(id) {
     var p = getProductoById(id);
     if (!p) return;
-    _productoEditId = id;
+    _productoEditId = p.id;
     document.getElementById('form-producto-nombre').value = p.nombre || '';
     document.getElementById('form-producto-precio-gramo').value = p.precio_por_gramo != null ? p.precio_por_gramo : '';
     document.getElementById('form-producto-stock-inicial').value = p.stock_gramos != null ? p.stock_gramos : '';
@@ -225,7 +227,7 @@ var _productoAjusteId = null;
 function abrirAjustarStockModal(id) {
     var p = getProductoById(id);
     if (!p) return;
-    _productoAjusteId = id;
+    _productoAjusteId = p.id;
     document.getElementById('ajuste-producto-nombre').textContent = p.nombre;
     document.getElementById('ajuste-cantidad').value = '';
     document.getElementById('ajuste-tipo').value = 'ajuste';
@@ -252,7 +254,7 @@ var _productoVentaId = null;
 function abrirVentaGramosModal(id) {
     var p = getProductoById(id);
     if (!p) return;
-    _productoVentaId = id;
+    _productoVentaId = p.id;
     document.getElementById('venta-producto-nombre').textContent = p.nombre;
     document.getElementById('venta-precio-gramo').textContent = p.precio_por_gramo != null ? p.precio_por_gramo.toFixed(2) + '€/g' : '—';
     document.getElementById('venta-stock-actual').textContent = (p.stock_gramos != null ? p.stock_gramos.toFixed(0) : '0') + ' g';

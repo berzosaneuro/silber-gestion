@@ -105,11 +105,8 @@ function guardarEditarProducto() {
         if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'PRICE_TABLE_EDIT', details: 'Editó producto: ' + cat + ' (precio/gramaje/stock)' });
         if (typeof notifyOtherMaster === 'function') notifyOtherMaster('Cambió la tabla de precios');
     };
-    if (typeof requireMasterBiometric === 'function') {
-        requireMasterBiometric(function(ok) { if (ok) doSave(); else alert('Verificación cancelada.'); });
-    } else {
-        doSave();
-    }
+    // Sin bloqueo biométrico aquí: evita frenar ajustes rápidos de stock en operación diaria.
+    doSave();
 }
 
 // Stubs legacy: no-op. La edición/borrado de precios se hace con abrirEditarProducto (modal).
