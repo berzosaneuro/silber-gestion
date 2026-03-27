@@ -5,6 +5,7 @@ function intentarLogin() {
     function showErr(msg) {
         if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; errEl.style.visibility = 'visible'; }
         try { alert(msg); } catch (_) {}
+        try { console.warn('[LOGIN] Error:', msg); } catch (_) {}
     }
     try {
         if (typeof USUARIOS === 'undefined') {
@@ -16,6 +17,7 @@ function intentarLogin() {
         var uRaw = (uEl && uEl.value) ? String(uEl.value).trim() : '';
         var p = (pEl && pEl.value) ? String(pEl.value).trim() : '';
         if (errEl) errEl.style.display = 'none';
+        try { console.log('[LOGIN] Intento', { usuario: uRaw || '(vacío)' }); } catch (_) {}
 
         if (!uRaw || !p) {
             showErr('Introduce usuario y contraseña');
@@ -27,6 +29,12 @@ function intentarLogin() {
         if (user) {
             sesionActual = { usuario: user.username, rol: user.role };
             if (typeof window._silberDebug === 'function') window._silberDebug('login-success', user.username);
+            try {
+                localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual));
+                console.log('[LOGIN] OK', { usuario: user.username, rol: user.role, origen: 'USUARIOS' });
+            } catch (storageErr) {
+                console.warn('[LOGIN] No se pudo guardar sesión en localStorage:', storageErr);
+            }
             entrarApp();
             return;
         }
@@ -36,6 +44,12 @@ function intentarLogin() {
         if (gIdx !== -1) {
             var g = gorriones[gIdx];
             sesionActual = { usuario: g.usuario, rol: 'WORKER', gorrionIdx: gIdx, nombre: g.nombre, numero: g.numero };
+            try {
+                localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual));
+                console.log('[LOGIN] OK', { usuario: g.usuario, rol: 'WORKER', origen: 'GORRION' });
+            } catch (storageErr2) {
+                console.warn('[LOGIN] No se pudo guardar sesión en localStorage:', storageErr2);
+            }
             entrarApp();
             return;
         }
@@ -95,6 +109,11 @@ function entrarApp() {
             saveWorkerLocation(sesionActual.usuario, sesionActual.rol, pos.coords.latitude, pos.coords.longitude);
         }, function() {});
     }
+    if (typeof bootstrapClientes === 'function') {
+        bootstrapClientes().catch(function(e) {
+            if (typeof console !== 'undefined' && console.error) console.error('[BOOTSTRAP EXCEPTION]', e);
+        });
+    }
     if (typeof syncClientsToSupabase === 'function') syncClientsToSupabase();
     if (navigator.vibrate) navigator.vibrate([30,50,30]);
     if (typeof showDailyLoveMessage === 'function') showDailyLoveMessage();
@@ -102,6 +121,22 @@ function entrarApp() {
 
 function esJefazo() { return sesionActual && sesionActual.rol === 'JEFAZO'; }
 function esJefaza() { return sesionActual && sesionActual.rol === 'JEFAZA'; }
+
+// Restaurar implementaciones canónicas (dashboard.js) si app.js las sobrescribe.
+if (typeof window !== 'undefined' && window.__silberCanonical) {
+    var c = window.__silberCanonical;
+    if (typeof c.cambiarDia === 'function') window.cambiarDia = c.cambiarDia;
+    if (typeof c.actualizarTimeMachine === 'function') window.actualizarTimeMachine = c.actualizarTimeMachine;
+    if (typeof c.dibujarDonut === 'function') window.dibujarDonut = c.dibujarDonut;
+    if (typeof c.cambiarPeriodo === 'function') window.cambiarPeriodo = c.cambiarPeriodo;
+    if (typeof c.renderizarRanking === 'function') window.renderizarRanking = c.renderizarRanking;
+    if (typeof c.renderizarCategoriasGastos === 'function') window.renderizarCategoriasGastos = c.renderizarCategoriasGastos;
+    if (typeof c.renderizarCategoriasIngresos === 'function') window.renderizarCategoriasIngresos = c.renderizarCategoriasIngresos;
+    if (typeof c.procesarFoto === 'function') window.procesarFoto = c.procesarFoto;
+    if (typeof c.abrirModalTransaccion === 'function') window.abrirModalTransaccion = c.abrirModalTransaccion;
+    if (typeof c.cerrarModalTransaccion === 'function') window.cerrarModalTransaccion = c.cerrarModalTransaccion;
+    if (typeof c.actualizarSaldos === 'function') window.actualizarSaldos = c.actualizarSaldos;
+}
 
 function showDailyLoveMessage() {
     var today = new Date().toISOString().split('T')[0];
@@ -538,65 +573,10 @@ setTimeout(chequearRecordatorios, 3000);
 
 window.addEventListener('resize', () => {
     const canvas = document.getElementById('donutCanvas');
+    if (!canvas || !canvas.parentElement) return;
     canvas.width = canvas.parentElement.offsetWidth;
     canvas.height = canvas.parentElement.offsetHeight;
-    dibujarDonut();
+    if (typeof dibujarDonut === 'function') dibujarDonut();
 });
 
 // ===== LOGIN =====
-
-
-const manifest = {
-    name: 'SILBER GESTIÓN',
-    short_name: 'SILBER',
-    description: 'Gestión financiera y de stock',
-    start_url: '.',
-    display: 'standalone',
-    orientation: 'portrait',
-    background_color: '#0F172A',
-    theme_color: '#0F172A',
-    icons: [
-        { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="%230F172A"/><text x="50%25" y="55%25" font-size="110" text-anchor="middle" dominant-baseline="middle" fill="%230EA5E9" font-family="Arial Black,sans-serif">N</text></svg>', sizes: '192x192', type: 'image/svg+xml' },
-        { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="%230F172A"/><text x="50%25" y="55%25" font-size="300" text-anchor="middle" dominant-baseline="middle" fill="%230EA5E9" font-family="Arial Black,sans-serif">N</text></svg>', sizes: '512x512', type: 'image/svg+xml' }
-    ]
-};
-const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-const manifestURL = URL.createObjectURL(blob);
-const linkManifest = document.createElement('link');
-linkManifest.rel = 'manifest';
-linkManifest.href = manifestURL;
-document.head.appendChild(linkManifest);
-
-// Favicon SVG inline
-const favicon = document.createElement('link');
-favicon.rel = 'icon';
-favicon.type = 'image/svg+xml';
-favicon.href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%230F172A"/><text x="50%25" y="56%25" font-size="40" text-anchor="middle" dominant-baseline="middle" fill="%230EA5E9" font-family="Arial Black,sans-serif">N</text></svg>';
-document.head.appendChild(favicon);
-
-// Apple touch icon inline
-const appleIcon = document.createElement('link');
-appleIcon.rel = 'apple-touch-icon';
-appleIcon.href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><rect width="180" height="180" rx="40" fill="%230F172A"/><text x="50%25" y="55%25" font-size="110" text-anchor="middle" dominant-baseline="middle" fill="%230EA5E9" font-family="Arial Black,sans-serif">N</text></svg>';
-document.head.appendChild(appleIcon);
-
-// ===== Service Worker (cache offline) =====
-if ('serviceWorker' in navigator) {
-    const swCode = `
-const CACHE = 'silber-gestion-v1';
-self.addEventListener('install', e => {
-    e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
-    self.skipWaiting();
-});
-self.addEventListener('activate', e => {
-    e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));
-    self.clients.claim();
-});
-self.addEventListener('fetch', e => {
-    e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => new Response('Offline', {status: 503}))));
-});
-    `;
-    const swBlob = new Blob([swCode], { type: 'application/javascript' });
-    const swURL = URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swURL).catch(() => {});
-}

@@ -10,7 +10,7 @@ const ACTIVITY_LOG_MAX = 500;
 const AUDIT_SHORT_TERM_MAX = 500;
 const DAILY_SUMMARY_MAX_DAYS = 90;
 // El jefe (Jefazo) recibe más avisos: cuando la otra master o un ADMIN hace algo sensible.
-const MAIN_MASTER_USER = 'Jefazo';
+const MAIN_MASTER_USER = 'Eljefazo';
 
 function _activityLogPayload(entry) {
     return (entry.timestamp || '') + '|' + (entry.user || '') + '|' + (entry.role || '') + '|' + (entry.action || '') + '|' + (entry.details || '');
@@ -57,7 +57,7 @@ function activityLogAdd(entry) {
     try {
         localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(list));
     } catch (e) {}
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         try {
             _supabase.from('activity_log').insert({
                 timestamp: entry.timestamp,
@@ -299,7 +299,7 @@ function saveDailySummary(date, summary) {
     list.sort(function(a, b) { return b.date.localeCompare(a.date); });
     while (list.length > DAILY_SUMMARY_MAX_DAYS) list.pop();
     try { localStorage.setItem(DAILY_SUMMARY_KEY, JSON.stringify(list)); } catch (e) {}
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         try {
             _supabase.from('daily_activity_summary').insert({ date: date, total_transactions: entry.total_transactions, deleted_count: entry.deleted_count, edited_count: entry.edited_count, suspicious_count: entry.suspicious_count }).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] daily_activity_summary:', err); });
         } catch (err) {}
@@ -354,7 +354,7 @@ function saveCashClosing(record) {
     try {
         localStorage.setItem(CASH_CLOSINGS_KEY, JSON.stringify(list));
     } catch (e) {}
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         try {
             _supabase.from('cash_closings').insert(record).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] cash_closings:', err); });
         } catch (err) {}

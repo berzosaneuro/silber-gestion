@@ -11,10 +11,8 @@
     <meta name="msapplication-navbutton-color" content="#04050F">
     <meta name="description" content="SILBER GESTIÓN — Gestión financiera y de stock">
     <link rel="icon" href="Logo Silber Gestion.png" type="image/png">
-    <link rel="apple-touch-icon" href="Logo Silber Gestion.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="Logo Silber Gestion.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="Logo Silber Gestion.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="Logo Silber Gestion.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
     <link rel="manifest" href="/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -369,7 +367,7 @@
 
         <!-- DEUDA POR OFICINA -->
         <div class="screen" id="screen-oficina">
-            <div class="content-section">
+            <div id="oficina-main" class="content-section oficina-view" style="display:block;">
                 <div class="section-card" style="margin-bottom:12px;">
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
                         <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;">TOTAL DEUDA</div><div id="of-res-total" style="font-size:20px;font-weight:900;color:#EF4444;">0€</div></div>
@@ -434,10 +432,44 @@
                     <div class="menu-item" id="oficina-menu-timeline" onclick="cambiarPantalla('timeline')" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">📜</div><div class="menu-item-text">Timeline del Negocio</div></div>
                     <div class="menu-item" id="oficina-menu-llegadas" onclick="if(typeof renderLlegadas==='function')renderLlegadas();cambiarPantalla('llegadas');" style="margin-bottom:8px;"><div class="menu-item-icon">📍</div><div class="menu-item-text">Registro de Llegadas</div></div>
                     <div class="menu-item" id="oficina-menu-analytics" onclick="if(typeof renderAnalytics==='function')renderAnalytics();cambiarPantalla('analytics');" style="margin-bottom:8px;"><div class="menu-item-icon">📊</div><div class="menu-item-text">Analíticas</div></div>
+                    <div class="menu-item" id="oficina-menu-guia" onclick="abrirOficinaView('oficina-guia')" style="margin-bottom:8px;"><div class="menu-item-icon">📘</div><div class="menu-item-text">Guía</div></div>
                     <div class="menu-item" id="oficina-menu-config" onclick="cambiarPantalla('config')"><div class="menu-item-icon">⚙️</div><div class="menu-item-text">Configuración</div></div>
                 </div>
+                <button id="oficina-fab-add-cliente" class="fab" onclick="abrirModalNuevoCliente()">+</button>
             </div>
-            <button class="fab" onclick="abrirModalNuevoCliente()">+</button>
+            <div id="oficina-guia" class="oficina-view" style="display:none;">
+                <div class="guia-container">
+                    <button class="btn btn-secondary" onclick="abrirOficinaView('oficina-main')" style="margin-bottom:12px;">← Volver</button>
+                    <h2>🏢 Oficina - Guía</h2>
+
+                    <h3>💰 Caja</h3>
+                    <p>Registrar ingresos, gastos y ver balance.</p>
+
+                    <h3>👥 Clientes</h3>
+                    <p>Crear, editar y gestionar clientes.</p>
+
+                    <h3>💳 Deudas</h3>
+                    <p>Control de créditos y pagos parciales.</p>
+
+                    <h3>🏦 Cuentas</h3>
+                    <p>Gestión de dinero por origen.</p>
+
+                    <h3>📦 Stock</h3>
+                    <p>Control de productos e inventario.</p>
+
+                    <h3>👷 Trabajadores</h3>
+                    <p>Usuarios operativos de la app.</p>
+
+                    <h3>📊 Dashboard</h3>
+                    <p>Resumen general del negocio.</p>
+
+                    <h3>🔄 Sync</h3>
+                    <p>Guardado automático y multi-dispositivo.</p>
+
+                    <h3>📱 App</h3>
+                    <p>Instalable como aplicación móvil.</p>
+                </div>
+            </div>
         </div>
 
         <!-- MODAL REGISTRO BIOMETRÍA -->
@@ -1082,6 +1114,31 @@
                     </div>
                 </div>
 
+                <!-- APP -->
+                <div class="settings-section-label">App</div>
+                <div class="settings-group">
+                    <div class="settings-row" onclick="silberInstallApp()" id="settings-install-app-row">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(16,185,129,0.15);">📲</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Instalar app</div>
+                                <div class="settings-row-sub">Añadir a pantalla de inicio (PWA)</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                    <div class="settings-row" onclick="silberShareAppWhatsApp()">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(37,211,102,0.15);">💬</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Compartir app por WhatsApp</div>
+                                <div class="settings-row-sub">Enviar enlace de instalación</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                </div>
+
                 <!-- ZONA ADMIN — solo visible para jefazo/jefaza -->
                 <div id="admin-zona-reset" style="display:none;">
                     <div class="settings-section-label" style="color:rgba(239,68,68,0.7);">⚠️ Zona Admin</div>
@@ -1454,7 +1511,7 @@
                 <div class="modal-header"><div class="modal-title">Nuevo Cliente</div></div>
                 <div class="modal-body">
                     <div class="input-group"><label class="input-label">Nombre</label><input type="text" class="input-field" id="cliente-nombre" placeholder="Nombre completo"></div>
-                    <div class="input-group"><label class="input-label">WhatsApp</label><input type="tel" class="input-field" id="cliente-whatsapp" placeholder="+34 600 000 000"></div>
+                    <div class="input-group"><label class="input-label">Teléfono</label><input type="tel" class="input-field" id="cliente-whatsapp" placeholder="+346XXXXXXXX"></div>
                     <div class="input-group"><label class="input-label">Límite de Crédito (€)</label><input type="number" class="input-field" id="cliente-limite" placeholder="0.00" step="0.01"></div>
                     <div class="input-group">
                         <label class="input-label">Día de Pago</label>
@@ -1892,10 +1949,13 @@
      * @param {object} client  — estado.clientes entry
      */
     function sendWhatsAppReminder(client) {
-        if (!client || !client.whatsapp) return;
-        var num = String(client.whatsapp).replace(/[^0-9+]/g, '');
-        var msg = '¡Hola ' + (client.nombre || '') + '! Te recordamos que tienes un pago pendiente de ' + (client.deuda || 0).toFixed(2) + '€. Gracias 🙏';
-        var url = 'https://wa.me/' + num.replace('+','') + '?text=' + encodeURIComponent(msg);
+        if (!client) return;
+        var phoneRaw = (client.telefono || client.whatsapp || '');
+        var num = String(phoneRaw).replace(/[^0-9]/g, '');
+        if (!num || num.length < 8) { alert('Este cliente no tiene teléfono válido para WhatsApp'); return; }
+        var deuda = Number(client.deuda || 0).toFixed(2);
+        var msg = 'Hola ' + (client.nombre || 'cliente') + ', tienes una deuda pendiente de ' + deuda + '€. ¿Puedes revisarlo hoy?';
+        var url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(msg);
         window.open(url, '_blank');
         if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'WHATSAPP_REMINDER_SENT', details: 'Recordatorio enviado a ' + (client.nombre || '') });
         createNotification('whatsapp_sent', { cliente: client.nombre, monto: client.deuda });
@@ -1917,7 +1977,11 @@
     function enviarWhatsAppCliente() {
         var c = (typeof estado !== 'undefined') ? estado.clienteActual : null;
         if (!c) { alert('No hay cliente activo'); return; }
-        if (!c.whatsapp) { alert('Este cliente no tiene WhatsApp registrado'); return; }
+        if (typeof _silberGetClientPhone === 'function') {
+            var normalized = _silberGetClientPhone(c);
+            c.telefono = normalized;
+            c.whatsapp = normalized; // compatibilidad
+        }
         sendWhatsAppReminder(c);
     }
 
@@ -1942,7 +2006,7 @@
     function _actualizarBotonesCliente() {
         var c = (typeof estado !== 'undefined') ? estado.clienteActual : null;
         var btn = document.getElementById('btn-whatsapp-cliente');
-        if (btn) btn.style.display = (c && c.whatsapp) ? 'flex' : 'none';
+        if (btn) btn.style.display = c ? 'flex' : 'none';
     }
 
     /* Hook into abrirDetalleCliente without modifying clientes.js
@@ -2430,40 +2494,12 @@
     /* ──────────────────────────────────────────────────────────── */
 
     (function() {
-      function loginFallback() {
-        if (typeof window.intentarLogin === 'function') { window.intentarLogin(); return; }
-        var u = (document.getElementById('login-usuario') && document.getElementById('login-usuario').value) ? String(document.getElementById('login-usuario').value).trim() : '';
-        var p = (document.getElementById('login-password') && document.getElementById('login-password').value) ? String(document.getElementById('login-password').value).trim() : '';
-        if (!u || !p) { alert('Introduce usuario y contraseña'); return; }
-        if (typeof USUARIOS === 'undefined') { alert('Error: recarga la página (F5)'); return; }
-        for (var i = 0; i < USUARIOS.length; i++) {
-          var x = USUARIOS[i];
-          if (x.username.toLowerCase() === u.toLowerCase() && (x.password || '').toLowerCase() === p.toLowerCase()) {
-            sesionActual = { usuario: x.username, rol: x.role };
-            try { document.body.classList.remove('login-visible'); } catch(e) {}
-            var loginEl = document.getElementById('screen-login');
-            if (loginEl) { loginEl.classList.remove('active'); loginEl.style.display = 'none'; loginEl.style.visibility = 'hidden'; }
-            var menuOv = document.getElementById('menuOverlay');
-            if (menuOv) { menuOv.classList.remove('active'); menuOv.style.display = 'none'; }
-            var nav = document.getElementById('bottom-nav');
-            if (nav) nav.style.display = 'flex';
-            try { localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual)); } catch(e) {}
-            if (typeof aplicarModoSesion === 'function') { try { aplicarModoSesion(); } catch(e) {} }
-            if (typeof cambiarPantalla === 'function') cambiarPantalla('dashboard');
-            return;
-          }
-        }
-        alert('Usuario o contraseña incorrectos');
-      }
-      window.silberLogin = loginFallback;
-      setTimeout(function() {
-        var form = document.querySelector('.login-form');
-        var btn = form && form.querySelector('button[type="submit"]');
-        if (form && btn) {
-          form.onsubmit = function() { loginFallback(); return false; };
-          btn.onclick = function() { loginFallback(); return false; };
-        }
-      }, 100);
+      // Evita sobrescribir la lógica principal de login en app.js.
+      // Solo expone un alias de compatibilidad para integraciones antiguas.
+      window.silberLogin = function() {
+        if (typeof window.intentarLogin === 'function') return window.intentarLogin();
+        alert('Sistema de login no disponible. Recarga la página (F5).');
+      };
     })();
 
     /* ══════════════════════════════════════════════════════════
@@ -2517,9 +2553,11 @@
                 '</div>' +
                 (limite > 0 ? '<div class="dcp-limit-track"><div class="dcp-limit-fill" style="width:' + uso + '%;background:' + usoCol + ';"></div></div>' : '') +
                 '<div class="dcp-actions">' +
-                    '<button class="dcp-btn dcp-btn-primary" onclick="pagoTotal();setTimeout(function(){_renderClientDetailPanel(estado.clienteActual)},200)">✅ Cobrar todo</button>' +
+                    '<button class="dcp-btn dcp-btn-primary" onclick="pagoTotal();setTimeout(function(){if(estado && estado.clienteActual){_renderClientDetailPanel(estado.clienteActual);}},200)">✅ Cobrar todo</button>' +
+                    '<button class="dcp-btn dcp-btn-secondary" onclick="abrirEditarCliente()">✏️ Editar</button>' +
+                    '<button class="dcp-btn dcp-btn-danger" onclick="eliminarClienteActual()">🗑️ Eliminar</button>' +
                     '<button class="dcp-btn dcp-btn-secondary" onclick="var m=document.getElementById(\'modalDetalleCliente\');if(m)m.classList.add(\'active\')">💸 Pago parcial</button>' +
-                    (cliente.whatsapp ? '<button class="dcp-btn dcp-btn-wa" onclick="enviarWhatsAppCliente()">💬 WhatsApp</button>' : '') +
+                    '<button class="dcp-btn dcp-btn-wa" onclick="enviarWhatsAppCliente()">💬 WhatsApp</button>' +
                     '<button class="dcp-btn dcp-btn-gps" onclick="registrarLlegada()">📍 Llegada</button>' +
                 '</div>' +
                 '<div class="dcp-section-label">Historial de movimientos</div>' +
@@ -2530,7 +2568,7 @@
         };
 
         /* ── Intercept client list clicks (capture phase) ─── */
-        var _selectedNombre = null;
+        var _selectedClientId = null;
         var listEl = document.getElementById('clientes-list');
         if (listEl) {
             listEl.addEventListener('click', function(e) {
@@ -2539,13 +2577,13 @@
                 var card = e.target.closest('.cliente-card');
                 if (!card) return;
                 e.stopPropagation(); /* prevent abrirDetalleCliente from opening modal */
-                var nombre  = card.dataset.nombre || '';
-                var cliente = (estado.clientes || []).find(function(c) { return c.nombre === nombre; });
+                var idStr = card.dataset.clientId || '';
+                var cliente = (estado.clientes || []).find(function(c) { return String(c.id) === String(idStr); });
                 if (!cliente) return;
                 /* Highlight row */
                 listEl.querySelectorAll('.cliente-card').forEach(function(c) { c.classList.remove('dsb-row-selected'); });
                 card.classList.add('dsb-row-selected');
-                _selectedNombre = nombre;
+                _selectedClientId = String(cliente.id);
                 /* Set clienteActual + populate modal DOM (payment functions need it) */
                 estado.clienteActual = cliente;
                 if (typeof abrirDetalleCliente === 'function') abrirDetalleCliente(cliente);
@@ -2565,9 +2603,9 @@
                 _orig.apply(this, arguments);
                 _patchDesktopRows();
                 /* Restore selected highlight */
-                if (_selectedNombre) {
+                if (_selectedClientId) {
                     var cards = listEl ? listEl.querySelectorAll('.cliente-card') : [];
-                    cards.forEach(function(c) { if (c.dataset.nombre === _selectedNombre) c.classList.add('dsb-row-selected'); });
+                    cards.forEach(function(c) { if (String(c.dataset.clientId || '') === _selectedClientId) c.classList.add('dsb-row-selected'); });
                 }
             };
         }
@@ -2581,28 +2619,38 @@
                 /* Store nombre for lookup */
                 var nombreEl = card.querySelector('.cliente-nombre');
                 var nombre   = nombreEl ? nombreEl.textContent.replace(/HOY/gi, '').trim() : '';
-                card.dataset.nombre = nombre;
-                var cli = (estado.clientes || []).find(function(c) { return c.nombre === nombre; });
+                var idStr = card.dataset.clientId || '';
+                var cli = (estado.clientes || []).find(function(c) { return String(c.id) === String(idStr); }) || (estado.clientes || []).find(function(c) { return c.nombre === nombre; });
+                if (cli) card.dataset.clientId = String(cli.id);
                 /* Hover quick-action buttons */
                 var acts = document.createElement('div');
                 acts.className = 'dsb-row-actions';
                 acts.innerHTML =
-                    '<button class="dsb-row-btn" title="Registrar llegada" onclick="event.stopPropagation();_dsbQuickLlegada(\'' + nombre.replace(/'/g,"\\'") + '\')">📍</button>' +
-                    (cli && cli.whatsapp ? '<button class="dsb-row-btn dsb-row-btn-wa" title="WhatsApp" onclick="event.stopPropagation();_dsbQuickWA(\'' + (cli.whatsapp||'').replace(/['"]/g,'') + '\',\'' + nombre.replace(/'/g,"\\'") + '\')">💬</button>' : '');
+                    '<button class="dsb-row-btn" title="Registrar llegada" onclick="event.stopPropagation();_dsbQuickLlegada(\'' + String((cli && cli.id) || '').replace(/'/g,"\\'") + '\')">📍</button>' +
+                    '<button class="dsb-row-btn dsb-row-btn-wa" title="WhatsApp" onclick="event.stopPropagation();_dsbQuickWA(\'' + String((cli && cli.id) || '').replace(/'/g,"\\'") + '\')">💬</button>';
                 card.appendChild(acts);
             });
         }
 
         /* ── Quick row action helpers ─────────────────────── */
-        window._dsbQuickLlegada = function(nombre) {
-            var cli = (estado.clientes || []).find(function(c) { return c.nombre === nombre; });
+        window._dsbQuickLlegada = function(clientId) {
+            var cli = (estado.clientes || []).find(function(c) { return String(c.id) === String(clientId); });
             if (!cli) return;
             estado.clienteActual = cli;
             if (typeof registrarLlegada === 'function') registrarLlegada();
         };
-        window._dsbQuickWA = function(wa, nombre) {
-            var msg = encodeURIComponent('Hola ' + nombre + ', te contactamos para recordarte tu saldo pendiente.');
-            window.open('https://wa.me/' + wa.replace(/[\s+\-(). ]/g,'') + '?text=' + msg, '_blank');
+        window._dsbQuickWA = function(clientId) {
+            var cli = (estado.clientes || []).find(function(c) { return String(c.id) === String(clientId); });
+            if (!cli) return;
+            if (typeof enviarWhatsAppClientePorId === 'function') {
+                enviarWhatsAppClientePorId(clientId);
+                return;
+            }
+            var raw = String((cli.telefono || cli.whatsapp || '')).replace(/[^0-9]/g, '');
+            if (!raw || raw.length < 8) { alert('Este cliente no tiene teléfono válido para WhatsApp'); return; }
+            var deuda = Number(cli.deuda || 0).toFixed(2);
+            var msg = encodeURIComponent('Hola ' + (cli.nombre || 'cliente') + ', tienes una deuda pendiente de ' + deuda + '€. ¿Puedes revisarlo hoy?');
+            window.open('https://wa.me/' + raw + '?text=' + msg, '_blank');
         };
 
     })(); /* end _initDesktopCRM */
@@ -2985,6 +3033,7 @@
     <script>
     (function() {
         'use strict';
+        window._silberDeferredPrompt = null;
 
         /* ── Detect standalone mode (already installed) ─────── */
         var _standalone =
@@ -3011,6 +3060,7 @@
             window.addEventListener('beforeinstallprompt', function(e) {
                 e.preventDefault();
                 _deferredPrompt = e;
+                window._silberDeferredPrompt = e;
 
                 /* Show banner only if user hasn't dismissed it before */
                 if (!localStorage.getItem('silber_pwa_android_dismissed')) {
@@ -3023,7 +3073,10 @@
             var installBtn = document.getElementById('pwa-install-btn');
             if (installBtn) {
                 installBtn.addEventListener('click', function() {
-                    if (!_deferredPrompt) return;
+                    if (!_deferredPrompt) {
+                        silberInstallApp();
+                        return;
+                    }
                     _deferredPrompt.prompt();
                     _deferredPrompt.userChoice.then(function(result) {
                         if (result.outcome === 'accepted') {
@@ -3031,6 +3084,7 @@
                             if (banner) banner.style.display = 'none';
                         }
                         _deferredPrompt = null;
+                        window._silberDeferredPrompt = null;
                     });
                 });
             }
@@ -3049,6 +3103,7 @@
             window.addEventListener('appinstalled', function() {
                 var banner = document.getElementById('pwa-android-banner');
                 if (banner) banner.style.display = 'none';
+                window._silberDeferredPrompt = null;
             });
         }
 
@@ -3078,6 +3133,43 @@
             }
         })();
 
+    })();
+
+    function silberInstallApp() {
+        var dp = window._silberDeferredPrompt;
+        if (dp && typeof dp.prompt === 'function') {
+            dp.prompt();
+            dp.userChoice.then(function() {
+                window._silberDeferredPrompt = null;
+                var row = document.getElementById('settings-install-app-row');
+                if (row) row.style.display = 'none';
+            }).catch(function() {});
+            return;
+        }
+        var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent || '');
+        if (isIos) {
+            var guide = document.getElementById('pwa-ios-guide');
+            if (guide) {
+                guide.style.display = 'flex';
+                return;
+            }
+        }
+        alert('La instalación no está disponible en este navegador. Usa Chrome/Edge en Android o Safari en iPhone.');
+    }
+
+    function silberShareAppWhatsApp() {
+        var url = window.location.origin + '/';
+        var msg = 'Instala Silber Gestión en tu móvil: ' + url;
+        window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    }
+
+    (function exposeDemoAccess() {
+        try {
+            window.SILBER_DEMO_ACCESS = window.SILBER_DEMO_ACCESS || {
+                jefazo: { username: 'Eljefazo', password: '15031980' },
+                jefaza: { username: 'Lajefaza', password: '15031980' }
+            };
+        } catch (e) {}
     })();
     </script>
 </body>

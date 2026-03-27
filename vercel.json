@@ -18,6 +18,7 @@
   "rewrites": [
     { "source": "/css/:path*",       "destination": "/css/:path*" },
     { "source": "/js/:path*",        "destination": "/js/:path*" },
+    { "source": "/icons/:path*",     "destination": "/icons/:path*" },
     { "source": "/logo.png",         "destination": "/logo.png" },
     { "source": "/favicon.ico",      "destination": "/favicon.ico" },
     { "source": "/manifest.json",    "destination": "/manifest.json" },

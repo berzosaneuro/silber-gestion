@@ -10,6 +10,15 @@
     --text-primary:  #DFF0FF;
     --text-secondary:#4A6A8A;
     --border:        rgba(0,229,255,0.15);
+    /* Stable app viewport height on mobile browsers */
+    --app-height:    100vh;
+}
+
+@supports (height: 100svh) {
+    :root { --app-height: 100svh; }
+}
+@supports (height: 100dvh) {
+    :root { --app-height: 100dvh; } /* prefer dynamic viewport on mobile */
 }
 
 @keyframes fadeIn  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
@@ -20,10 +29,13 @@
 
 html {
     background:#04050F;
-    height:100%;
+    height:var(--app-height);
+    min-height:var(--app-height);
+    max-height:var(--app-height);
     width:100%;
     max-width:100vw;
-    overflow-x:hidden;
+    overflow:hidden;
+    overscroll-behavior:none;
     -webkit-text-size-adjust:100%;
     -webkit-tap-highlight-color:transparent;
 }
@@ -32,20 +44,23 @@ html, body {
     font-family:'Inter',-apple-system,sans-serif;
     background:#04050F;
     color:var(--text-primary);
+    height:var(--app-height);
+    min-height:var(--app-height);
+    overflow:hidden;
     overscroll-behavior:none;
 }
 body {
     width:100%;
     max-width:100vw;
-    min-height:100vh;
-    min-height:100dvh;
-    height:100%;
-    overflow-x:hidden;
+    min-height:var(--app-height);
+    height:var(--app-height);
+    max-height:var(--app-height);
+    overflow:hidden;
     position:fixed;
     top:0; left:0; right:0; bottom:0;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:none;
     box-sizing:border-box;
+    touch-action:manipulation;
 }
 
 /* scanlines sutiles: z-index negativo para quedar siempre detrás de toda la UI (login, app-container, etc.) */
@@ -66,11 +81,10 @@ body::after {
 .app-container {
     width:100%; max-width:100vw; margin:0; background:transparent;
     position:relative; z-index:10;
-    height:100%;
-    min-height:100vh;
-    min-height:100dvh;
-    overflow-x:hidden;
-    overflow-y:auto;
+    height:var(--app-height);
+    min-height:var(--app-height);
+    max-height:var(--app-height);
+    overflow:hidden;
     padding:0;
     box-sizing:border-box;
 }
@@ -84,8 +98,8 @@ body::after {
 .screen {
     display:none; animation:fadeIn .3s ease-out;
     width:100%;
-    min-height:100vh;
-    min-height:100dvh;
+    min-height:100%;
+    height:100%;
     overflow-y:auto;
     overflow-x:hidden;
     -webkit-overflow-scrolling:touch;
@@ -100,7 +114,7 @@ body::after {
 }
 .screen.active { display:block !important; visibility:visible !important; opacity:1 !important; z-index:1; overflow-y:auto; overflow-x:hidden; }
 .screen:not(.active) { z-index:0; }
-#screen-dashboard.active { min-height:100vh; }
+#screen-dashboard.active { min-height:100%; }
 #screen-dashboard.active .dashboard-content { opacity:1; visibility:visible; min-height:400px; display:flex; flex-direction:column; }
 .screen.active .dashboard-content,
 .screen.active .content-section,
@@ -415,6 +429,7 @@ body.login-visible .app-header { display:none !important; visibility:hidden !imp
     background:rgba(4,5,15,0.92); backdrop-filter:blur(16px);
     z-index:10000; display:none; align-items:center; justify-content:center;
     animation:fadeIn .25s;
+    overscroll-behavior:contain;
 }
 .modal-overlay.active { display:flex; }
 .modal-content {
@@ -422,6 +437,8 @@ body.login-visible .app-header { display:none !important; visibility:hidden !imp
     border:1px solid rgba(0,229,255,0.18); border-radius:18px;
     padding:24px; max-width:90%; width:380px;
     max-height:82vh; overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
     animation:modalIn .25s; position:relative;
     box-shadow:0 0 0 1px rgba(0,229,255,.05),0 24px 60px rgba(0,0,0,.75),0 0 40px rgba(0,229,255,.05);
 }
@@ -507,7 +524,8 @@ select option { background:var(--bg-card); color:var(--text-primary); }
 
 /* ========== LOGIN — portada al abrir la app (sin recortes) ========== */
 #screen-login {
-    min-height:100vh; min-height:100dvh;
+    min-height:var(--app-height);
+    height:var(--app-height);
     width:100%; max-width:100vw;
     overflow-x:hidden; overflow-y:auto;
     box-sizing:border-box;
@@ -519,7 +537,8 @@ select option { background:var(--bg-card); color:var(--text-primary); }
     flex-direction:column; align-items:center; justify-content:center;
     width:100%; max-width:100vw;
     padding:16px; overflow-x:hidden; overflow-y:auto; background:#04050F;
-    min-height:100vh; min-height:100dvh;
+    min-height:var(--app-height);
+    height:var(--app-height);
     padding-top:env(safe-area-inset-top, 0) !important;
     padding-bottom:env(safe-area-inset-bottom, 0) !important;
     padding-left:max(16px, env(safe-area-inset-left, 0)) !important;
@@ -876,6 +895,27 @@ select option { background:var(--bg-card); color:var(--text-primary); }
 .menu-item::before { opacity: 0.5; }
 .menu-item-text { font-size: 14px; font-weight: 600; letter-spacing: 0.2px; }
 .menu-item-icon { font-size: 20px; }
+
+.guia-container {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+#oficina-guia {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.guia-container h2 {
+  margin-bottom: 12px;
+}
+
+.guia-container h3 {
+  margin-top: 16px;
+  color: #ff6600;
+}
 
 /* ── FAB polish ───────────────────────────────────────────── */
 .fab { box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 12px rgba(0,229,255,0.2); }
@@ -2319,6 +2359,8 @@ select option { background:var(--bg-card); color:var(--text-primary); }
   .dcp-btn-primary:hover  { background: rgba(0,229,255,0.2); }
   .dcp-btn-secondary{ background: rgba(255,255,255,0.06); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); }
   .dcp-btn-secondary:hover{ background: rgba(255,255,255,0.1); }
+  .dcp-btn-danger   { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.3); }
+  .dcp-btn-danger:hover   { background: rgba(239,68,68,0.18); }
   .dcp-btn-wa       { background: rgba(37,211,102,0.1); color: #25D366; border: 1px solid rgba(37,211,102,0.3); }
   .dcp-btn-wa:hover       { background: rgba(37,211,102,0.2); }
   .dcp-btn-gps      { background: rgba(139,92,246,0.1); color: #A78BFA; border: 1px solid rgba(139,92,246,0.3); }
@@ -2936,3 +2978,372 @@ select option { background:var(--bg-card); color:var(--text-primary); }
 .kpi-value {
     transition: color 320ms ease;
 }
+
+/* ============================================================
+   UI POLISH LAYER — Vibrancy + micro-interactions (safe)
+   No layout changes; visual-only overrides.
+   ============================================================ */
+
+/* Primary actions: brighter orange + subtle glow */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.quick-amt-btn,
+.btn-whatsapp,
+.menu-item,
+.nav-item,
+.period-btn,
+.tab-btn,
+.fab {
+  transition:
+    transform 120ms ease,
+    box-shadow 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    opacity 150ms ease;
+}
+
+.btn-primary,
+.dcp-btn-primary {
+  background: linear-gradient(135deg, rgba(255, 122, 26, 0.24), rgba(255, 92, 22, 0.34));
+  border-color: rgba(255, 122, 26, 0.72);
+  color: #FFDCC4;
+  box-shadow:
+    0 0 0 1px rgba(255, 122, 26, 0.18),
+    0 4px 16px rgba(255, 102, 0, 0.22);
+  text-shadow: 0 0 8px rgba(255, 122, 26, 0.34);
+}
+
+.btn-primary:active,
+.dcp-btn-primary:active,
+.btn:active,
+.quick-amt-btn:active,
+.btn-whatsapp:active,
+.menu-item:active,
+.fab:active {
+  transform: scale(0.98);
+}
+
+/* Active UI elements: subtle cyberpunk glow */
+.nav-item.active,
+.period-btn.active,
+.tab-btn.active,
+.menu-item:active {
+  box-shadow: 0 0 14px rgba(255, 102, 0, 0.16);
+}
+
+/* Hierarchy: totals and key numbers stand out slightly more */
+#res-total,
+#of-res-total,
+#res-hoy,
+#of-res-hoy,
+#res-clientes,
+#of-res-clientes,
+.stat-value,
+.cliente-deuda,
+.historial-monto,
+.an-kpi-value,
+.kpi-value,
+.saldo-valor,
+.saldo-value {
+  filter: brightness(1.06);
+  text-shadow: 0 0 10px rgba(255, 122, 26, 0.18);
+}
+
+/* Secondary text a bit dimmer for clearer hierarchy */
+.stat-label,
+.cliente-info,
+.historial-fecha,
+.settings-row-sub,
+.an-tools-row-sub {
+  color: rgba(148, 163, 184, 0.78);
+}
+
+/* Lightweight view/list appearance */
+.screen {
+  animation-duration: 200ms;
+}
+.dashboard-card,
+.cliente-card,
+.transaction-item,
+.an-kpi-card,
+.ranking-item,
+.historial-item {
+  animation-duration: 190ms;
+}
+
+/* Toast feedback: success / error / info */
+.silber-sync-toast--ok .sst-pill {
+  border-color: rgba(34, 197, 94, 0.45);
+  background: rgba(7, 22, 13, 0.93);
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.18);
+}
+.silber-sync-toast--warn .sst-pill {
+  border-color: rgba(239, 68, 68, 0.48);
+  background: rgba(28, 8, 8, 0.94);
+  box-shadow: 0 4px 22px rgba(239, 68, 68, 0.2);
+}
+.silber-sync-toast--info .sst-pill {
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(7, 15, 30, 0.94);
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.16);
+}
+
+.silber-toast--success {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(8, 24, 12, 0.96);
+  color: #86EFAC;
+  box-shadow: 0 4px 22px rgba(34, 197, 94, 0.2);
+}
+.silber-toast--error {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(20, 5, 5, 0.97);
+  color: #FCA5A5;
+  box-shadow: 0 4px 24px rgba(239, 68, 68, 0.22);
+}
+.silber-toast--info {
+  border-color: rgba(56, 189, 248, 0.45);
+  background: rgba(7, 16, 28, 0.96);
+  color: #BAE6FD;
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.18);
+}
+
+/* ============================================================
+   PREMIUM CONSISTENCY LAYER — controlled cyberpunk polish
+   Visual-only: no layout structure or logic changes.
+   ============================================================ */
+
+:root {
+  --ui-space-1: 8px;
+  --ui-space-2: 16px;
+  --ui-space-3: 24px;
+  --ui-radius-sm: 10px;
+  --ui-radius-md: 14px;
+  --ui-radius-lg: 18px;
+  --accent-blue: #38BDF8; /* secondary accent */
+}
+
+/* Consistency: radius + subtle depth */
+.btn,
+.menu-item,
+.cliente-card,
+.historial-item,
+.section-card,
+.summary-card,
+.settings-group {
+  border-radius: var(--ui-radius-md);
+}
+
+.section-card,
+.summary-card,
+.an-kpi-card,
+.ranking-item,
+.settings-group {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.28);
+}
+
+/* Controlled vibrancy on primary actions only */
+.btn-primary,
+.dcp-btn-primary,
+.btn.btn-primary {
+  background: linear-gradient(135deg, rgba(255, 126, 28, 0.32), rgba(255, 102, 0, 0.42));
+  border-color: rgba(255, 126, 28, 0.78);
+  color: #FFE7D2;
+  box-shadow:
+    0 0 0 1px rgba(255, 126, 28, 0.2),
+    0 5px 18px rgba(255, 102, 0, 0.24);
+}
+
+/* Secondary accent reserved for active controls */
+.period-btn.active,
+.tab-btn.active,
+.nav-item.active {
+  border-color: rgba(56, 189, 248, 0.52);
+  color: #BEEAFF;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.16);
+}
+
+/* Cyberpunk glow but subtle */
+.btn-primary:hover,
+.dcp-btn-primary:hover,
+.btn-primary:focus-visible,
+.dcp-btn-primary:focus-visible {
+  box-shadow:
+    0 0 0 1px rgba(255, 126, 28, 0.28),
+    0 0 14px rgba(255, 102, 0, 0.22),
+    0 6px 20px rgba(0, 0, 0, 0.28);
+}
+
+/* Micro-interactions + touch feedback */
+.btn,
+.menu-item,
+.cliente-card,
+.quick-amt-btn,
+.btn-whatsapp,
+.fab,
+.period-btn,
+.tab-btn,
+.nav-item {
+  transition:
+    transform 130ms ease-out,
+    box-shadow 150ms ease-out,
+    background 150ms ease-out,
+    border-color 150ms ease-out,
+    color 150ms ease-out,
+    opacity 130ms ease-out;
+}
+
+.btn:active,
+.menu-item:active,
+.quick-amt-btn:active,
+.btn-whatsapp:active,
+.fab:active,
+.period-btn:active,
+.tab-btn:active,
+.nav-item:active {
+  transform: scale(0.97);
+}
+
+/* Keep lists and screen transitions smooth/light */
+.screen { animation-duration: 180ms; }
+.cliente-card,
+.historial-item,
+.ranking-item,
+.an-kpi-card,
+.dashboard-card {
+  animation-duration: 200ms;
+}
+
+/* Hierarchy tuning */
+#res-total,
+#of-res-total,
+#res-hoy,
+#of-res-hoy,
+#res-clientes,
+#of-res-clientes,
+.stat-value,
+.cliente-deuda,
+.historial-monto,
+.kpi-value,
+.saldo-value,
+.saldo-valor {
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  text-shadow: 0 0 10px rgba(255, 126, 28, 0.2);
+}
+
+.section-title,
+.stat-label,
+.cliente-info,
+.historial-fecha,
+.settings-row-sub,
+.an-tools-row-sub {
+  color: rgba(148, 163, 184, 0.74);
+}
+
+/* Toast polish (clean and noticeable) */
+.silber-sync-toast .sst-pill {
+  border-radius: 999px;
+  padding: 8px 14px 8px 11px;
+}
+.silber-sync-toast--ok .sst-pill {
+  border-color: rgba(34, 197, 94, 0.5);
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.2);
+}
+.silber-sync-toast--warn .sst-pill {
+  border-color: rgba(239, 68, 68, 0.52);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.2);
+}
+.silber-sync-toast--info .sst-pill {
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 4px 18px rgba(56, 189, 248, 0.18);
+}
+
+/* ============================================================
+   LAYOUT STABILITY PATCH — prevent tilt/shift on hover/tap
+   Only small interactive controls should scale.
+   ============================================================ */
+
+/* Keep subtle press feedback on buttons only */
+button {
+  transition: transform 0.12s ease;
+}
+button:active {
+  transform: scale(0.98);
+}
+
+/* Never move layout blocks/cards/sections on interaction */
+.menu-item:active,
+.summary-card:active,
+.cliente-card:active,
+.ranking-item:hover,
+.summary-card:hover {
+  transform: none !important;
+}
+
+/* Remove transform transitions from layout containers to avoid visual shift */
+.menu-item,
+.summary-card,
+.cliente-card,
+.ranking-item,
+.section-card,
+.content-section {
+  transition-property: background, border-color, box-shadow, color, opacity !important;
+}
+
+/* Disable hover transforms on touch devices */
+@media (hover: none), (pointer: coarse) {
+  .menu-item:hover,
+  .summary-card:hover,
+  .cliente-card:hover,
+  .ranking-item:hover,
+  .category-btn:hover,
+  .category-btn:hover .category-icon,
+  .dsb-row-btn:hover {
+    transform: none !important;
+  }
+}
+
+/* ============================================================
+   TEXT RENDER STABILITY — crisp labels and headings
+   ============================================================ */
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent text blur from transformed parent containers */
+#screen-oficina .content-section,
+#screen-oficina .section-card,
+#screen-oficina .menu-item,
+#screen-oficina .section-title,
+#screen-oficina .menu-item-text,
+#modalCierreDia .modal-content,
+#modalCierreDia .modal-header,
+#modalCierreDia .modal-body,
+#modalCierreDia .stat-row,
+#modalCierreDia .stat-label,
+#modalCierreDia .stat-value {
+  transform: none !important;
+}
+
+/* Keep text render clean in critical labels/titles */
+#screen-oficina .section-title,
+#screen-oficina .menu-item-text,
+#modalCierreDia .modal-title,
+#modalCierreDia .stat-label,
+#modalCierreDia .stat-value {
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+/* Whole-pixel sizing for affected UI texts */
+#screen-oficina .section-title { font-size: 12px; }
+#screen-oficina .menu-item-text { font-size: 14px; }
+#modalCierreDia .modal-title { font-size: 17px; }
+#modalCierreDia .stat-label { font-size: 13px; }
+#modalCierreDia .stat-value { font-size: 16px; }

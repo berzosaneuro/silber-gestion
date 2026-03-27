@@ -242,6 +242,21 @@ function actualizarSaldos() {
     renderizarListaStock();
     renderizarTablaPrecios();
     renderizarOficina();
-    // Refrescar desde la nube si Supabase está activo (solo si estamos en HOY)
-    if (_supabase && estado.diaOffset === 0) cargarDatosDashboard();
+    // Fuente de verdad local: evitar sobrescrituras de totales desde agregados remotos.
+}
+
+// Exportar funciones canónicas para evitar sobreescrituras posteriores.
+if (typeof window !== 'undefined') {
+    window.__silberCanonical = window.__silberCanonical || {};
+    window.__silberCanonical.cambiarDia = cambiarDia;
+    window.__silberCanonical.actualizarTimeMachine = actualizarTimeMachine;
+    window.__silberCanonical.dibujarDonut = dibujarDonut;
+    window.__silberCanonical.cambiarPeriodo = cambiarPeriodo;
+    window.__silberCanonical.renderizarRanking = renderizarRanking;
+    window.__silberCanonical.renderizarCategoriasGastos = renderizarCategoriasGastos;
+    window.__silberCanonical.renderizarCategoriasIngresos = renderizarCategoriasIngresos;
+    window.__silberCanonical.procesarFoto = procesarFoto;
+    window.__silberCanonical.abrirModalTransaccion = abrirModalTransaccion;
+    window.__silberCanonical.cerrarModalTransaccion = cerrarModalTransaccion;
+    window.__silberCanonical.actualizarSaldos = actualizarSaldos;
 }

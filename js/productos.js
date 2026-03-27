@@ -39,7 +39,7 @@ function addProducto(nombre, precio_por_gramo, stock_inicial, stock_minimo) {
     estado.productos.push(p);
     guardarEstado();
     if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'PRODUCT_CREATED', details: 'Producto creado: ' + nombre });
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         try { _supabase.from('productos').insert(p).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] productos insert:', err); }); } catch (e) {}
     }
     return p;
@@ -50,9 +50,10 @@ function updateProducto(id, data) {
     if (!p) return;
     if (data.nombre != null) p.nombre = data.nombre;
     if (data.precio_por_gramo != null) p.precio_por_gramo = parseFloat(data.precio_por_gramo);
+    if (data.stock_gramos != null && !isNaN(parseFloat(data.stock_gramos))) p.stock_gramos = parseFloat(data.stock_gramos);
     if (data.stock_minimo != null) p.stock_minimo = parseFloat(data.stock_minimo);
     guardarEstado();
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         try { _supabase.from('productos').upsert(p, { onConflict: 'id' }).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] productos upsert:', err); }); } catch (e) {}
     }
 }
@@ -66,7 +67,7 @@ function ajustarStock(productoId, cantidad_gramos, tipo) {
     recordStockMovement(p.id, tipo || 'ajuste', cantidad_gramos, typeof sesionActual !== 'undefined' && sesionActual ? sesionActual.usuario : '?');
     guardarEstado();
     if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'STOCK_ADJUSTMENT', details: 'Ajuste ' + (cantidad_gramos >= 0 ? '+' : '') + cantidad_gramos + 'g en ' + p.nombre });
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         try { _supabase.from('productos').update({ stock_gramos: p.stock_gramos }).eq('id', p.id).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] productos update:', err); }); } catch (e) {}
     }
     return true;
@@ -99,6 +100,15 @@ function registrarVentaPorGramos(productoId, cantidad_gramos) {
     if (p.stock_gramos < cantidad_gramos) return { ok: false, msg: 'Stock insuficiente' };
     var precio_total = cantidad_gramos * p.precio_por_gramo;
     p.stock_gramos -= cantidad_gramos;
+    // Registrar venta también como ingreso financiero para mantener fuente única.
+    if (typeof _silberRegistrarIngresoDeuda === 'function') {
+        _silberRegistrarIngresoDeuda({
+            monto: precio_total,
+            cuenta: 'efectivo',
+            nota: 'Venta gramos: ' + p.nombre,
+            categoria: p.nombre
+        });
+    }
     recordStockMovement(p.id, 'venta', -cantidad_gramos, typeof sesionActual !== 'undefined' && sesionActual ? sesionActual.usuario : '?');
     guardarEstado();
     if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'PRODUCT_SOLD', user: sesionActual ? sesionActual.usuario : '?', details: 'Venta ' + cantidad_gramos + 'g de ' + p.nombre + ' — ' + precio_total.toFixed(2) + '€' });
@@ -109,7 +119,7 @@ function registrarVentaPorGramos(productoId, cantidad_gramos) {
     if (pred.dias_restantes >= 0 && pred.dias_restantes < 5) {
         if (typeof activityLogAdd === 'function') activityLogAdd({ action: 'STOCK_DEPLETION_WARNING', details: 'El stock de ' + p.nombre + ' podría agotarse en menos de 5 días' });
     }
-    if (typeof _supabase !== 'undefined' && _supabase) {
+    if (typeof _supabase !== 'undefined' && _supabase && !(typeof window !== 'undefined' && window.__silberTableSyncEnabled)) {
         try {
             _supabase.from('productos').update({ stock_gramos: p.stock_gramos }).eq('id', p.id).then(function() {}).catch(function() {});
             _supabase.from('stock_movements').insert({ producto: p.id, tipo: 'venta', cantidad_gramos: -cantidad_gramos, usuario: sesionActual ? sesionActual.usuario : '?', timestamp: new Date().toISOString().slice(0, 19) }).then(function() {}).catch(function(err) { if (console && console.warn) console.warn('[Supabase] stock_movements:', err); });

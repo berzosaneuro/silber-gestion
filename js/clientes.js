@@ -40,6 +40,7 @@ function renderizarOficina() {
     }
     container.innerHTML = '';
     lista.forEach(cliente => {
+        const telefono = _silberGetClientPhone(cliente);
         const cobrarHoyCliente = cliente.diaPago === diaHoy && cliente.deuda > 0;
         const div = document.createElement('div');
         div.className = 'cliente-card';
@@ -49,7 +50,8 @@ function renderizarOficina() {
                 <div class="cliente-nombre">${cliente.nombre}${cobrarHoyCliente ? ' <span style="font-size:10px;background:rgba(245,158,11,0.2);color:#F59E0B;border:1px solid rgba(245,158,11,0.4);border-radius:6px;padding:2px 6px;font-weight:700;">HOY</span>' : ''}</div>
                 <div class="cliente-deuda ${cliente.deuda > 0 ? 'negativa' : ''}">${(cliente.deuda || 0).toFixed(2)}€</div>
             </div>
-            <div class="cliente-info">${cliente.whatsapp || ''} • Límite: ${cliente.limite || 0}€ • Día ${cliente.diaPago || '-'}</div>
+            <div class="cliente-info">${telefono || 'Sin teléfono'} • Límite: ${cliente.limite || 0}€ • Día ${cliente.diaPago || '-'}</div>
+            <button class="btn btn-secondary" style="margin-top:8px;padding:6px 10px;font-size:11px;" onclick="event.stopPropagation();enviarWhatsAppClientePorId('${String(cliente.id).replace(/'/g, "\\'")}')">WhatsApp</button>
         `;
         container.appendChild(div);
     });
@@ -81,6 +83,7 @@ function renderizarClientes() {
     }
     container.innerHTML = '';
     lista.forEach(cliente => {
+        const telefono = _silberGetClientPhone(cliente);
         const cobrarHoyCliente = cliente.diaPago === diaHoy && cliente.deuda > 0;
         const div = document.createElement('div');
         div.className = 'cliente-card';
@@ -90,10 +93,167 @@ function renderizarClientes() {
                 <div class="cliente-nombre">${cliente.nombre}${cobrarHoyCliente ? ' <span style="font-size:10px;background:rgba(245,158,11,0.2);color:#F59E0B;border:1px solid rgba(245,158,11,0.4);border-radius:6px;padding:2px 6px;font-weight:700;">HOY</span>' : ''}</div>
                 <div class="cliente-deuda ${cliente.deuda > 0 ? 'negativa' : ''}">${(cliente.deuda || 0).toFixed(2)}€</div>
             </div>
-            <div class="cliente-info">${cliente.whatsapp || ''} • Límite: ${cliente.limite || 0}€ • Día ${cliente.diaPago || '-'}</div>
+            <div class="cliente-info">${telefono || 'Sin teléfono'} • Límite: ${cliente.limite || 0}€ • Día ${cliente.diaPago || '-'}</div>
+            <button class="btn btn-secondary" style="margin-top:8px;padding:6px 10px;font-size:11px;" onclick="event.stopPropagation();enviarWhatsAppClientePorId('${String(cliente.id).replace(/'/g, "\\'")}')">WhatsApp</button>
         `;
         container.appendChild(div);
     });
+}
+
+function _silberNormPhone(v) {
+    return String(v || '')
+        .trim()
+        .replace(/[^\d+]/g, '')
+        .replace(/(?!^)\+/g, '');
+}
+
+function _silberPhoneForWa(v) {
+    return _silberNormPhone(v).replace(/\D/g, '');
+}
+
+function _silberPhoneIsValid(v) {
+    var p = _silberNormPhone(v);
+    if (!p) return true; // opcional
+    return /^\+?\d{8,15}$/.test(p);
+}
+
+function _silberGetClientPhone(cliente) {
+    if (!cliente) return '';
+    return _silberNormPhone(cliente.telefono || cliente.whatsapp || '');
+}
+
+function _silberDebtForClient(cliente) {
+    return Number((cliente && cliente.deuda) || 0) || 0;
+}
+
+function _silberSyncInfo(msg) {
+    try {
+        if (typeof _showSyncToast === 'function') _showSyncToast(msg || 'OK');
+    } catch (_) {}
+}
+function _silberSyncWarn(msg) {
+    try {
+        if (typeof _showSyncToast === 'function') _showSyncToast(msg || 'Error', 'warn');
+        else alert(msg || 'Error de sincronización');
+    } catch (_) {}
+}
+
+function _silberEnsureId(item) {
+    if (!item) return '';
+    if (item.id != null && String(item.id).trim() !== '') return String(item.id);
+    var id = '';
+    try {
+        if (typeof crypto !== 'undefined' && crypto && typeof crypto.randomUUID === 'function') {
+            id = crypto.randomUUID();
+        }
+    } catch (_) {}
+    if (!id) id = 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+    item.id = id;
+    return id;
+}
+
+function _silberCurrentUserOrThrow() {
+    var raw = null;
+    var currentUser = null;
+    try { raw = localStorage.getItem('silber_sesion_activa'); } catch (_) {}
+    try { currentUser = raw ? JSON.parse(raw) : null; } catch (_) { currentUser = null; }
+    if (!currentUser || !currentUser.usuario) {
+        console.error('No active user session');
+        throw new Error('User not logged in');
+    }
+    return currentUser;
+}
+
+async function _silberSyncClienteToSupabase(cliente) {
+    if (typeof window === 'undefined' || !window.__silberTableSyncEnabled || !_supabase) return;
+    var row = Object.assign({}, cliente || {});
+    log('[SYNC] START', row);
+    _silberEnsureId(row);
+    try {
+        var currentUser = _silberCurrentUserOrThrow();
+        row.user_id = String(currentUser.usuario);
+        row.id = String(row.id);
+        row.nombre = row.nombre || '';
+        row.telefono = row.telefono || row.whatsapp || '';
+        row.whatsapp = row.whatsapp || row.telefono || '';
+        row.limite = Number(row.limite || 0);
+        row.dia_pago = Number(row.diaPago || row.dia_pago || 1);
+        row.producto = row.producto || '';
+        row.deuda = Number(row.deuda || 0);
+        row.lat = row.lat != null ? Number(row.lat) : null;
+        row.lng = row.lng != null ? Number(row.lng) : null;
+        delete row.diaPago;
+        delete row.historial;
+    } catch (sessErr) {
+        console.error('[SYNC] EXCEPTION', sessErr);
+        _silberSyncWarn('Error sync ❌');
+        return;
+    }
+    try {
+        var up = await _supabase.from('clientes').upsert(row, { onConflict: 'id' }).select();
+        if (up.error) {
+            console.error('[SYNC] SUPABASE ERROR', up.error);
+            _silberSyncWarn('Error nube ❌');
+            return;
+        }
+        log('[SYNC] UPSERT OK', up.data);
+        var verify = await _supabase.from('clientes').select('*').eq('id', row.id).eq('user_id', row.user_id).single();
+        if (verify.error || !verify.data) {
+            console.error('[SYNC] VERIFY FAIL', verify.error);
+            _silberSyncWarn('No persistido ❌');
+            return;
+        }
+        log('[SYNC] VERIFY OK', verify.data);
+        _silberSyncInfo('Guardado nube ✅');
+        try {
+            window.__silberLastSyncCliente = {
+                id: row.id,
+                user_id: row.user_id,
+                ts: new Date().toISOString()
+            };
+        } catch (_) {}
+    } catch (e) {
+        console.error('[SYNC] EXCEPTION', e);
+        _silberSyncWarn('Error sync ❌');
+    }
+}
+
+function _silberBuildWhatsAppDebtMessage(cliente) {
+    var nombre = (cliente && cliente.nombre) || 'cliente';
+    var deuda = _silberDebtForClient(cliente).toFixed(2);
+    return 'Hola ' + nombre + ', tienes una deuda pendiente de ' + deuda + '€. ¿Puedes revisarlo hoy?';
+}
+
+function _silberSyncClientDataEverywhere(cliente) {
+    if (!cliente) return;
+    var telefono = _silberGetClientPhone(cliente);
+    cliente.telefono = telefono;
+    cliente.whatsapp = telefono; // compatibilidad con lógica existente
+    var db = cargarDbDeudas();
+    var dbCli = (db.clientes || []).find(function(c) { return String(c.id) === String(cliente.id); });
+    if (dbCli) {
+        dbCli.nombre = cliente.nombre || dbCli.nombre || '';
+        dbCli.telefono = telefono;
+        dbCli.limite_credito = Number(cliente.limite) || 0;
+        dbCli.dia_pago = Number(cliente.diaPago) || 1;
+        dbCli.producto = cliente.producto || dbCli.producto || '';
+    } else {
+        db.clientes.push({
+            id: cliente.id,
+            nombre: cliente.nombre || '',
+            producto: cliente.producto || '',
+            limite_credito: Number(cliente.limite) || 0,
+            telefono: telefono,
+            dia_pago: Number(cliente.diaPago) || 1
+        });
+    }
+    guardarDbDeudas(db);
+    if (typeof syncClientsToSupabase === 'function') syncClientsToSupabase();
+}
+
+function _silberGetClienteByCurrent() {
+    if (!estado.clienteActual) return null;
+    return estado.clientes.find(function(c) { return String(c.id) === String(estado.clienteActual.id); }) || null;
 }
 
 function abrirModalNuevoCliente() {
@@ -121,7 +281,7 @@ function guardarCliente() {
     var nombreEl = document.getElementById('cliente-nombre');
     var whatsappEl = document.getElementById('cliente-whatsapp');
     var nombre = nombreEl ? nombreEl.value.trim() : '';
-    var whatsapp = whatsappEl ? whatsappEl.value.trim() : '';
+    var telefono = _silberNormPhone(whatsappEl ? whatsappEl.value : '');
     var limiteEl = document.getElementById('cliente-limite');
     var diaPagoEl = document.getElementById('cliente-dia-pago');
     var limite = limiteEl ? parseFloat(limiteEl.value) : 0;
@@ -132,16 +292,30 @@ function guardarCliente() {
     var prod2Group = document.getElementById('cliente-producto2-group');
     var prod2 = prod2el && prod2Group && prod2Group.style.display !== 'none' ? prod2el.value : '';
     var producto = prod2 ? prod1 + ' + ' + prod2 : prod1;
-    if (!nombre || !whatsapp) {
+    if (!nombre) {
         if (btn) { btn.disabled = false; btn.textContent = 'Crear Cliente'; }
-        alert('Por favor completa los campos obligatorios');
+        alert('El nombre es obligatorio');
+        return;
+    }
+    if (!_silberPhoneIsValid(telefono)) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Crear Cliente'; }
+        alert('Teléfono inválido. Usa formato +346XXXXXXXX');
+        return;
+    }
+    var dupTelefono = telefono ? (estado.clientes || []).find(function(c) {
+        return _silberGetClientPhone(c) === telefono;
+    }) : null;
+    if (telefono && dupTelefono) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Crear Cliente'; }
+        alert('Ya existe un cliente con ese teléfono.');
         return;
     }
     var latEl = document.getElementById('cliente-lat');
     var lngEl = document.getElementById('cliente-lng');
     var lat = latEl && latEl.value ? parseFloat(latEl.value) : undefined;
     var lng = lngEl && lngEl.value ? parseFloat(lngEl.value) : undefined;
-    var obj = { id: Date.now(), nombre, whatsapp, limite: limite || 0, diaPago: diaPago || 1, producto, deuda: 0, historial: [] };
+    var obj = { id: null, nombre, telefono, whatsapp: telefono, limite: limite || 0, diaPago: diaPago || 1, producto, deuda: 0, historial: [] };
+    _silberEnsureId(obj);
     if (lat != null && !isNaN(lat)) obj.lat = lat;
     if (lng != null && !isNaN(lng)) obj.lng = lng;
     estado.clientes.push(obj);
@@ -149,15 +323,17 @@ function guardarCliente() {
     if (typeof actualizarSaldos === 'function') actualizarSaldos();
     cerrarModalNuevoCliente();
     guardarEstado();
-    if (typeof syncClientsToSupabase === 'function') syncClientsToSupabase();
+    _silberSyncClientDataEverywhere(obj);
+    _silberSyncClienteToSupabase(obj);
     if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
     if (btn) { btn.disabled = false; btn.textContent = 'Crear Cliente'; }
 }
 
 function abrirDetalleCliente(cliente) {
     estado.clienteActual = cliente;
+    var telefono = _silberGetClientPhone(cliente);
     document.getElementById('detalle-cliente-nombre').textContent = cliente.nombre;
-    document.getElementById('detalle-cliente-info').textContent = `${cliente.whatsapp} • Día ${cliente.diaPago}`;
+    document.getElementById('detalle-cliente-info').textContent = `${telefono || 'Sin teléfono'} • Día ${cliente.diaPago}`;
     document.getElementById('detalle-cliente-deuda').textContent = cliente.deuda + '€';
     document.getElementById('detalle-cliente-limite').textContent = cliente.limite + '€';
     const historialContainer = document.getElementById('historial-cliente');
@@ -201,8 +377,115 @@ function abrirDetalleCliente(cliente) {
     }
     _renderizarLlegadasEnDetalle(cliente.id);
 
+    var btnWA = document.getElementById('btn-whatsapp-cliente');
+    if (btnWA) btnWA.style.display = 'flex';
+
     document.getElementById('modalDetalleCliente').classList.add('active');
     if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function abrirEditarCliente() {
+    if (typeof esMaster === 'function' && !esMaster()) {
+        alert('Solo Jefazo / Jefaza pueden editar clientes.');
+        return;
+    }
+    var c = _silberGetClienteByCurrent();
+    if (!c) { alert('No hay cliente seleccionado'); return; }
+    var nombre = prompt('Nombre del cliente:', c.nombre || '');
+    if (nombre === null) return;
+    nombre = nombre.trim();
+    if (!nombre) { alert('El nombre no puede estar vacío.'); return; }
+    var telefono = prompt('Teléfono del cliente (opcional):', _silberGetClientPhone(c));
+    if (telefono === null) return;
+    telefono = _silberNormPhone(telefono);
+    if (!_silberPhoneIsValid(telefono)) { alert('Teléfono inválido. Usa formato +346XXXXXXXX'); return; }
+    var limiteTxt = prompt('Límite de crédito (€):', String(Number(c.limite) || 0));
+    if (limiteTxt === null) return;
+    var limite = Number(limiteTxt);
+    if (isNaN(limite) || limite < 0) { alert('Límite inválido.'); return; }
+    var diaTxt = prompt('Día de pago (1-31):', String(Number(c.diaPago) || 1));
+    if (diaTxt === null) return;
+    var dia = parseInt(diaTxt, 10);
+    if (!dia || dia < 1 || dia > 31) { alert('Día de pago inválido.'); return; }
+    var producto = prompt('Producto (opcional):', c.producto || '');
+    if (producto === null) return;
+    c.nombre = nombre;
+    var dupPhone = telefono ? (estado.clientes || []).find(function(x) { return x.id !== c.id && _silberGetClientPhone(x) === telefono; }) : null;
+    if (telefono && dupPhone) { alert('Ya existe otro cliente con ese teléfono.'); return; }
+    c.telefono = telefono;
+    c.whatsapp = telefono;
+    c.limite = limite;
+    c.diaPago = dia;
+    c.producto = (producto || '').trim();
+    _silberSyncClientDataEverywhere(c);
+    guardarEstado();
+    renderizarClientes();
+    if (typeof renderizarOficina === 'function') renderizarOficina();
+    if (typeof actualizarSaldos === 'function') actualizarSaldos();
+    abrirDetalleCliente(c);
+    alert('✅ Cliente actualizado');
+}
+
+function eliminarCliente(id) {
+    if (typeof esMaster === 'function' && !esMaster()) {
+        alert('Solo Jefazo / Jefaza pueden eliminar clientes.');
+        return false;
+    }
+    if (id == null || id === '') return false;
+
+    console.log('[DELETE CLIENT]', id);
+
+    var current = (estado && estado.clientes ? estado.clientes : []).find(function(c) {
+        return String(c.id) === String(id);
+    }) || null;
+    var nombre = current && current.nombre ? current.nombre : '';
+    if (!confirm(nombre ? ('¿Eliminar cliente "' + nombre + '"?') : '¿Eliminar cliente?')) return false;
+
+    // 1) Persistencia directa solicitada: localStorage['clientes']
+    var clientesLS = [];
+    try {
+        var raw = localStorage.getItem('clientes');
+        var parsed = raw ? JSON.parse(raw) : null;
+        if (Array.isArray(parsed)) clientesLS = parsed;
+    } catch (_) {}
+    if (!clientesLS.length) clientesLS = (estado && Array.isArray(estado.clientes)) ? estado.clientes.slice() : [];
+    clientesLS = clientesLS.filter(function(c) { return String(c.id) !== String(id); });
+    try { localStorage.setItem('clientes', JSON.stringify(clientesLS)); } catch (_) {}
+
+    // 2) Estado principal
+    estado.clientes = (estado.clientes || []).filter(function(c) { return String(c.id) !== String(id); });
+
+    // 3) db_deudas relacionado
+    var db = cargarDbDeudas();
+    db.clientes = (db.clientes || []).filter(function(x) { return String(x.id) !== String(id); });
+    db.deudas = (db.deudas || []).filter(function(x) { return String(x.cliente_id) !== String(id); });
+    db.historial = (db.historial || []);
+    db.historial.push({
+        fecha: new Date().toISOString().split('T')[0],
+        accion: 'cliente eliminado',
+        detalles: { id: id, nombre: nombre || '(sin nombre)' }
+    });
+    guardarDbDeudas(db);
+
+    guardarEstado();
+    if (typeof syncClientsToSupabase === 'function') syncClientsToSupabase();
+
+    if (estado.clienteActual && String(estado.clienteActual.id) === String(id)) {
+        cerrarModalDetalleCliente();
+    }
+
+    renderizarClientes();
+    if (typeof renderizarOficina === 'function') renderizarOficina();
+    if (typeof actualizarSaldos === 'function') actualizarSaldos();
+    if (typeof dibujarDonut === 'function') dibujarDonut();
+    return true;
+}
+
+function eliminarClienteActual() {
+    var c = _silberGetClienteByCurrent();
+    if (!c) return;
+    var ok = eliminarCliente(c.id);
+    if (ok) alert('✅ Cliente eliminado');
 }
 
 function cerrarModalDetalleCliente() {
@@ -212,17 +495,39 @@ function cerrarModalDetalleCliente() {
 
 function pagoTotal() {
     if (!estado.clienteActual) return;
-    if (confirm(`¿Saldar toda la deuda de ${estado.clienteActual.nombre}?`)) {
-        const cliente = estado.clientes.find(c => c.id === estado.clienteActual.id);
-        const deudaAnterior = cliente.deuda;
-        cliente.deuda = 0;
-        cliente.historial.unshift({ fecha: new Date().toISOString().split('T')[0], tipo: 'Pago Total', monto: -deudaAnterior, deudaTotal: 0 });
-        renderizarClientes();
-        actualizarSaldos();
-        cerrarModalDetalleCliente();
-        guardarEstado();
-        if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+    var cliente = _silberGetClienteByCurrent();
+    if (!cliente) { alert('Cliente no encontrado.'); return; }
+    var deudaAnterior = Number(cliente.deuda) || 0;
+    if (deudaAnterior <= 0) { alert('Este cliente no tiene deuda pendiente.'); return; }
+    if (!confirm('¿Saldar toda la deuda de ' + cliente.nombre + '?')) return;
+    var cuentaPagoTotal = 'efectivo';
+    var ok = (typeof _silberRegistrarIngresoDeuda === 'function')
+        ? _silberRegistrarIngresoDeuda({ monto: deudaAnterior, cuenta: cuentaPagoTotal, nota: 'Pago total deuda ' + cliente.nombre })
+        : false;
+    if (!ok) {
+        alert('No se pudo registrar el pago total.');
+        return;
     }
+    cliente.deuda = 0;
+    cliente.historial.unshift({ fecha: new Date().toISOString().split('T')[0], tipo: 'Pago Total', monto: -deudaAnterior, deudaTotal: 0 });
+    var db = cargarDbDeudas();
+    (db.deudas || []).forEach(function(d) {
+        if (String(d.cliente_id) === String(cliente.id) && !d.pagada) {
+            d.pagada = true;
+            if (!Array.isArray(d.historial_pagos)) d.historial_pagos = [];
+            d.historial_pagos.push({ fecha: new Date().toISOString().split('T')[0], monto: d.cantidad });
+            d.cantidad = 0;
+        }
+    });
+    guardarDbDeudas(db);
+    _silberSyncClientDataEverywhere(cliente);
+    guardarEstado();
+    renderizarClientes();
+    if (typeof renderizarOficina === 'function') renderizarOficina();
+    actualizarSaldos();
+    if (typeof dibujarDonut === 'function') dibujarDonut();
+    cerrarModalDetalleCliente();
+    if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
 }
 
 function mostrarPagoParcial() {
@@ -233,12 +538,40 @@ function mostrarPagoParcial() {
 function ejecutarPagoParcial() {
     const monto = parseFloat(document.getElementById('pago-parcial-monto').value);
     if (!monto || monto <= 0) { alert('Ingresa un monto válido'); return; }
-    if (monto > estado.clienteActual.deuda) { alert('El monto no puede ser mayor que la deuda'); return; }
-    const cliente = estado.clientes.find(c => c.id === estado.clienteActual.id);
+    const cliente = _silberGetClienteByCurrent();
+    if (!cliente) { alert('Cliente no encontrado.'); return; }
+    if (monto > cliente.deuda) { alert('El monto no puede ser mayor que la deuda'); return; }
+    var cuentaPagoParcial = 'efectivo';
+    var ok = (typeof _silberRegistrarIngresoDeuda === 'function')
+        ? _silberRegistrarIngresoDeuda({ monto: monto, cuenta: cuentaPagoParcial, nota: 'Pago parcial deuda ' + cliente.nombre })
+        : false;
+    if (!ok) { alert('No se pudo registrar el pago parcial.'); return; }
     cliente.deuda -= monto;
     cliente.historial.unshift({ fecha: new Date().toISOString().split('T')[0], tipo: 'Pago Parcial', monto: -monto, deudaTotal: cliente.deuda });
+    var restante = monto;
+    var db = cargarDbDeudas();
+    (db.deudas || []).filter(function(d) { return String(d.cliente_id) === String(cliente.id) && !d.pagada; })
+        .sort(function(a, b) { return String(a.fecha_creacion || '').localeCompare(String(b.fecha_creacion || '')); })
+        .forEach(function(d) {
+            if (restante <= 0) return;
+            if (!Array.isArray(d.historial_pagos)) d.historial_pagos = [];
+            if (restante >= d.cantidad) {
+                d.historial_pagos.push({ fecha: new Date().toISOString().split('T')[0], monto: d.cantidad });
+                restante -= d.cantidad;
+                d.cantidad = 0;
+                d.pagada = true;
+            } else {
+                d.historial_pagos.push({ fecha: new Date().toISOString().split('T')[0], monto: restante });
+                d.cantidad -= restante;
+                restante = 0;
+            }
+        });
+    guardarDbDeudas(db);
+    _silberSyncClientDataEverywhere(cliente);
     renderizarClientes();
+    if (typeof renderizarOficina === 'function') renderizarOficina();
     actualizarSaldos();
+    if (typeof dibujarDonut === 'function') dibujarDonut();
     cerrarModalDetalleCliente();
     guardarEstado();
     if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
@@ -264,17 +597,22 @@ function altaClienteDeuda() {
     const prod2    = prod2el && document.getElementById('alta-producto2-group').style.display !== 'none' ? prod2el.value : '';
     const producto = prod2 ? `${prod1} + ${prod2}` : prod1;
     const limite   = parseFloat(document.getElementById('alta-limite').value) || 0;
-    const telefono = document.getElementById('alta-telefono').value.trim();
+    const telefono = _silberNormPhone(document.getElementById('alta-telefono').value);
     const diaPago  = parseInt(document.getElementById('alta-dia-pago').value) || 1;
     if (!nombre) { alert('El nombre es obligatorio'); return; }
+    if (!_silberPhoneIsValid(telefono)) { alert('Teléfono inválido. Usa formato +346XXXXXXXX'); return; }
     const db = cargarDbDeudas();
-    const id = Date.now();
+    const tmp = { id: null };
+    const id = _silberEnsureId(tmp);
     db.clientes.push({ id, nombre, producto, limite_credito: limite, telefono, dia_pago: diaPago });
     db.historial.push({ fecha: new Date().toISOString().split('T')[0], accion: 'alta cliente', detalles: { id, nombre } });
     guardarDbDeudas(db);
     // Sincronizar con estado.clientes para que aparezca en pantalla Deuda
     if (!estado.clientes.find(c => c.nombre.toLowerCase() === nombre.toLowerCase())) {
-        estado.clientes.push({ id, nombre, whatsapp: telefono, limite, diaPago, producto, deuda: 0, historial: [] });
+        var nuevoCli = { id, nombre, telefono: telefono, whatsapp: telefono, limite, diaPago, producto, deuda: 0, historial: [] };
+        estado.clientes.push(nuevoCli);
+        _silberSyncClientDataEverywhere(nuevoCli);
+        _silberSyncClienteToSupabase(nuevoCli);
         guardarEstado();
         renderizarClientes();
     }
@@ -308,7 +646,7 @@ function cerrarModalDeudaPendiente() {
 }
 
 function guardarDeudaPendiente() {
-    const clienteId = parseInt(document.getElementById('dp-cliente').value);
+    const clienteId = String(document.getElementById('dp-cliente').value);
     const prod1     = document.getElementById('dp-producto').value;
     const prod2el   = document.getElementById('dp-producto2');
     const prod2     = prod2el && document.getElementById('dp-producto2-group').style.display !== 'none' ? prod2el.value : '';
@@ -318,12 +656,12 @@ function guardarDeudaPendiente() {
     if (!producto || !cantidad || cantidad <= 0) { alert('Completa todos los campos'); return; }
     const db = cargarDbDeudas();
     // Buscar cliente en db o en estado
-    const dbCliente = db.clientes.find(c => c.id === clienteId);
-    const stCliente = estado.clientes.find(c => c.id === clienteId);
+    const dbCliente = db.clientes.find(c => String(c.id) === String(clienteId));
+    const stCliente = estado.clientes.find(c => String(c.id) === String(clienteId));
     const limite = dbCliente ? dbCliente.limite_credito : (stCliente ? stCliente.limite : 0);
     const nombre = dbCliente ? dbCliente.nombre : (stCliente ? stCliente.nombre : '');
     // Calcular deuda actual
-    const deudaActual = db.deudas.filter(d => d.cliente_id === clienteId && !d.pagada).reduce((s, d) => s + d.cantidad, 0);
+    const deudaActual = db.deudas.filter(d => String(d.cliente_id) === String(clienteId) && !d.pagada).reduce((s, d) => s + d.cantidad, 0);
     if (limite > 0 && (deudaActual + cantidad) > limite) {
         const exceso = ((deudaActual + cantidad) - limite).toFixed(2);
         document.getElementById('sirena-mensaje').textContent = `${nombre} excede el crédito por ${exceso}€. Límite: ${limite}€ — Deuda actual: ${deudaActual}€ — Nueva: ${cantidad}€. OPERACIÓN RECHAZADA.`;
@@ -348,7 +686,6 @@ function guardarDeudaPendiente() {
         // Sonido sirena
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const dur = 1.2;
             [0, 0.4, 0.8].forEach(t => {
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
@@ -367,13 +704,14 @@ function guardarDeudaPendiente() {
     }
     const fecha = new Date().toISOString().split('T')[0];
     const id = Date.now();
-    db.deudas.push({ id, cliente_id: clienteId, producto, cantidad, dia_pago: diaPago, fecha_creacion: fecha, pagada: false, historial_pagos: [] });
+    db.deudas.push({ id, cliente_id: Number(clienteId), producto, cantidad, dia_pago: diaPago, fecha_creacion: fecha, pagada: false, historial_pagos: [] });
     db.historial.push({ fecha, accion: 'deuda pendiente', detalles: { cliente: nombre, producto, cantidad, dia_pago: diaPago } });
     guardarDbDeudas(db);
     // Actualizar deuda en estado.clientes
     if (stCliente) {
         stCliente.deuda = (stCliente.deuda || 0) + cantidad;
         stCliente.historial.unshift({ fecha, tipo: `Deuda ${producto}`, monto: cantidad, deudaTotal: stCliente.deuda });
+        _silberSyncClientDataEverywhere(stCliente);
         guardarEstado();
         renderizarClientes();
         actualizarSaldos();
@@ -400,16 +738,16 @@ function cerrarModalDeudaPagada() {
 }
 
 function guardarDeudaPagada() {
-    const clienteId = parseInt(document.getElementById('pago-cliente').value);
+    const clienteId = String(document.getElementById('pago-cliente').value);
     const pagado    = parseFloat(document.getElementById('pago-cantidad').value);
     const cuenta    = document.getElementById('pago-cuenta').value;
     if (!pagado || pagado <= 0) { alert('Ingresa un monto válido'); return; }
     const db = cargarDbDeudas();
-    const dbCliente = db.clientes.find(c => c.id === clienteId);
-    const stCliente = estado.clientes.find(c => c.id === clienteId);
+    const dbCliente = db.clientes.find(c => String(c.id) === String(clienteId));
+    const stCliente = estado.clientes.find(c => String(c.id) === String(clienteId));
     const nombre = dbCliente ? dbCliente.nombre : (stCliente ? stCliente.nombre : '');
     // Pagar deudas de más antigua a más reciente
-    const pendientes = db.deudas.filter(d => d.cliente_id === clienteId && !d.pagada).sort((a,b) => a.fecha_creacion.localeCompare(b.fecha_creacion));
+    const pendientes = db.deudas.filter(d => String(d.cliente_id) === String(clienteId) && !d.pagada).sort((a,b) => a.fecha_creacion.localeCompare(b.fecha_creacion));
     let restante = pagado;
     const fecha = new Date().toISOString().split('T')[0];
     pendientes.forEach(deuda => {
@@ -427,16 +765,19 @@ function guardarDeudaPagada() {
     db.historial.push({ fecha, accion: 'deuda pagada', detalles: { cliente: nombre, pagado, cuenta } });
     guardarDbDeudas(db);
     // Registrar ingreso y actualizar deuda en estado
-    const fechaHoy = fechaConOffset(0);
-    if (!estado.registrosDiarios[fechaHoy]) estado.registrosDiarios[fechaHoy] = { gastos: 0, ingresos: 0 };
-    estado.registrosDiarios[fechaHoy].ingresos += pagado;
-    estado.cuentas[cuenta] = (estado.cuentas[cuenta] || 0) + pagado;
+    if (typeof _silberRegistrarIngresoDeuda !== 'function') {
+        alert('No se pudo registrar el ingreso de deuda.');
+        return;
+    }
+    _silberRegistrarIngresoDeuda({ monto: pagado, cuenta: cuenta, nota: 'Pago deuda ' + nombre });
     if (stCliente) {
         stCliente.deuda = Math.max(0, (stCliente.deuda || 0) - pagado);
         stCliente.historial.unshift({ fecha, tipo: 'Pago Deuda', monto: -pagado, deudaTotal: stCliente.deuda });
+        _silberSyncClientDataEverywhere(stCliente);
         guardarEstado();
         renderizarClientes();
     }
+    if (typeof renderizarOficina === 'function') renderizarOficina();
     actualizarSaldos();
     dibujarDonut();
     guardarEstado();
@@ -674,6 +1015,29 @@ function abrirRutaEnGoogleMaps() {
     window.open(url, '_blank');
     cerrarModalRutaClientes();
 }
+
+function enviarWhatsAppClientePorId(clienteId) {
+    var cliente = (estado.clientes || []).find(function(c) { return String(c.id) === String(clienteId); });
+    if (!cliente) { alert('Cliente no encontrado'); return; }
+    var phoneDigits = _silberPhoneForWa(cliente.telefono || cliente.whatsapp);
+    if (!phoneDigits || phoneDigits.length < 8) {
+        alert('Este cliente no tiene teléfono válido para WhatsApp');
+        return;
+    }
+    var msg = _silberBuildWhatsAppDebtMessage(cliente);
+    var url = 'https://wa.me/' + phoneDigits + '?text=' + encodeURIComponent(msg);
+    window.open(url, '_blank');
+}
+
+(function _silberMigrateTelefonosClientes() {
+    var changed = false;
+    (estado.clientes || []).forEach(function(c) {
+        var tel = _silberGetClientPhone(c);
+        if ((c.telefono || '') !== tel) { c.telefono = tel; changed = true; }
+        if ((c.whatsapp || '') !== tel) { c.whatsapp = tel; changed = true; }
+    });
+    if (changed) guardarEstado();
+})();
 
 // ===== GEOLOCALIZACIÓN, GPS CAPTURE, "HE LLEGADO" Y GEOFENCE =====
 

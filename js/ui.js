@@ -146,6 +146,13 @@ function cambiarPantalla(pantalla) {
         if (estado.historialPantallas[estado.historialPantallas.length - 1] !== pantalla) {
             estado.historialPantallas.push(pantalla);
         }
+        // Evita overlays "fantasma" que bloquean taps al navegar entre pantallas.
+        var activeModals = document.querySelectorAll('.modal-overlay.active');
+        if (activeModals && activeModals.length) {
+            for (var m = 0; m < activeModals.length; m++) activeModals[m].classList.remove('active');
+        }
+        var resetModal = document.getElementById('modal-reset-confirm');
+        if (resetModal && resetModal.style.display && resetModal.style.display !== 'none') resetModal.style.display = 'none';
         var screens = document.querySelectorAll('.screen');
         if (screens && screens.length) { for (var i = 0; i < screens.length; i++) { screens[i].classList.remove('active'); screens[i].style.display = 'none'; screens[i].style.visibility = 'hidden'; } }
         var target = document.getElementById('screen-' + pantalla);
@@ -239,6 +246,21 @@ function cerrarMenu() {
     var o = document.getElementById('menuOverlay');
     if (o) { o.classList.remove('active'); o.style.display = 'none'; }
 }
+
+function abrirOficinaView(viewId) {
+    var oficinaScreen = document.getElementById('screen-oficina');
+    if (!oficinaScreen) return;
+    var views = oficinaScreen.querySelectorAll('.oficina-view');
+    if (views && views.length) {
+        for (var i = 0; i < views.length; i++) views[i].style.display = 'none';
+    }
+    var target = document.getElementById(viewId || 'oficina-main');
+    if (target) target.style.display = (viewId === 'oficina-guia') ? 'flex' : 'block';
+
+    var fab = document.getElementById('oficina-fab-add-cliente');
+    if (fab) fab.style.display = (viewId === 'oficina-guia') ? 'none' : '';
+}
+if (typeof window !== 'undefined') window.abrirOficinaView = abrirOficinaView;
 
 // ===== GESTIÓN BIOMETRÍA EN OFICINA =====
 function actualizarEstadoBiometria() {

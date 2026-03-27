@@ -3,17 +3,24 @@
    Does NOT intercept Supabase API calls, CDN resources, or auth flows.
 */
 
-var CACHE = 'silber-v1';
+var CACHE = 'silber-v3';
 
 /* ── Install: cache the app shell ──────────────────────────── */
 self.addEventListener('install', function(e) {
     self.skipWaiting();
     e.waitUntil(
         caches.open(CACHE).then(function(cache) {
-            /* Only cache index.html — the rest is cached dynamically on first use.
+            /* Precache critical shell + icons to avoid stale launcher assets.
                Wrapping in catch so a single missing file never blocks installation. */
-            return cache.add('/index.html').catch(function(err) {
-                console.warn('[SW] Could not precache index.html:', err);
+            return cache.addAll([
+                '/index.html',
+                '/manifest.json',
+                '/icons/icon-192.png',
+                '/icons/icon-512.png',
+                '/icons/icon-192-maskable.png',
+                '/icons/icon-512-maskable.png'
+            ]).catch(function(err) {
+                console.warn('[SW] Could not precache shell/icons:', err);
             });
         })
     );
@@ -78,8 +85,8 @@ self.addEventListener('push', function(event) {
     event.waitUntil(
         self.registration.showNotification(data.title || 'Silber Gestión', {
             body:    data.body    || '',
-            icon:    '/icon-192.png',
-            badge:   '/icon-192.png',
+            icon:    '/icons/icon-192.png',
+            badge:   '/icons/icon-192.png',
             data:    data.url    || '/',
             vibrate: [100, 50, 100]
         })
