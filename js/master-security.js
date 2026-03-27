@@ -31,7 +31,14 @@ function requireMasterBiometric(onVerified) {
         return;
     }
     const credGuardadas = localStorage.getItem('silber_biometric_creds');
-    if (credGuardadas && typeof window.PublicKeyCredential !== 'undefined') {
+    var sesion = null;
+    var credSesion = null;
+    try { sesion = JSON.parse(localStorage.getItem('silber_sesion_activa') || 'null'); } catch (_) {}
+    try { credSesion = credGuardadas ? JSON.parse(credGuardadas) : null; } catch (_) {}
+    // Evita pedir biometría de otro usuario (ej. biometría guardada por Eljefazo y sesión de Lajefaza).
+    var sameUser = !!(sesion && credSesion && sesion.usuario && credSesion.usuario && String(sesion.usuario) === String(credSesion.usuario));
+    var biometricEnabled = localStorage.getItem('silber_biometric_enabled') === '1';
+    if (biometricEnabled && credGuardadas && sameUser && typeof window.PublicKeyCredential !== 'undefined') {
         (typeof autenticarBiometria === 'function' ? autenticarBiometria() : Promise.resolve(false))
             .then(function(ok) { if (typeof onVerified === 'function') onVerified(!!ok); })
             .catch(function() { if (typeof onVerified === 'function') onVerified(false); });

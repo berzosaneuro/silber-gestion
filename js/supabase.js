@@ -70,12 +70,13 @@ function saveWorkerLocation(user, role, lat, lng) {
 
 // ——— Sync clients to Supabase (upsert by id)
 function syncClientsToSupabase() {
-    if (typeof _supabase === 'undefined' || !_supabase || !estado.clientes || !estado.clientes.length) return;
+    if (typeof _supabase === 'undefined' || !_supabase) return;
     if (_silberTableSyncEnabled) {
         // En modo tablas core, un único sync conserva consistencia entre entidades.
         _triggerCloudSync();
         return;
     }
+    if (!estado.clientes || !estado.clientes.length) return;
     try {
         estado.clientes.forEach(function(c) {
             var row = { id: String(c.id), nombre: c.nombre, whatsapp: c.whatsapp || '', limite: c.limite || 0, dia_pago: c.diaPago || 1, producto: c.producto || '', deuda: c.deuda || 0, lat: c.lat != null ? c.lat : null, lng: c.lng != null ? c.lng : null };
@@ -306,8 +307,10 @@ async function fetchClientes() {
         .eq('user_id', currentUser.usuario);
 }
 if (typeof window !== 'undefined') window.fetchClientes = fetchClientes;
-async function bootstrapClientes() {
+async function bootstrapClientes(opts) {
     try {
+        var options = opts || {};
+        var force = options.force === true;
         var currentUser = null;
         try { currentUser = JSON.parse(localStorage.getItem('silber_sesion_activa') || 'null'); } catch (_) {}
         if (!currentUser || !currentUser.usuario) return;
@@ -327,8 +330,9 @@ async function bootstrapClientes() {
 
         try { localStorage.setItem('clientes', JSON.stringify(data)); } catch (_) {}
 
-        // Mantiene flujo local existente, pero hidrata estado en dispositivo nuevo.
-        if (typeof estado !== 'undefined' && estado && data.length) {
+        // Hidrata estado solo cuando se fuerza o hay datos remotos.
+        // Evita ignorar "vacíos reales" después de borrados remotos.
+        if (typeof estado !== 'undefined' && estado && (force || data.length || (Array.isArray(estado.clientes) && estado.clientes.length))) {
             estado.clientes = data.map(function(c) {
                 return {
                     id: c.id,
@@ -430,6 +434,14 @@ function _silberScheduleCoreRetry(reason) {
         });
     }, 5000);
 }
+function _sbHashCoreBundle(bundle) {
+    try {
+        return JSON.stringify(_sbNormalizeCoreBundle(bundle || null));
+    } catch (_) {
+        return '';
+    }
+}
+var _silberLastAppliedCoreHash = '';
 async function _silberBootstrapCoreTables() {
     if (!_supabase) return false;
     var bundle = await _sbFetchCoreBundle();
@@ -443,10 +455,15 @@ async function _silberBootstrapCoreTables() {
         return false;
     }
 
+    var nextHash = _sbHashCoreBundle(bundle);
+    if (nextHash && nextHash === _silberLastAppliedCoreHash) {
+        return false;
+    }
     _isRemoteUpdate = true;
     var changed = _sbApplyCoreBundleToEstado(bundle);
     try { guardarEstado(); } catch (_) {}
     _isRemoteUpdate = false;
+    if (nextHash) _silberLastAppliedCoreHash = nextHash;
     if (changed) _sbInfo('[CORE_SYNC] LOAD OK (tablas)');
     return changed;
 }
@@ -459,22 +476,23 @@ function _sbApplyCoreBundleToEstado(bundle) {
     var remoteDeudas = bundle.deudas || [];
     var remoteProductos = bundle.productos || [];
 
-    if (remoteClientes.length) {
-        estado.clientes = remoteClientes.map(function(c) {
-            return {
-                id: c.id != null ? c.id : String(Date.now() + Math.random()),
-                nombre: c.nombre || '',
-                telefono: c.telefono || c.whatsapp || '',
-                whatsapp: c.whatsapp || c.telefono || '',
-                limite: _sbNum(c.limite != null ? c.limite : c.limite_credito, 0),
-                diaPago: _sbNum(c.dia_pago, 1),
-                producto: c.producto || '',
-                deuda: _sbNum(c.deuda, 0),
-                historial: [],
-                lat: c.lat != null ? _sbNum(c.lat, null) : undefined,
-                lng: c.lng != null ? _sbNum(c.lng, null) : undefined
-            };
-        });
+    var nextClientes = remoteClientes.map(function(c) {
+        return {
+            id: c.id != null ? c.id : String(Date.now() + Math.random()),
+            nombre: c.nombre || '',
+            telefono: c.telefono || c.whatsapp || '',
+            whatsapp: c.whatsapp || c.telefono || '',
+            limite: _sbNum(c.limite != null ? c.limite : c.limite_credito, 0),
+            diaPago: _sbNum(c.dia_pago, 1),
+            producto: c.producto || '',
+            deuda: _sbNum(c.deuda, 0),
+            historial: [],
+            lat: c.lat != null ? _sbNum(c.lat, null) : undefined,
+            lng: c.lng != null ? _sbNum(c.lng, null) : undefined
+        };
+    });
+    if (JSON.stringify(estado.clientes || []) !== JSON.stringify(nextClientes)) {
+        estado.clientes = nextClientes;
         changed = true;
     }
 
@@ -484,68 +502,74 @@ function _sbApplyCoreBundleToEstado(bundle) {
         changed = true;
     }
 
-    if (remoteTx.length) {
-        estado.gastosRegistros = [];
-        estado.ingresosRegistros = [];
-        remoteTx.forEach(function(t) {
-            var base = {
-                id: t.id != null ? t.id : (Date.now() + Math.random()),
-                fecha: t.fecha || new Date().toISOString().split('T')[0],
-                hora: t.hora || new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-                categoria: t.categoria || '',
-                monto: _sbNum(t.monto, 0),
-                cuenta: t.cuenta || 'efectivo',
-                nota: t.nota || '',
-                gramos: _sbNum(t.gramos, 0),
-                registradoPor: t.registrado_por || '?'
-            };
-            if (String(t.tipo || '').toLowerCase() === 'gasto') estado.gastosRegistros.push(base);
-            else estado.ingresosRegistros.push(base);
-        });
+    var nextGastos = [];
+    var nextIngresos = [];
+    remoteTx.forEach(function(t) {
+        var base = {
+            id: t.id != null ? t.id : (Date.now() + Math.random()),
+            fecha: t.fecha || new Date().toISOString().split('T')[0],
+            hora: t.hora || new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+            categoria: t.categoria || '',
+            monto: _sbNum(t.monto, 0),
+            cuenta: t.cuenta || 'efectivo',
+            nota: t.nota || '',
+            gramos: _sbNum(t.gramos, 0),
+            registradoPor: t.registrado_por || '?'
+        };
+        if (String(t.tipo || '').toLowerCase() === 'gasto') nextGastos.push(base);
+        else nextIngresos.push(base);
+    });
+    if (JSON.stringify(estado.gastosRegistros || []) !== JSON.stringify(nextGastos)
+        || JSON.stringify(estado.ingresosRegistros || []) !== JSON.stringify(nextIngresos)) {
+        estado.gastosRegistros = nextGastos;
+        estado.ingresosRegistros = nextIngresos;
         if (typeof _silberRebuildRegistrosFromLedgers === 'function') _silberRebuildRegistrosFromLedgers();
         changed = true;
     }
 
-    if (remoteProductos.length) {
-        estado.productos = remoteProductos.map(function(p) {
-            return {
-                id: p.id != null ? p.id : String(Date.now() + Math.random()),
-                nombre: p.nombre || '',
-                precio_por_gramo: _sbNum(p.precio_por_gramo, 0),
-                stock_gramos: _sbNum(p.stock_gramos, 0),
-                stock_minimo: _sbNum(p.stock_minimo, 0),
-                activo: p.activo !== false,
-                created_at: p.created_at || new Date().toISOString().slice(0, 19).replace('T', ' ')
-            };
-        });
+    var nextProductos = remoteProductos.map(function(p) {
+        return {
+            id: p.id != null ? p.id : String(Date.now() + Math.random()),
+            nombre: p.nombre || '',
+            precio_por_gramo: _sbNum(p.precio_por_gramo, 0),
+            stock_gramos: _sbNum(p.stock_gramos, 0),
+            stock_minimo: _sbNum(p.stock_minimo, 0),
+            activo: p.activo !== false,
+            created_at: p.created_at || new Date().toISOString().slice(0, 19).replace('T', ' ')
+        };
+    });
+    if (JSON.stringify(estado.productos || []) !== JSON.stringify(nextProductos)) {
+        estado.productos = nextProductos;
         changed = true;
     }
 
-    if (remoteDeudas.length) {
-        var db = _sbReadDbDeudasLocal();
-        db.deudas = remoteDeudas.map(function(d) {
-            return {
-                id: d.id != null ? d.id : String(Date.now() + Math.random()),
-                cliente_id: d.cliente_id != null ? d.cliente_id : '',
-                producto: d.producto || '',
-                cantidad: _sbNum(d.cantidad, 0),
-                dia_pago: _sbNum(d.dia_pago, 1),
-                fecha_creacion: d.fecha_creacion || new Date().toISOString().split('T')[0],
-                pagada: !!d.pagada,
-                historial_pagos: Array.isArray(d.historial_pagos) ? d.historial_pagos : []
-            };
-        });
-        if (!Array.isArray(db.clientes)) db.clientes = [];
-        db.clientes = (estado.clientes || []).map(function(c) {
-            return {
-                id: c.id,
-                nombre: c.nombre || '',
-                producto: c.producto || '',
-                limite_credito: _sbNum(c.limite, 0),
-                telefono: c.telefono || c.whatsapp || '',
-                dia_pago: _sbNum(c.diaPago, 1)
-            };
-        });
+    var db = _sbReadDbDeudasLocal();
+    var nextDeudas = remoteDeudas.map(function(d) {
+        return {
+            id: d.id != null ? d.id : String(Date.now() + Math.random()),
+            cliente_id: d.cliente_id != null ? d.cliente_id : '',
+            producto: d.producto || '',
+            cantidad: _sbNum(d.cantidad, 0),
+            dia_pago: _sbNum(d.dia_pago, 1),
+            fecha_creacion: d.fecha_creacion || new Date().toISOString().split('T')[0],
+            pagada: !!d.pagada,
+            historial_pagos: Array.isArray(d.historial_pagos) ? d.historial_pagos : []
+        };
+    });
+    var nextDbClientes = (estado.clientes || []).map(function(c) {
+        return {
+            id: c.id,
+            nombre: c.nombre || '',
+            producto: c.producto || '',
+            limite_credito: _sbNum(c.limite, 0),
+            telefono: c.telefono || c.whatsapp || '',
+            dia_pago: _sbNum(c.diaPago, 1)
+        };
+    });
+    if (JSON.stringify(db.deudas || []) !== JSON.stringify(nextDeudas)
+        || JSON.stringify(db.clientes || []) !== JSON.stringify(nextDbClientes)) {
+        db.deudas = nextDeudas;
+        db.clientes = nextDbClientes;
         _sbWriteDbDeudasLocal(db);
         (estado.clientes || []).forEach(function(c) {
             var deudaPend = (db.deudas || [])

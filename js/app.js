@@ -31,6 +31,7 @@ function intentarLogin() {
             if (typeof window._silberDebug === 'function') window._silberDebug('login-success', user.username);
             try {
                 localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual));
+                _silberApplyBiometricGateFromSession();
                 console.log('[LOGIN] OK', { usuario: user.username, rol: user.role, origen: 'USUARIOS' });
             } catch (storageErr) {
                 console.warn('[LOGIN] No se pudo guardar sesión en localStorage:', storageErr);
@@ -46,6 +47,7 @@ function intentarLogin() {
             sesionActual = { usuario: g.usuario, rol: 'WORKER', gorrionIdx: gIdx, nombre: g.nombre, numero: g.numero };
             try {
                 localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual));
+                _silberApplyBiometricGateFromSession();
                 console.log('[LOGIN] OK', { usuario: g.usuario, rol: 'WORKER', origen: 'GORRION' });
             } catch (storageErr2) {
                 console.warn('[LOGIN] No se pudo guardar sesión en localStorage:', storageErr2);
@@ -77,6 +79,7 @@ function entrarApp() {
         if (typeof aplicarModoSesion === 'function') { try { aplicarModoSesion(); } catch (e) { if (console && console.warn) console.warn('[Silber] aplicarModoSesion:', e); } }
         if (sesionActual) {
             try { localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual)); } catch (e) {}
+            _silberApplyBiometricGateFromSession();
             if (typeof activarBiometria === 'function') { try { activarBiometria(sesionActual); } catch (e) {} }
         }
     } catch (e) {
@@ -117,6 +120,18 @@ function entrarApp() {
     if (typeof syncClientsToSupabase === 'function') syncClientsToSupabase();
     if (navigator.vibrate) navigator.vibrate([30,50,30]);
     if (typeof showDailyLoveMessage === 'function') showDailyLoveMessage();
+}
+
+function _silberApplyBiometricGateFromSession() {
+    try {
+        var sesion = null;
+        var cred = null;
+        try { sesion = JSON.parse(localStorage.getItem('silber_sesion_activa') || 'null'); } catch (_) {}
+        try { cred = JSON.parse(localStorage.getItem('silber_biometric_creds') || 'null'); } catch (_) {}
+        var hasBioSlot = !!(localStorage.getItem('silber_webauthn_id') || localStorage.getItem('silber_webauthn_id_2'));
+        var enabled = !!(sesion && cred && sesion.usuario && cred.usuario && String(sesion.usuario) === String(cred.usuario) && hasBioSlot);
+        localStorage.setItem('silber_biometric_enabled', enabled ? '1' : '0');
+    } catch (_) {}
 }
 
 function esJefazo() { return sesionActual && sesionActual.rol === 'JEFAZO'; }
@@ -268,6 +283,8 @@ function resetSuave() {
 
     /* 2 — Persistir en localStorage */
     if (typeof guardarEstado === 'function') guardarEstado();
+    try { localStorage.setItem('clientes', JSON.stringify([])); } catch (_) {}
+    try { localStorage.setItem('db_deudas', JSON.stringify({ clientes: [], deudas: [], historial: [] })); } catch (_) {}
     console.log('[RESET] Estado limpio guardado en localStorage');
 
     /* 3 — Push a Supabase para propagar a todos los dispositivos */
@@ -495,6 +512,10 @@ async function loginFaceID() {
 function _entrarConCreds(credGuardadas) {
     try {
         sesionActual = JSON.parse(credGuardadas);
+        try {
+            localStorage.setItem('silber_sesion_activa', JSON.stringify(sesionActual));
+            _silberApplyBiometricGateFromSession();
+        } catch (_) {}
         aplicarModoSesion();
         entrarApp();
     } catch(e) {

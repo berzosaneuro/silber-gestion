@@ -376,6 +376,30 @@ function cerrarModalBiometria() {
     if (msgEl) msgEl.style.color = 'var(--text-secondary)';
 }
 
+function desactivarBiometriaSesionActual() {
+    try {
+        localStorage.removeItem('silber_biometric_creds');
+        localStorage.removeItem('silber_webauthn_id');
+        localStorage.removeItem('silber_webauthn_id_2');
+        localStorage.setItem('silber_biometric_enabled', '0');
+        if (typeof mostrarToast === 'function') mostrarToast('✅ PIN/biometría desactivado para esta sesión', 'info');
+        else alert('PIN/biometría desactivado');
+        if (typeof actualizarEstadoBiometria === 'function') actualizarEstadoBiometria();
+        console.log('[BIO] desactivada manualmente por usuario');
+    } catch (e) {
+        console.warn('[BIO] no se pudo desactivar:', e);
+    }
+}
+if (typeof window !== 'undefined') window.desactivarBiometriaSesionActual = desactivarBiometriaSesionActual;
+document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('btn-disable-bio');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+        if (!confirm('¿Desactivar PIN/biometría para esta cuenta en este dispositivo?')) return;
+        desactivarBiometriaSesionActual();
+    });
+});
+
 let _gestorTipo = 'gasto'; // 'gasto' | 'ingreso'
 let _editCatIdx = null;
 
@@ -535,9 +559,15 @@ async function _ejecutarDelete() {
     }
 
     const credGuardadas = localStorage.getItem('silber_biometric_creds');
+    var sesionActiva = null;
+    var sesionBio = null;
+    try { sesionActiva = JSON.parse(localStorage.getItem('silber_sesion_activa') || 'null'); } catch (_) {}
+    try { sesionBio = credGuardadas ? JSON.parse(credGuardadas) : null; } catch (_) {}
+    var sameUser = !!(sesionActiva && sesionBio && sesionActiva.usuario && sesionBio.usuario && String(sesionActiva.usuario) === String(sesionBio.usuario));
 
-    // Si hay sesión guardada, pedir biometría. Si no, ejecutar directo.
-    if (credGuardadas && window.PublicKeyCredential) {
+    // Solo pedir biometría si corresponde al usuario activo.
+    var biometricEnabled = localStorage.getItem('silber_biometric_enabled') === '1';
+    if (biometricEnabled && credGuardadas && sameUser && window.PublicKeyCredential) {
         const ok = await autenticarBiometria();
         if (!ok) {
             // Biometría fallida o cancelada — NO borrar

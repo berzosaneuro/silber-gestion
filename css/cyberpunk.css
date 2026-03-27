@@ -822,3 +822,15 @@ body::before {
     height: min(280px, 82vw) !important;
   }
 }
+
+/* Capa de nitidez final: evita borrosidad en textos críticos de oficina/cierre. */
+#screen-oficina .section-title,
+#screen-oficina .menu-item-text,
+#screen-oficina .stat-label,
+#screen-oficina .stat-value,
+#modalCierreDia .section-title,
+#modalCierreDia .stat-label,
+#modalCierreDia .stat-value {
+  text-shadow: none !important;
+  filter: none !important;
+}
