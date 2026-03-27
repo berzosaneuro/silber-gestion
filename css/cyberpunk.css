@@ -1037,3 +1037,156 @@ button {
     animation: none !important;
   }
 }
+
+/* ─────────────────────────────────────────────
+   UX REFRESH FINAL — llamativo + intuitivo + pro
+   (solo capa visual, sin tocar lógica)
+   ───────────────────────────────────────────── */
+
+:root {
+  --ux-primary: #00e5ff;
+  --ux-secondary: #7c3aed;
+  --ux-success: #10b981;
+  --ux-danger: #ef4444;
+  --ux-surface: rgba(8, 12, 28, 0.88);
+  --ux-surface-2: rgba(12, 18, 38, 0.86);
+}
+
+/* Tipografía nítida y consistente */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Contenedores con jerarquía visual más clara */
+.section-card,
+.summary-card,
+.settings-group,
+.ranking-section,
+.donut-section {
+  background: linear-gradient(180deg, var(--ux-surface), var(--ux-surface-2)) !important;
+  border: 1px solid rgba(0, 229, 255, 0.22) !important;
+  border-radius: 16px !important;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 1px rgba(0, 229, 255, 0.05) !important;
+}
+
+/* Navegación inferior: más legible y con estado activo evidente */
+#bottom-nav {
+  background: linear-gradient(180deg, rgba(4, 8, 20, 0.96), rgba(2, 6, 16, 0.98)) !important;
+  border-top: 1px solid rgba(0, 229, 255, 0.2) !important;
+  box-shadow: 0 -10px 26px rgba(0, 0, 0, 0.48) !important;
+}
+
+.nav-item {
+  border-radius: 12px;
+  min-width: 68px;
+  transition: background-color .16s ease, box-shadow .16s ease, transform .12s ease;
+}
+
+.nav-item .nav-label {
+  font-size: 9px !important;
+  font-weight: 800;
+  letter-spacing: .8px;
+  color: rgba(186, 210, 233, .78);
+}
+
+.nav-item.active {
+  background: linear-gradient(180deg, rgba(0, 229, 255, .16), rgba(124, 58, 237, .12)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .15),
+    0 0 18px rgba(0, 229, 255, .24) !important;
+}
+
+.nav-item:active {
+  transform: scale(0.98);
+}
+
+/* Sidebar desktop más intuitiva (mejor agrupación visual) */
+#desktop-sidebar .dsb-section-label {
+  color: rgba(143, 186, 214, .72) !important;
+  letter-spacing: 1.2px !important;
+}
+
+#desktop-sidebar .dsb-item {
+  border-radius: 12px !important;
+  margin: 4px 8px !important;
+  border: 1px solid transparent;
+  transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+#desktop-sidebar .dsb-item:hover {
+  background: rgba(124, 58, 237, .1) !important;
+  border-color: rgba(124, 58, 237, .24) !important;
+}
+
+#desktop-sidebar .dsb-item.active {
+  background: linear-gradient(90deg, rgba(0, 229, 255, .14), rgba(124, 58, 237, .14)) !important;
+  border-color: rgba(0, 229, 255, .38) !important;
+  box-shadow: 0 0 18px rgba(0, 229, 255, .18) !important;
+}
+
+/* Botones: feedback rápido y estable (sin saltos de layout) */
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.dash-quick-btn,
+.settings-row .switch {
+  transform: none !important;
+  transition: transform .12s ease, filter .14s ease, box-shadow .16s ease !important;
+}
+
+.btn-primary:active,
+.btn-secondary:active,
+.btn-danger:active,
+.dash-quick-btn:active {
+  transform: scale(0.98) !important;
+  filter: brightness(1.06);
+}
+
+/* CTA del dashboard con color emocional por acción */
+.dash-quick-btn--gasto {
+  background: linear-gradient(160deg, rgba(44, 8, 20, .9), rgba(18, 6, 16, .95)) !important;
+}
+.dash-quick-btn--ingreso {
+  background: linear-gradient(160deg, rgba(6, 34, 28, .9), rgba(4, 18, 16, .95)) !important;
+}
+.dash-quick-btn--deuda {
+  background: linear-gradient(160deg, rgba(40, 30, 8, .92), rgba(18, 14, 6, .96)) !important;
+}
+
+/* Filas de herramientas con mejor affordance */
+.settings-row {
+  transition: background-color .14s ease, border-color .14s ease;
+}
+
+.settings-row:active {
+  background: rgba(0, 229, 255, 0.08) !important;
+}
+
+/* Aparición suave y ligera de contenido */
+@keyframes ux-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.screen.active .section-card,
+.screen.active .summary-card,
+.screen.active .settings-group {
+  animation: ux-fade-in .18s ease-out;
+}
+
+/* Evitar sobrecarga en móviles táctiles */
+@media (hover: none), (pointer: coarse) {
+  #desktop-sidebar .dsb-item:hover,
+  .section-card:hover,
+  .summary-card:hover,
+  .cliente-card:hover,
+  .menu-item:hover,
+  .ranking-item:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,.45), 0 0 0 1px rgba(0,229,255,.06) !important;
+    border-color: rgba(0,229,255,.22) !important;
+  }
+}

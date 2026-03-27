@@ -138,6 +138,24 @@ function renderizarListaStock() {
 
 function cambiarPantalla(pantalla) {
     try {
+        var SCREEN_TO_NAV = {
+            dashboard: 'dashboard',
+            gastos: 'gastos',
+            ingresos: 'ingresos',
+            deuda: 'oficina',
+            oficina: 'oficina',
+            cuentas: 'oficina',
+            transferencias: 'oficina',
+            gorriones: 'oficina',
+            timeline: 'oficina',
+            metricas: 'oficina',
+            stock: 'oficina',
+            productos: 'oficina',
+            'tabla-precios': 'oficina',
+            analytics: 'oficina',
+            config: 'oficina',
+            llegadas: 'oficina'
+        };
         if (typeof estado === 'undefined') { estado = (typeof window !== 'undefined' && window.estado) ? window.estado : { historialPantallas: ['dashboard'] }; }
         // Blindaje de permisos: gorriones no pueden abrir módulo stock ni subpantallas asociadas.
         if (typeof esGorrion === 'function' && esGorrion()) {
@@ -171,16 +189,23 @@ function cambiarPantalla(pantalla) {
         }
         var navItems = document.querySelectorAll('.nav-item');
         if (navItems && navItems.length) { for (var j = 0; j < navItems.length; j++) { navItems[j].classList.remove('active'); } }
-        var navItem = document.querySelector('.nav-item[data-screen="' + pantalla + '"]');
+        var navTarget = SCREEN_TO_NAV[pantalla] || pantalla;
+        var navItem = document.querySelector('.nav-item[data-screen="' + navTarget + '"]');
         if (navItem) navItem.classList.add('active');
+        var dsbItems = document.querySelectorAll('.dsb-item');
+        if (dsbItems && dsbItems.length) {
+            for (var d = 0; d < dsbItems.length; d++) dsbItems[d].classList.remove('active');
+        }
+        var dsbItem = document.querySelector('.dsb-item[data-screen="' + (pantalla === 'deuda' ? 'deuda' : (pantalla === 'stock' || pantalla === 'productos' || pantalla === 'tabla-precios' ? 'stock' : (pantalla === 'config' ? 'config' : (pantalla === 'dashboard' ? 'dashboard' : (pantalla === 'gastos' ? 'gastos' : (pantalla === 'ingresos' ? 'ingresos' : (pantalla === 'llegadas' ? 'llegadas' : (pantalla === 'analytics' ? 'analytics' : 'oficina')))))))) + '"]');
+        if (dsbItem) dsbItem.classList.add('active');
         var backBtn = document.getElementById('backBtn');
         if (backBtn) backBtn.classList.toggle('visible', pantalla !== 'dashboard');
         var titleMap = {
-            dashboard: 'SILBER GESTIÓN',
-            gastos: 'GASTOS',
-            ingresos: 'INGRESOS',
-            deuda: 'CLIENTES Y DEUDAS',
-            oficina: 'OFICINA · CONTABILIDAD',
+            dashboard: 'INICIO · SILBER GESTIÓN',
+            gastos: 'GASTOS · REGISTRO',
+            ingresos: 'INGRESOS · REGISTRO',
+            deuda: 'CLIENTES · DEUDAS',
+            oficina: 'OFICINA · OPERACIONES',
             stock: 'STOCK',
             config: 'HERRAMIENTAS',
             analytics: 'ANALÍTICAS',
@@ -259,6 +284,24 @@ function cambiarPantalla(pantalla) {
 
 function volverAtras() {
     try {
+        var SCREEN_TO_NAV = {
+            dashboard: 'dashboard',
+            gastos: 'gastos',
+            ingresos: 'ingresos',
+            deuda: 'oficina',
+            oficina: 'oficina',
+            cuentas: 'oficina',
+            transferencias: 'oficina',
+            gorriones: 'oficina',
+            timeline: 'oficina',
+            metricas: 'oficina',
+            stock: 'oficina',
+            productos: 'oficina',
+            'tabla-precios': 'oficina',
+            analytics: 'oficina',
+            config: 'oficina',
+            llegadas: 'oficina'
+        };
         var loginEl = document.getElementById('screen-login');
         if (loginEl && loginEl.classList.contains('active')) return;
         if (typeof estado === 'undefined' || !estado.historialPantallas || estado.historialPantallas.length <= 1) return;
@@ -270,8 +313,15 @@ function volverAtras() {
         if (prevScreen) { prevScreen.classList.add('active'); prevScreen.style.display = 'block'; prevScreen.style.visibility = 'visible'; }
         var navItems = document.querySelectorAll('.nav-item');
         if (navItems && navItems.length) { for (var j = 0; j < navItems.length; j++) { navItems[j].classList.remove('active'); } }
-        var navItem = document.querySelector('.nav-item[data-screen="' + anterior + '"]');
+        var navTarget = SCREEN_TO_NAV[anterior] || anterior;
+        var navItem = document.querySelector('.nav-item[data-screen="' + navTarget + '"]');
         if (navItem) navItem.classList.add('active');
+        var dsbItems = document.querySelectorAll('.dsb-item');
+        if (dsbItems && dsbItems.length) {
+            for (var d = 0; d < dsbItems.length; d++) dsbItems[d].classList.remove('active');
+        }
+        var dsbItem = document.querySelector('.dsb-item[data-screen="' + (anterior === 'deuda' ? 'deuda' : (anterior === 'stock' || anterior === 'productos' || anterior === 'tabla-precios' ? 'stock' : (anterior === 'config' ? 'config' : (anterior === 'dashboard' ? 'dashboard' : (anterior === 'gastos' ? 'gastos' : (anterior === 'ingresos' ? 'ingresos' : (anterior === 'llegadas' ? 'llegadas' : (anterior === 'analytics' ? 'analytics' : 'oficina')))))))) + '"]');
+        if (dsbItem) dsbItem.classList.add('active');
         var backBtn = document.getElementById('backBtn');
         if (backBtn) backBtn.classList.toggle('visible', anterior !== 'dashboard');
         cerrarMenu();
