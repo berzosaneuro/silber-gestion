@@ -193,11 +193,16 @@ function aplicarModoSesion() {
             var el = document.getElementById(id);
             if (el) el.style.display = 'none';
         });
+        var elSidebarStock = document.querySelector('.dsb-item[data-screen="stock"]');
+        if (elSidebarStock) elSidebarStock.style.display = 'none';
         var elRutaW = document.getElementById('oficina-menu-ruta');
         if (elRutaW) elRutaW.style.display = 'block';
         renderizarCategoriasGastos();
         renderizarCategoriasIngresos();
         mostrarBotonCambiarPassword();
+    } else {
+        var elSidebarStock2 = document.querySelector('.dsb-item[data-screen="stock"]');
+        if (elSidebarStock2) elSidebarStock2.style.display = '';
     }
     if (esMaster() && typeof startMasterNotificationPoll === 'function') startMasterNotificationPoll();
 

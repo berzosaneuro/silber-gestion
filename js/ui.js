@@ -139,6 +139,14 @@ function renderizarListaStock() {
 function cambiarPantalla(pantalla) {
     try {
         if (typeof estado === 'undefined') { estado = (typeof window !== 'undefined' && window.estado) ? window.estado : { historialPantallas: ['dashboard'] }; }
+        // Blindaje de permisos: gorriones no pueden abrir módulo stock ni subpantallas asociadas.
+        if (typeof esGorrion === 'function' && esGorrion()) {
+            var stockBlocked = pantalla === 'stock' || pantalla === 'productos' || pantalla === 'tabla-precios';
+            if (stockBlocked) {
+                if (typeof mostrarToast === 'function') mostrarToast('Acceso solo para admins', 'error');
+                pantalla = 'oficina';
+            }
+        }
         if (!estado.historialPantallas || !estado.historialPantallas.length) estado.historialPantallas = ['dashboard'];
         if (estado.historialPantallas[estado.historialPantallas.length - 1] !== pantalla) {
             estado.historialPantallas.push(pantalla);
