@@ -3435,3 +3435,110 @@ body {
     0 0 14px rgba(0,229,255,0.13),
     0 4px 12px rgba(0,0,0,0.28) !important;
 }
+
+/* ============================================================
+   PASS 2 ULTRA FINO — Tipografía + ritmo visual
+   (solo ajuste de lectura y espaciado, sin lógica)
+   ============================================================ */
+
+:root {
+  --read-title: clamp(18px, 2.2vw, 22px);
+  --read-subtitle: clamp(15px, 1.9vw, 18px);
+  --read-body: clamp(13px, 1.55vw, 15px);
+  --read-meta: clamp(11px, 1.3vw, 12px);
+  --read-leading: 1.45;
+}
+
+body {
+  line-height: var(--read-leading);
+}
+
+.header-title,
+.app-header #headerTitle {
+  font-size: var(--read-subtitle);
+  letter-spacing: 1.1px;
+  line-height: 1.2;
+}
+
+.section-title,
+.settings-section-label {
+  font-size: var(--read-meta);
+  line-height: 1.35;
+}
+
+.modal-title {
+  font-size: var(--read-subtitle);
+  line-height: 1.25;
+}
+
+.input-label,
+.settings-row-sub,
+.cliente-info,
+.historial-fecha,
+.nav-label {
+  font-size: var(--read-meta);
+  line-height: 1.45;
+}
+
+.btn,
+.menu-item-text,
+.settings-row-text,
+.dash-quick-text,
+.input-field,
+.select-field,
+.textarea-field {
+  font-size: var(--read-body);
+  line-height: 1.35;
+}
+
+/* Ritmo visual */
+#screen-dashboard .dashboard-content {
+  gap: 18px;
+}
+
+#screen-dashboard .summary-grid {
+  gap: 12px;
+}
+
+#screen-dashboard .dash-quick-actions {
+  gap: 12px;
+}
+
+#screen-dashboard .dash-quick-btn {
+  min-height: 90px;
+  padding: 12px 10px;
+}
+
+#screen-dashboard .dashboard-content,
+#screen-oficina .content-section,
+#screen-config .content-section {
+  padding-left: 22px !important;
+  padding-right: 22px !important;
+}
+
+#screen-oficina .section-card,
+#screen-config .settings-group,
+#screen-config .section-card {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 380px) {
+  .btn,
+  .menu-item-text,
+  .settings-row-text,
+  .dash-quick-text,
+  .input-field,
+  .select-field,
+  .textarea-field {
+    font-size: 13px;
+  }
+}
+
+@media (min-width: 1024px) {
+  #screen-dashboard .dashboard-content,
+  #screen-oficina .content-section,
+  #screen-config .content-section {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+}

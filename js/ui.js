@@ -201,20 +201,20 @@ function cambiarPantalla(pantalla) {
         var backBtn = document.getElementById('backBtn');
         if (backBtn) backBtn.classList.toggle('visible', pantalla !== 'dashboard');
         var titleMap = {
-            dashboard: 'INICIO · SILBER GESTIÓN',
-            gastos: 'GASTOS · REGISTRO',
-            ingresos: 'INGRESOS · REGISTRO',
-            deuda: 'CLIENTES · DEUDAS',
-            oficina: 'OFICINA · OPERACIONES',
+            dashboard: 'Inicio · Silber Gestión',
+            gastos: 'Gastos · Nuevo registro',
+            ingresos: 'Ingresos · Nuevo registro',
+            deuda: 'Clientes · Deudas',
+            oficina: 'Oficina · Operaciones',
             stock: 'STOCK',
-            config: 'HERRAMIENTAS',
-            analytics: 'ANALÍTICAS',
-            llegadas: 'LLEGADAS',
-            cuentas: 'CUENTAS',
-            transferencias: 'TRANSFERENCIAS',
-            productos: 'PRODUCTOS',
-            gorriones: 'TRABAJADORES',
-            'tabla-precios': 'TABLA DE PRECIOS'
+            config: 'Herramientas',
+            analytics: 'Analíticas',
+            llegadas: 'Llegadas',
+            cuentas: 'Cuentas',
+            transferencias: 'Transferencias',
+            productos: 'Productos',
+            gorriones: 'Trabajadores',
+            'tabla-precios': 'Tabla de precios'
         };
         var headerTitle = document.getElementById('headerTitle');
         if (headerTitle) headerTitle.textContent = titleMap[pantalla] || 'SILBER GESTIÓN';
@@ -231,15 +231,15 @@ function cambiarPantalla(pantalla) {
                     guia.innerHTML = ''
                         + '<button class="btn btn-secondary" onclick="abrirOficinaView(\'oficina-main\')" style="margin-bottom:12px;">← Volver</button>'
                         + '<h2>🏢 Oficina - Guía</h2>'
-                        + '<h3>💰 Caja</h3><p>Registrar ingresos, gastos y ver balance.</p>'
-                        + '<h3>👥 Clientes</h3><p>Crear, editar y gestionar clientes.</p>'
-                        + '<h3>💳 Deudas</h3><p>Control de créditos y pagos parciales.</p>'
+                        + '<h3>💰 Caja</h3><p>Registrar ingresos y gastos, y ver tu balance al instante.</p>'
+                        + '<h3>👥 Clientes</h3><p>Crear, editar y gestionar clientes de forma rápida.</p>'
+                        + '<h3>💳 Deudas</h3><p>Controlar deudas, abonos y pagos parciales.</p>'
                         + '<h3>🏦 Cuentas</h3><p>Gestión de dinero por origen.</p>'
                         + '<h3>📦 Stock</h3><p>Control de productos e inventario.</p>'
                         + '<h3>👷 Trabajadores</h3><p>Usuarios operativos de la app.</p>'
                         + '<h3>📊 Dashboard</h3><p>Resumen general del negocio.</p>'
                         + '<h3>🔄 Sync</h3><p>Guardado automático y multi-dispositivo.</p>'
-                        + '<h3>📱 App</h3><p>Instalable como aplicación móvil.</p>';
+                        + '<h3>📱 App</h3><p>Instalable como app móvil para usarla como nativa.</p>';
                 }
             }
         }

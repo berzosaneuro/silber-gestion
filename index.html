@@ -327,8 +327,8 @@
                 </div>
                 <div class="categories-grid" id="ingresos-grid"></div>
                 <div style="padding:0 20px 16px;display:flex;flex-direction:column;gap:10px;">
-                    <button class="btn btn-primary btn-full" onclick="abrirModalDeudaPendiente()" style="font-size:13px;">📋 Registrar Deuda Pendiente</button>
-                    <button id="btn-pago-deuda-ingresos" class="btn btn-primary btn-full" onclick="abrirModalDeudaPagada()" style="font-size:13px;background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.25));border-color:rgba(16,185,129,0.6);color:#10B981;text-shadow:0 0 10px rgba(16,185,129,0.8);box-shadow:0 0 12px rgba(16,185,129,0.4),0 0 30px rgba(16,185,129,0.15);">💚 Registrar Pago de Deuda</button>
+                    <button class="btn btn-primary btn-full" onclick="abrirModalDeudaPendiente()" style="font-size:13px;">📋 Nueva Deuda Pendiente</button>
+                    <button id="btn-pago-deuda-ingresos" class="btn btn-primary btn-full" onclick="abrirModalDeudaPagada()" style="font-size:13px;background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.25));border-color:rgba(16,185,129,0.6);color:#10B981;text-shadow:0 0 10px rgba(16,185,129,0.8);box-shadow:0 0 12px rgba(16,185,129,0.4),0 0 30px rgba(16,185,129,0.15);">💚 Registrar Pago</button>
                 </div>
                 <div class="create-category"><button class="create-btn" onclick="abrirGestorCategorias('ingreso')">+</button></div>
                 <div style="padding:0 16px 80px;">
@@ -395,8 +395,8 @@
                     </div>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
-                    <button class="btn btn-primary btn-full" onclick="abrirModalDeudaPendiente()" style="font-size:13px;">📋 Registrar Deuda Pendiente</button>
-                    <button class="btn btn-primary btn-full" onclick="abrirModalDeudaPagada()" style="font-size:13px;background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.25));border-color:rgba(16,185,129,0.6);color:#10B981;text-shadow:0 0 10px rgba(16,185,129,0.8);box-shadow:0 0 12px rgba(16,185,129,0.4),0 0 30px rgba(16,185,129,0.15);">💚 Registrar Pago de Deuda</button>
+                    <button class="btn btn-primary btn-full" onclick="abrirModalDeudaPendiente()" style="font-size:13px;">📋 Nueva Deuda Pendiente</button>
+                    <button class="btn btn-primary btn-full" onclick="abrirModalDeudaPagada()" style="font-size:13px;background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.25));border-color:rgba(16,185,129,0.6);color:#10B981;text-shadow:0 0 10px rgba(16,185,129,0.8);box-shadow:0 0 12px rgba(16,185,129,0.4),0 0 30px rgba(16,185,129,0.15);">💚 Registrar Pago</button>
                 </div>
                 <div style="display:flex;gap:8px;margin-bottom:8px;">
                     <button class="btn btn-secondary" id="of-filtro-todos" onclick="filtrarOficina('todos')" style="flex:1;font-size:11px;padding:8px;">Todos</button>
@@ -409,7 +409,7 @@
                 </div>
                 <div class="section-card" style="margin-bottom:12px;">
                     <div class="section-title">🐦 Gorriones</div>
-                    <button class="btn btn-primary btn-full" onclick="cambiarPantalla('gorriones')" style="margin-top:8px;font-size:13px;">Ver / Gestionar Gorriones →</button>
+                    <button class="btn btn-primary btn-full" onclick="cambiarPantalla('gorriones')" style="margin-top:8px;font-size:13px;">Gestionar Gorriones →</button>
                 </div>
                 <div class="section-card" id="oficina-cierre-card" style="margin-bottom:12px;">
                     <div class="section-title">🔐 Cierre del Día</div>
@@ -1157,7 +1157,7 @@
                             <option value="1">Día 1</option><option value="2">Día 2</option><option value="3">Día 3</option><option value="4">Día 4</option><option value="5">Día 5</option><option value="6">Día 6</option><option value="7">Día 7</option><option value="8">Día 8</option><option value="9">Día 9</option><option value="10">Día 10</option><option value="11">Día 11</option><option value="12">Día 12</option><option value="13">Día 13</option><option value="14">Día 14</option><option value="15">Día 15</option><option value="16">Día 16</option><option value="17">Día 17</option><option value="18">Día 18</option><option value="19">Día 19</option><option value="20">Día 20</option><option value="21">Día 21</option><option value="22">Día 22</option><option value="23">Día 23</option><option value="24">Día 24</option><option value="25">Día 25</option><option value="26">Día 26</option><option value="27">Día 27</option><option value="28">Día 28</option><option value="29">Día 29</option><option value="30">Día 30</option><option value="31">Día 31</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary btn-full" onclick="altaClienteDeuda()" style="margin-top:4px;">✅ Registrar Cliente</button>
+                    <button class="btn btn-primary btn-full" onclick="altaClienteDeuda()" style="margin-top:4px;">✅ Crear Cliente</button>
                     <div id="alta-resultado" style="margin-top:10px;font-size:13px;color:#10B981;font-weight:700;display:none;"></div>
                 </div>
 
@@ -1601,7 +1601,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" onclick="cerrarModalNuevoCliente()">Cancelar</button>
-                    <button class="btn btn-primary" id="btn-guardar-cliente" onclick="guardarCliente()">Crear Cliente</button>
+                    <button class="btn btn-primary" id="btn-guardar-cliente" onclick="guardarCliente()">Guardar Cliente</button>
                 </div>
             </div>
         </div>
