@@ -188,10 +188,8 @@ function aplicarModoSesion() {
     if (elTimeline) elTimeline.style.display = _isAdmin ? 'block' : 'none';
     var elProductos = document.getElementById('oficina-menu-productos');
     if (elProductos) elProductos.style.display = _isAdmin ? 'block' : 'none';
-    var elConfig = document.getElementById('oficina-menu-config');
-    if (elConfig) elConfig.style.display = _isAdmin ? 'block' : 'none';
     if (esWorker()) {
-        [ 'oficina-menu-cuentas', 'oficina-menu-transferencias', 'oficina-menu-stock', 'oficina-menu-productos', 'oficina-menu-auditoria', 'oficina-menu-metricas', 'oficina-menu-timeline', 'oficina-menu-config' ].forEach(function(id) {
+        [ 'oficina-menu-cuentas', 'oficina-menu-transferencias', 'oficina-menu-stock', 'oficina-menu-productos', 'oficina-menu-auditoria', 'oficina-menu-metricas', 'oficina-menu-timeline' ].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) el.style.display = 'none';
         });

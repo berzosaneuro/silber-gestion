@@ -71,13 +71,17 @@
                     Analíticas
                     <span class="dsb-alert-dot" id="dsb-dot-alertas"></span>
                 </div>
+                <div class="dsb-item" data-screen="stock" onclick="cambiarPantalla('stock')">
+                    <span class="dsb-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg></span>
+                    Stock
+                </div>
                 <div class="dsb-item" data-screen="oficina" onclick="cambiarPantalla('oficina')">
                     <span class="dsb-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V12h6v9"/></svg></span>
                     Oficina
                 </div>
                 <div class="dsb-item" data-screen="config" onclick="cambiarPantalla('config')">
                     <span class="dsb-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
-                    Configuración
+                    Herramientas
                 </div>
             </nav>
             <div class="dsb-footer">
@@ -419,20 +423,12 @@
                     </div>
                 </div>
                 <div class="section-card">
-                    <div class="section-title">Accesos Rápidos</div>
+                    <div class="section-title">💼 Contabilidad</div>
                     <div class="menu-item" id="oficina-menu-cuentas" onclick="cambiarPantalla('cuentas')" style="margin-bottom:8px;"><div class="menu-item-icon">💰</div><div class="menu-item-text">Cuentas</div></div>
                     <div class="menu-item" id="oficina-menu-transferencias" onclick="cambiarPantalla('transferencias')" style="margin-bottom:8px;"><div class="menu-item-icon">🔄</div><div class="menu-item-text">Transferencias</div></div>
-                    <div class="menu-item" id="oficina-menu-stock" onclick="cambiarPantalla('stock')" style="margin-bottom:8px;"><div class="menu-item-icon">📦</div><div class="menu-item-text">Control de Stock</div></div>
-                    <div class="menu-item" id="oficina-menu-productos" onclick="cambiarPantalla('productos'); if(typeof renderProductos==='function')renderProductos();" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">📦</div><div class="menu-item-text">Gestión de Productos</div></div>
                     <div class="menu-item" onclick="abrirAlertasJefes()" style="margin-bottom:8px;"><div class="menu-item-icon">🚨</div><div class="menu-item-text">Alertas de Crédito</div></div>
-                    <div class="menu-item" id="oficina-menu-auditoria" onclick="abrirAuditoria()" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">📋</div><div class="menu-item-text">Ver auditoría</div></div>
-                    <div class="menu-item" id="oficina-menu-metricas" onclick="cambiarPantalla('metricas'); if(typeof renderizarMetricas==='function')renderizarMetricas();" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">📊</div><div class="menu-item-text">Métricas del negocio</div></div>
-                    <div class="menu-item" id="oficina-menu-ruta" onclick="abrirModalRutaClientes()" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">🗺️</div><div class="menu-item-text">Optimizar ruta de clientes</div></div>
-                    <div class="menu-item" id="oficina-menu-timeline" onclick="cambiarPantalla('timeline')" style="margin-bottom:8px;display:none;"><div class="menu-item-icon">📜</div><div class="menu-item-text">Timeline del Negocio</div></div>
-                    <div class="menu-item" id="oficina-menu-llegadas" onclick="if(typeof renderLlegadas==='function')renderLlegadas();cambiarPantalla('llegadas');" style="margin-bottom:8px;"><div class="menu-item-icon">📍</div><div class="menu-item-text">Registro de Llegadas</div></div>
-                    <div class="menu-item" id="oficina-menu-analytics" onclick="if(typeof renderAnalytics==='function')renderAnalytics();cambiarPantalla('analytics');" style="margin-bottom:8px;"><div class="menu-item-icon">📊</div><div class="menu-item-text">Analíticas</div></div>
                     <div class="menu-item" id="oficina-menu-guia" onclick="abrirOficinaView('oficina-guia')" style="margin-bottom:8px;"><div class="menu-item-icon">📘</div><div class="menu-item-text">Guía</div></div>
-                    <div class="menu-item" id="oficina-menu-config" onclick="cambiarPantalla('config')"><div class="menu-item-icon">⚙️</div><div class="menu-item-text">Configuración</div></div>
+                    <div class="menu-item" id="oficina-menu-herramientas" onclick="cambiarPantalla('config')"><div class="menu-item-icon">🧰</div><div class="menu-item-text">Herramientas</div></div>
                 </div>
                 <button id="oficina-fab-add-cliente" class="fab" onclick="abrirModalNuevoCliente()">+</button>
             </div>
@@ -984,7 +980,7 @@
             </div>
         </div>
 
-        <!-- CONFIG — iOS-style grouped settings -->
+        <!-- HERRAMIENTAS — iOS-style grouped settings -->
         <div class="screen" id="screen-config">
             <div class="content-section">
 
@@ -1020,15 +1016,15 @@
                     </div>
                 </div>
 
-                <!-- GESTIÓN -->
-                <div class="settings-section-label">Gestión</div>
+                <!-- HERRAMIENTAS -->
+                <div class="settings-section-label">Herramientas</div>
                 <div class="settings-group">
                     <div class="settings-row" onclick="cambiarPantalla('stock')">
                         <div class="settings-row-left">
                             <div class="settings-row-icon" style="background:rgba(59,130,246,0.15);">📦</div>
                             <div class="settings-row-body">
-                                <div class="settings-row-text">Control de Stock</div>
-                                <div class="settings-row-sub">Entradas, costes, tabla de precios</div>
+                                <div class="settings-row-text">Módulo Stock</div>
+                                <div class="settings-row-sub">Inventario, ajustes y movimientos</div>
                             </div>
                         </div>
                         <div class="settings-chevron">›</div>
@@ -1043,6 +1039,66 @@
                         </div>
                         <div class="settings-chevron">›</div>
                     </div>
+                    <div class="settings-row" onclick="cambiarPantalla('productos'); if(typeof renderProductos==='function')renderProductos();">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(37,99,235,0.15);">🧪</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Gestión de Productos</div>
+                                <div class="settings-row-sub">Crear, editar y vender por gramos</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                    <div class="settings-row" onclick="if(typeof renderAnalytics==='function')renderAnalytics();cambiarPantalla('analytics');">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(14,165,233,0.15);">📊</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Analíticas</div>
+                                <div class="settings-row-sub">Resumen avanzado y herramientas</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                    <div class="settings-row" onclick="cambiarPantalla('metricas'); if(typeof renderizarMetricas==='function')renderizarMetricas();">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(56,189,248,0.15);">📈</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Métricas del negocio</div>
+                                <div class="settings-row-sub">Indicadores clave del rendimiento</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                    <div class="settings-row" onclick="cambiarPantalla('timeline')">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(168,85,247,0.15);">📜</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Timeline del Negocio</div>
+                                <div class="settings-row-sub">Evolución y eventos del negocio</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                    <div class="settings-row" onclick="if(typeof renderLlegadas==='function')renderLlegadas();cambiarPantalla('llegadas');">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(16,185,129,0.15);">📍</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Registro de Llegadas</div>
+                                <div class="settings-row-sub">Control de visitas y ubicaciones</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
+                    <div class="settings-row" onclick="abrirModalRutaClientes()">
+                        <div class="settings-row-left">
+                            <div class="settings-row-icon" style="background:rgba(34,197,94,0.15);">🗺️</div>
+                            <div class="settings-row-body">
+                                <div class="settings-row-text">Optimizar ruta de clientes</div>
+                                <div class="settings-row-sub">Orden inteligente para cobros/visitas</div>
+                            </div>
+                        </div>
+                        <div class="settings-chevron">›</div>
+                    </div>
                     <div class="settings-row" onclick="cambiarPantalla('gorriones')">
                         <div class="settings-row-left">
                             <div class="settings-row-icon" style="background:rgba(245,158,11,0.15);">🐦</div>
@@ -1053,22 +1109,12 @@
                         </div>
                         <div class="settings-chevron">›</div>
                     </div>
-                    <div class="settings-row" onclick="cambiarPantalla('deuda')">
+                    <div class="settings-row" onclick="abrirAuditoria()">
                         <div class="settings-row-left">
-                            <div class="settings-row-icon" style="background:rgba(239,68,68,0.15);">👥</div>
+                            <div class="settings-row-icon" style="background:rgba(239,68,68,0.12);">📋</div>
                             <div class="settings-row-body">
-                                <div class="settings-row-text">Clientes y Deudas</div>
-                                <div class="settings-row-sub">Ver lista de clientes</div>
-                            </div>
-                        </div>
-                        <div class="settings-chevron">›</div>
-                    </div>
-                    <div class="settings-row" onclick="cambiarPantalla('transferencias')">
-                        <div class="settings-row-left">
-                            <div class="settings-row-icon" style="background:rgba(14,165,233,0.15);">🔄</div>
-                            <div class="settings-row-body">
-                                <div class="settings-row-text">Transferencias</div>
-                                <div class="settings-row-sub">Mover entre cuentas</div>
+                                <div class="settings-row-text">Auditoría</div>
+                                <div class="settings-row-sub">Registro y supervisión administrativa</div>
                             </div>
                         </div>
                         <div class="settings-chevron">›</div>
@@ -2056,12 +2102,12 @@
             /* sub-screens inherit parent */
             'screen-cuentas':       'oficina',
             'screen-transferencias':'oficina',
-            'screen-stock':         'oficina',
-            'screen-productos':     'oficina',
+            'screen-stock':         'stock',
+            'screen-productos':     'stock',
             'screen-gorriones':     'oficina',
             'screen-timeline':      'oficina',
             'screen-metricas':      'oficina',
-            'screen-tabla-precios': 'oficina'
+            'screen-tabla-precios': 'stock'
         };
 
         function syncSidebar() {

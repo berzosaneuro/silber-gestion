@@ -167,6 +167,24 @@ function cambiarPantalla(pantalla) {
         if (navItem) navItem.classList.add('active');
         var backBtn = document.getElementById('backBtn');
         if (backBtn) backBtn.classList.toggle('visible', pantalla !== 'dashboard');
+        var titleMap = {
+            dashboard: 'SILBER GESTIÓN',
+            gastos: 'GASTOS',
+            ingresos: 'INGRESOS',
+            deuda: 'CLIENTES Y DEUDAS',
+            oficina: 'OFICINA · CONTABILIDAD',
+            stock: 'STOCK',
+            config: 'HERRAMIENTAS',
+            analytics: 'ANALÍTICAS',
+            llegadas: 'LLEGADAS',
+            cuentas: 'CUENTAS',
+            transferencias: 'TRANSFERENCIAS',
+            productos: 'PRODUCTOS',
+            gorriones: 'TRABAJADORES',
+            'tabla-precios': 'TABLA DE PRECIOS'
+        };
+        var headerTitle = document.getElementById('headerTitle');
+        if (headerTitle) headerTitle.textContent = titleMap[pantalla] || 'SILBER GESTIÓN';
         var menuOverlay = document.getElementById('menuOverlay');
         if (menuOverlay) { menuOverlay.classList.remove('active'); menuOverlay.style.display = 'none'; }
         cerrarMenu();
