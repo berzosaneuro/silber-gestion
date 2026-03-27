@@ -170,7 +170,28 @@ function cambiarPantalla(pantalla) {
         var menuOverlay = document.getElementById('menuOverlay');
         if (menuOverlay) { menuOverlay.classList.remove('active'); menuOverlay.style.display = 'none'; }
         cerrarMenu();
-        if (pantalla === 'oficina' && typeof actualizarEstadoBiometria === 'function') { try { actualizarEstadoBiometria(); } catch (e) {} }
+        if (pantalla === 'oficina') {
+            if (typeof actualizarEstadoBiometria === 'function') { try { actualizarEstadoBiometria(); } catch (e) {} }
+            if (typeof abrirOficinaView === 'function') { try { abrirOficinaView('oficina-main'); } catch (e) {} }
+            var guia = document.querySelector('#oficina-guia .guia-container');
+            if (guia) {
+                var txt = (guia.textContent || '').replace(/\s+/g, '').trim();
+                if (!txt || txt.length < 20) {
+                    guia.innerHTML = ''
+                        + '<button class="btn btn-secondary" onclick="abrirOficinaView(\'oficina-main\')" style="margin-bottom:12px;">← Volver</button>'
+                        + '<h2>🏢 Oficina - Guía</h2>'
+                        + '<h3>💰 Caja</h3><p>Registrar ingresos, gastos y ver balance.</p>'
+                        + '<h3>👥 Clientes</h3><p>Crear, editar y gestionar clientes.</p>'
+                        + '<h3>💳 Deudas</h3><p>Control de créditos y pagos parciales.</p>'
+                        + '<h3>🏦 Cuentas</h3><p>Gestión de dinero por origen.</p>'
+                        + '<h3>📦 Stock</h3><p>Control de productos e inventario.</p>'
+                        + '<h3>👷 Trabajadores</h3><p>Usuarios operativos de la app.</p>'
+                        + '<h3>📊 Dashboard</h3><p>Resumen general del negocio.</p>'
+                        + '<h3>🔄 Sync</h3><p>Guardado automático y multi-dispositivo.</p>'
+                        + '<h3>📱 App</h3><p>Instalable como aplicación móvil.</p>';
+                }
+            }
+        }
         if (pantalla === 'gastos' && typeof renderizarDesgloseGastos === 'function') { try { renderizarDesgloseGastos(); } catch (e) {} }
         if (pantalla === 'ingresos' && typeof renderizarDesgloseIngresos === 'function') { try { renderizarDesgloseIngresos(); } catch (e) {} }
         if (pantalla === 'transferencias' && typeof renderizarHistorialTransferencias === 'function') { try { renderizarHistorialTransferencias(); } catch (e) {} }
@@ -247,15 +268,37 @@ function cerrarMenu() {
 function abrirOficinaView(viewId) {
     var oficinaScreen = document.getElementById('screen-oficina');
     if (!oficinaScreen) return;
+    var targetView = viewId || 'oficina-main';
     var views = oficinaScreen.querySelectorAll('.oficina-view');
     if (views && views.length) {
         for (var i = 0; i < views.length; i++) views[i].style.display = 'none';
     }
-    var target = document.getElementById(viewId || 'oficina-main');
-    if (target) target.style.display = (viewId === 'oficina-guia') ? 'flex' : 'block';
+    var target = document.getElementById(targetView);
+    if (target) target.style.display = (targetView === 'oficina-guia') ? 'flex' : 'block';
 
     var fab = document.getElementById('oficina-fab-add-cliente');
-    if (fab) fab.style.display = (viewId === 'oficina-guia') ? 'none' : '';
+    if (fab) fab.style.display = (targetView === 'oficina-guia') ? 'none' : '';
+
+    if (targetView === 'oficina-guia') {
+        var guia = document.querySelector('#oficina-guia .guia-container');
+        if (guia) {
+            var txt = (guia.textContent || '').replace(/\s+/g, '').trim();
+            if (!txt || txt.length < 20) {
+                guia.innerHTML = ''
+                    + '<button class="btn btn-secondary" onclick="abrirOficinaView(\'oficina-main\')" style="margin-bottom:12px;">← Volver</button>'
+                    + '<h2>🏢 Oficina - Guía</h2>'
+                    + '<h3>💰 Caja</h3><p>Registrar ingresos, gastos y ver balance.</p>'
+                    + '<h3>👥 Clientes</h3><p>Crear, editar y gestionar clientes.</p>'
+                    + '<h3>💳 Deudas</h3><p>Control de créditos y pagos parciales.</p>'
+                    + '<h3>🏦 Cuentas</h3><p>Gestión de dinero por origen.</p>'
+                    + '<h3>📦 Stock</h3><p>Control de productos e inventario.</p>'
+                    + '<h3>👷 Trabajadores</h3><p>Usuarios operativos de la app.</p>'
+                    + '<h3>📊 Dashboard</h3><p>Resumen general del negocio.</p>'
+                    + '<h3>🔄 Sync</h3><p>Guardado automático y multi-dispositivo.</p>'
+                    + '<h3>📱 App</h3><p>Instalable como aplicación móvil.</p>';
+            }
+        }
+    }
 }
 if (typeof window !== 'undefined') window.abrirOficinaView = abrirOficinaView;
 
